@@ -763,11 +763,14 @@ In `project-planner/src/js/ui/gantt.js`, add these two functions right before th
 
     document.addEventListener('mousemove', function (e) {
       if (!drag) return;
+      if (e.buttons === 0) { drag = null; return; }
       drag.deltaPx = e.clientX - drag.startClientX;
       if (drag.mode === 'move' && drag.el) {
         drag.el.setAttribute('x', drag.origX + drag.deltaPx);
       }
     });
+
+    window.addEventListener('blur', function () { drag = null; });
 
     document.addEventListener('mouseup', function () {
       if (!drag) return;
@@ -787,6 +790,8 @@ In `project-planner/src/js/ui/gantt.js`, add these two functions right before th
           applyForwardPass(state, drag.id);
           onChanged();
         }
+      } else if (drag.mode === 'move' && drag.el) {
+        drag.el.setAttribute('x', drag.origX);
       }
       drag = null;
     });

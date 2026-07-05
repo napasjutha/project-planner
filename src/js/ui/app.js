@@ -15,6 +15,7 @@
     PP.renderGantt(state);
     PP.renderScurve(state);
     PP.renderScurveOverlaySelect(state);
+    PP.renderDashboard(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';

@@ -219,10 +219,24 @@
 
     document.addEventListener('mousemove', function (e) {
       if (!drag) return;
+      if (e.buttons === 0) {
+        // The mouse button was released outside the page (browser chrome,
+        // another app after alt-tab, another monitor, etc.) so no `mouseup`
+        // ever reached `document`. Abandon the stale drag now instead of
+        // letting some unrelated future mouseup wrongly finalize it.
+        drag = null;
+        return;
+      }
       drag.deltaPx = e.clientX - drag.startClientX;
       if (drag.mode === 'move' && drag.el) {
         drag.el.setAttribute('x', drag.origX + drag.deltaPx);
       }
+    });
+
+    window.addEventListener('blur', function () {
+      // The window losing focus (e.g. alt-tab) is a more immediate signal
+      // than waiting for the next mousemove to notice the button is up.
+      drag = null;
     });
 
     document.addEventListener('mouseup', function () {
@@ -243,6 +257,10 @@
           applyForwardPass(state, drag.id);
           onChanged();
         }
+      } else if (drag.mode === 'move' && drag.el) {
+        // A sub-threshold movement already nudged the bar's visual position
+        // during mousemove; snap it back so it doesn't look offset.
+        drag.el.setAttribute('x', drag.origX);
       }
       drag = null;
     });

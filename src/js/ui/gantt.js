@@ -181,19 +181,22 @@
     });
   }
 
-  function applyForwardPass(state, movedTaskId) {
+  function computeForwardPassPatches(state, movedTaskId) {
     var holidayDates = state.project.holidays.map(function (h) { return h.date; });
     var result = PP.forwardPass(state.project.tasks, movedTaskId, holidayDates);
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
+    var patches = [];
     result.forEach(function (updated) {
       if (updated.id === movedTaskId) return;
       var original = byId.get(updated.id);
       if (original.plannedStart !== updated.plannedStart || original.plannedFinish !== updated.plannedFinish) {
-        state.project.updateTask(updated.id, {
-          plannedStart: updated.plannedStart, plannedFinish: updated.plannedFinish,
-        }, state.currentUser);
+        patches.push({
+          id: updated.id,
+          patch: { plannedStart: updated.plannedStart, plannedFinish: updated.plannedFinish },
+        });
       }
     });
+    return patches;
   }
 
   function wireGantt(state, onChanged) {
@@ -245,16 +248,28 @@
       if (deltaDays !== 0) {
         var task = state.project.tasks.find(function (t) { return t.id === drag.id; });
         if (task && task.plannedStart && task.plannedFinish) {
+          var dragPatch;
           if (drag.mode === 'move') {
             var newStart = PP.toISO(PP.parseISO(task.plannedStart) + deltaDays * DAY_MS);
             var newFinish = PP.toISO(PP.parseISO(task.plannedFinish) + deltaDays * DAY_MS);
-            state.project.updateTask(drag.id, { plannedStart: newStart, plannedFinish: newFinish }, state.currentUser);
+            dragPatch = { id: drag.id, patch: { plannedStart: newStart, plannedFinish: newFinish } };
           } else {
             var candidateFinish = PP.toISO(PP.parseISO(task.plannedFinish) + deltaDays * DAY_MS);
             if (candidateFinish < task.plannedStart) candidateFinish = task.plannedStart;
-            state.project.updateTask(drag.id, { plannedFinish: candidateFinish }, state.currentUser);
+            dragPatch = { id: drag.id, patch: { plannedFinish: candidateFinish } };
           }
-          applyForwardPass(state, drag.id);
+          // Applied as its own batch first so `PP.forwardPass` (called next)
+          // sees the dragged task's NEW dates when deciding whether
+          // successors need to shift. This is checkpoint 1 of at most 2 for
+          // this drag (was previously 1 + N separate updateTask checkpoints).
+          state.project.updateTasks([dragPatch], state.currentUser);
+          var successorPatches = computeForwardPassPatches(state, drag.id);
+          if (successorPatches.length) {
+            // Checkpoint 2: every cascading successor shift lands in a single
+            // atomic undo step, instead of one updateTask call (and one
+            // undo checkpoint) per successor.
+            state.project.updateTasks(successorPatches, state.currentUser);
+          }
           onChanged();
         }
       } else if (drag.mode === 'move' && drag.el) {

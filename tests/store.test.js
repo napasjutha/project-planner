@@ -51,6 +51,62 @@ test('updateTask throws for an unknown task id', () => {
   assert.throws(() => p.updateTask('missing', { actualPct: 1 }));
 });
 
+test('updateTasks applies multiple patches as a single undo checkpoint', () => {
+  const p = Project.empty('Test');
+  const a = p.addTask({ parentId: null, name: 'A' });
+  const b = p.addTask({ parentId: null, name: 'B' });
+  const undoStackBefore = p._undoStack.length;
+
+  p.updateTasks([
+    { id: a.id, patch: { plannedStart: '2026-01-01' } },
+    { id: b.id, patch: { plannedStart: '2026-01-05' } },
+  ], 'Alice');
+
+  assert.equal(p.tasks.find(t => t.id === a.id).plannedStart, '2026-01-01');
+  assert.equal(p.tasks.find(t => t.id === b.id).plannedStart, '2026-01-05');
+  assert.equal(p._undoStack.length, undoStackBefore + 1);
+});
+
+test('updateTasks records one audit entry per changed field across all patched tasks', () => {
+  const p = Project.empty('Test');
+  const a = p.addTask({ parentId: null, name: 'A' });
+  const b = p.addTask({ parentId: null, name: 'B' });
+  const auditLengthBefore = p.auditLog.length;
+
+  p.updateTasks([
+    { id: a.id, patch: { plannedStart: '2026-01-01', plannedFinish: '2026-01-02' } },
+    { id: b.id, patch: { plannedStart: '2026-01-05' } },
+  ], 'Alice');
+
+  assert.equal(p.auditLog.length, auditLengthBefore + 3);
+});
+
+test('updateTasks undo reverts every patched task together', () => {
+  const p = Project.empty('Test');
+  const a = p.addTask({ parentId: null, name: 'A' });
+  const b = p.addTask({ parentId: null, name: 'B' });
+
+  p.updateTasks([
+    { id: a.id, patch: { plannedStart: '2026-01-01' } },
+    { id: b.id, patch: { plannedStart: '2026-01-05' } },
+  ], 'Alice');
+
+  p.undo();
+
+  assert.equal(p.tasks.find(t => t.id === a.id).plannedStart, null);
+  assert.equal(p.tasks.find(t => t.id === b.id).plannedStart, null);
+});
+
+test('updateTasks throws for an unknown task id and does not partially apply', () => {
+  const p = Project.empty('Test');
+  const a = p.addTask({ parentId: null, name: 'A' });
+
+  assert.throws(() => p.updateTasks([
+    { id: a.id, patch: { plannedStart: '2026-01-01' } },
+    { id: 'missing', patch: { plannedStart: '2026-01-05' } },
+  ], 'Alice'));
+});
+
 test('deleteTask removes the task and its full subtree', () => {
   const p = Project.empty('Test');
   const parent = p.addTask({ parentId: null, name: 'Parent' });

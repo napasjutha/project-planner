@@ -147,6 +147,19 @@
       return task;
     }
 
+    updateTasks(patches, who) {
+      this._pushUndo();
+      patches.forEach(function (entry) {
+        const task = this.tasks.find(t => t.id === entry.id);
+        if (!task) throw new Error(`Task not found: ${entry.id}`);
+        for (const [field, value] of Object.entries(entry.patch)) {
+          const old = task[field];
+          task[field] = value;
+          this._audit(who, entry.id, field, old, value);
+        }
+      }, this);
+    }
+
     deleteTask(id, who) {
       if (!this.tasks.some(t => t.id === id)) throw new Error(`Task not found: ${id}`);
       this._pushUndo();

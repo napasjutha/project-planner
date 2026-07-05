@@ -141,6 +141,11 @@
     updateActive();
   }
 
+  function slugifyProjectName(name) {
+    var slug = (name || 'project').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return slug || 'project';
+  }
+
   function handleSave(state) {
     state.project.meta.savedBy = state.currentUser;
     state.project.meta.savedAt = new Date().toISOString();
@@ -158,7 +163,8 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'ProjectPlanner.html';
+    var dateStr = state.project.meta.savedAt.slice(0, 10);
+    a.download = slugifyProjectName(state.project.meta.name) + '_rev' + state.project.meta.revision + '_' + dateStr + '.html';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

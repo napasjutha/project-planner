@@ -177,7 +177,7 @@ Create `project-planner/package.json`:
   "description": "Single-file HTML project planning application",
   "scripts": {
     "build": "python3 build.py",
-    "test": "node --test tests/"
+    "test": "node --test"
   }
 }
 ```
@@ -1756,13 +1756,13 @@ test('project serializes to JSON and restores to an identical, re-computable sta
 
 - [ ] **Step 4: Run the full test suite to verify everything passes**
 
-Run: `cd "project-planner" && node --test tests/`
-Expected: PASS — all tests across `build.test.js`, `schedule.test.js`, `status.test.js`, `deps.test.js`, `calc.test.js`, `store.test.js`, `snapshot.test.js`, `integration.test.js`.
+Run: `cd "project-planner" && node --test`
+Expected: PASS — all tests across `build.test.js`, `schedule.test.js`, `status.test.js`, `deps.test.js`, `calc.test.js`, `store.test.js`, `snapshot.test.js`, `integration.test.js`. (Bare `node --test` auto-discovers `tests/*.test.js`; the directory form `node --test tests/` does not work on Node v24 — it throws `MODULE_NOT_FOUND` trying to `require` the directory. `package.json`'s `test` script uses the bare form for this reason.)
 
 - [ ] **Step 5: Rebuild the artifact and manually confirm it opens**
 
 Run: `cd "project-planner" && python3 build.py && open dist/ProjectPlanner.html`
-Expected: browser opens a blank page with `Loading…` text (no UI wired up yet — that's the next plan). No console errors about `__CSS__`/`__JS__` markers or JSON parse failures. Open the browser dev console and run `PP.recalc` — it should be `undefined` because engines currently only expose functions inside the module scope returned to `factory()`; confirm instead that `document.getElementById('project-data').textContent` parses as valid JSON via `JSON.parse(document.getElementById('project-data').textContent)`.
+Expected: browser opens a blank page with `Loading…` text (no UI wired up yet — that's the next plan). No console errors about `__CSS__`/`__JS__` markers or JSON parse failures. Open the browser dev console and run `PP.recalc` — it should be a `function`, since the UMD wrapper's browser branch (`else { root.PP = root.PP || {}; Object.assign(root.PP, factory()); }`) attaches every engine's exports onto `globalThis.PP`. Also confirm `document.getElementById('project-data').textContent` parses as valid JSON via `JSON.parse(...)`.
 
 - [ ] **Step 6: Commit**
 

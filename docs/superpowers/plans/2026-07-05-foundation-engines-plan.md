@@ -1423,9 +1423,9 @@ Create `project-planner/src/js/store.js`:
     }
 
     updateTask(id, patch, who) {
-      this._pushUndo();
       const task = this.tasks.find(t => t.id === id);
       if (!task) throw new Error(`Task not found: ${id}`);
+      this._pushUndo();
       for (const [field, value] of Object.entries(patch)) {
         const old = task[field];
         task[field] = value;
@@ -1435,6 +1435,7 @@ Create `project-planner/src/js/store.js`:
     }
 
     deleteTask(id, who) {
+      if (!this.tasks.some(t => t.id === id)) throw new Error(`Task not found: ${id}`);
       this._pushUndo();
       const toDelete = this._subtreeIds(id);
       this.tasks = this.tasks.filter(t => !toDelete.has(t.id));
@@ -1455,6 +1456,12 @@ Create `project-planner/src/js/store.js`:
         .sort((a, b) => a.order - b.order);
       siblings.splice(newOrder, 0, task);
       siblings.forEach((t, i) => { t.order = i; });
+      if (oldParentId !== newParentId) {
+        const oldSiblings = this.tasks
+          .filter(t => t.parentId === oldParentId)
+          .sort((a, b) => a.order - b.order);
+        oldSiblings.forEach((t, i) => { t.order = i; });
+      }
       this._audit(who, id, 'parentId', oldParentId, newParentId);
     }
 

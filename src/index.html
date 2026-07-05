@@ -45,6 +45,9 @@
   <div id="view-tabs">
     <button class="view-tab active" data-view="plan">Plan</button>
     <button class="view-tab" data-view="gantt">Gantt</button>
+    <button class="view-tab" data-view="scurve">S-Curve</button>
+    <button class="view-tab" data-view="dashboard">Dashboard</button>
+    <button class="view-tab" data-view="snapshots">Snapshots</button>
   </div>
   <div id="plan-view">
     <div id="tree-header">
@@ -74,9 +77,29 @@
       <div id="gantt-body"></div>
     </div>
   </div>
+  <div id="scurve-view" hidden>
+    <div id="scurve-toolbar">
+      <label>Overlay snapshot
+        <select id="scurve-overlay-select"><option value="">None</option></select>
+      </label>
+    </div>
+    <div id="scurve-body"></div>
+  </div>
+  <div id="dashboard-view" hidden>
+    <div id="dashboard-body"></div>
+  </div>
+  <div id="snapshots-view" hidden>
+    <div id="snapshots-toolbar">
+      <input id="snapshot-note-input" type="text" placeholder="Snapshot note (optional)">
+      <button id="take-snapshot-button">Take Snapshot</button>
+    </div>
+    <div id="snapshots-list"></div>
+    <div id="snapshot-comparison"></div>
+  </div>
 </div>
 
 <div id="context-menu" class="context-menu" hidden></div>
+<div id="scurve-tooltip" hidden></div>
 
 <script type="application/json" id="project-data">{"meta":{"id":"seed","name":"New Project","statusDate":"2026-01-01","revision":0,"savedBy":null,"savedAt":null,"createdAt":"2026-01-01T00:00:00.000Z"},"tasks":[],"holidays":[],"picList":[],"snapshots":[],"auditLog":[],"settings":{"theme":"kpmg-light","ganttZoom":"week"}}</script>
 <script>

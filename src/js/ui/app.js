@@ -13,6 +13,8 @@
     renderPicFilter(state);
     PP.renderTree(state);
     PP.renderGantt(state);
+    PP.renderScurve(state);
+    PP.renderScurveOverlaySelect(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -106,6 +108,8 @@
     });
   }
 
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view'];
+
   function wireViewTabs(state) {
     var tabs = document.querySelectorAll('.view-tab');
     tabs.forEach(function (tab) {
@@ -113,8 +117,10 @@
         tabs.forEach(function (t) { t.classList.remove('active'); });
         tab.classList.add('active');
         var view = tab.dataset.view;
-        document.getElementById('plan-view').hidden = view !== 'plan';
-        document.getElementById('gantt-view').hidden = view !== 'gantt';
+        VIEW_IDS.forEach(function (viewId) {
+          var el = document.getElementById(viewId);
+          if (el) el.hidden = viewId !== view + '-view';
+        });
       });
     });
   }
@@ -173,6 +179,7 @@
     wireGanttZoom(state);
     PP.wireTree(state, function () { refresh(state, true); });
     PP.wireGantt(state, function () { refresh(state, true); });
+    PP.wireScurve(state, function () { PP.renderScurve(state); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();
@@ -223,6 +230,7 @@
       dirty: false,
       calc: null,
       filters: { search: '', pic: '', status: '', onlyDelayed: false, onlyMine: false },
+      scurveOverlaySnapshotId: null,
     };
 
     if (state.currentUser) {

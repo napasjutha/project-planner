@@ -67,6 +67,28 @@ test('forwardPass: chain shifts recursively (A pushes B pushes C)', () => {
   assert.equal(c.plannedStart, '2024-01-22');
 });
 
+test('forwardPass: diamond dependency graph re-propagates final dates regardless of array order (X->Z, X->W, W->Z, Z->V)', () => {
+  const tasks = [
+    task('X', null, '2024-01-15', '2024-01-16', []),
+    task('Z', null, '2024-01-15', '2024-01-16', ['X', 'W']),
+    task('W', null, '2024-01-15', '2024-01-16', ['X']),
+    task('V', null, '2024-01-15', '2024-01-16', ['Z']),
+  ];
+  const result = forwardPass(tasks, 'X', []);
+  const x = result.find(t => t.id === 'X');
+  const z = result.find(t => t.id === 'Z');
+  const w = result.find(t => t.id === 'W');
+  const v = result.find(t => t.id === 'V');
+
+  // Z and W must each individually respect finish-to-start against X.
+  assert.ok(z.plannedStart > x.plannedFinish, 'Z must start after X finishes');
+  assert.ok(w.plannedStart > x.plannedFinish, 'W must start after X finishes');
+
+  // The core regression: V must be scheduled against Z's FINAL finish date
+  // (after Z has been updated by both X and W), not a stale intermediate one.
+  assert.ok(v.plannedStart > z.plannedFinish, 'V must start strictly after Z\'s final finish date');
+});
+
 test('forwardPass does not mutate the input array', () => {
   const tasks = [
     task('A', null, '2024-01-15', '2024-01-16', []),

@@ -31,7 +31,6 @@
   function forwardPass(tasks, movedTaskId, holidayDates) {
     const byId = new Map(tasks.map(t => [t.id, { ...t }]));
     const queue = [movedTaskId];
-    const visited = new Set();
     while (queue.length) {
       const curId = queue.shift();
       const cur = byId.get(curId);
@@ -43,10 +42,14 @@
             const shift = duration > 1 ? duration - 1 : 0;
             t.plannedStart = minStart;
             t.plannedFinish = shift > 0 ? addWorkdays(minStart, shift, holidayDates) : minStart;
-            if (!visited.has(t.id)) {
-              visited.add(t.id);
-              queue.push(t.id);
-            }
+            // Always re-enqueue: the graph is acyclic (wouldCreateCycle prevents
+            // cycles at link time) and dates only ever move forward, so a task
+            // may need to re-propagate to its successors multiple times as
+            // different predecessor branches (e.g. diamond dependencies) push
+            // its own dates later. Gating on a "visited once" set would let an
+            // earlier, stale propagation reach a successor before a later,
+            // final update arrives.
+            queue.push(t.id);
           }
         }
       }

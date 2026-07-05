@@ -6,11 +6,13 @@
 
 ## 1. Purpose
 
-Replace the SDS Salesforce Phase 2 Excel project plan with a self-contained, single-file HTML project planning application. The file is shared via OneDrive/shared drive; anyone opens it in a browser and continues working. No installation, no Excel, no server, no external dependencies.
+Build a self-contained, single-file HTML project planning application usable for **any new project** brought to the team — implementation projects, PMO/governance tracking, change-management programs — at any scale or timeline, from a two-week sprint to a multi-year program. The file is shared via OneDrive/shared drive; anyone opens it in a browser and continues working. No installation, no Excel, no server, no external dependencies.
 
-The app must cover **every function of the current Excel workbook** (WBS, roll-ups, weights, planned-vs-actual progress, holiday-aware durations, dynamic status, Gantt, S-curve, weekly snapshots, dashboard) and go beyond it (interactive Gantt, dependencies, filters, dashboard charts, snapshot comparison, PowerPoint-ready reports, audit log, undo/redo, themes).
+The SDS Salesforce Phase 2 Excel workbook (`SDS_Salesforce_Ph2_Project_Detail_Plan_VF3.0.xlsx`) is the **reference example only** — it demonstrates the calculation rules (WBS roll-ups, weights, planned-vs-actual progress, holiday-aware durations, dynamic status, S-curve) the app must get right, and its real rows are reused as **test fixtures** to verify the calculation engine against known-correct numbers. Nothing about the app is specific to SDS or Salesforce: phase names, task counts, WBS depth, and holiday lists are all just data the user enters per project, never hardcoded.
 
-No Excel import/export. The app starts fresh; the Excel serves as the specification for business rules only.
+The app must cover every function the workbook demonstrates (WBS, roll-ups, weights, planned-vs-actual progress, holiday-aware durations, dynamic status, Gantt, S-curve, weekly snapshots, dashboard) and go beyond it (interactive Gantt, dependencies, filters, dashboard charts, snapshot comparison, PowerPoint-ready reports, audit log, undo/redo, themes).
+
+No Excel import/export. Every project starts from a blank WBS the user builds out; the Excel serves as the specification for business rules and as a test fixture only, never as shipped default content.
 
 ## 2. Decisions Log
 
@@ -93,7 +95,7 @@ ProjectPlanner.html
 
 ```json
 {
-  "meta": { "id": "uuid", "name": "SDS Salesforce Phase 2", "statusDate": "2026-07-05",
+  "meta": { "id": "uuid", "name": "New Project", "statusDate": "2026-07-05",
             "revision": 42, "savedBy": "Peem", "savedAt": "ISO", "createdAt": "ISO" },
   "tasks": [ Task ],
   "holidays": [ { "date": "2026-01-01", "label": "New Year" } ],
@@ -136,7 +138,7 @@ Single `recalc()` pass after any mutation: leaf computations → bottom-up rollu
 
 `networkdays(start, end, holidays)` — inclusive count of Mon–Fri excluding the holiday list. Port of Excel `NETWORKDAYS`, verified against a truth table generated from the workbook. Also: `addWorkdays(date, n, holidays)` for Gantt drag and dependency shifting, `remainingWorkdays(statusDate, projectFinish)` for the KPI card.
 
-Holiday list managed in the dedicated Holidays view (§6.7); seeded with the SDS Thai holiday list from the workbook, extended for 2025–2026.
+Holiday list managed in the dedicated Holidays view (§6.7); ships empty by default. A "Load Thailand preset" button offers the public-holiday list sourced from the reference workbook (2024, extendable to 2025–2026) as a one-click starting point — fully editable/removable, never assumed.
 
 ### 5.2 Per-leaf computed values (Excel column ↔ rule)
 
@@ -156,11 +158,18 @@ For each parent, over non-cancelled descendants:
 - `plannedPct` and `actualPct` = Σ(leaf weight × leaf pct) / Σ(leaf weight)  *(weighted — improvement over the Excel's unweighted AVERAGE at summary level, which disagreed with its own weighting scheme; flagged in UI docs)*
 - dates = min(child starts) / max(child finishes); duration = networkdays over that span
 - weight = Σ(child weights)
+- status = same derivation rule as §5.2 row L, applied to the rolled-up dates/actualPct (parents get a real status, not blank as in the workbook)
 - Overall = rollup of root nodes. KPIs derive from Overall + status counts.
 
-### 5.4 S-curve series
+These three rollup rules (weighted %, computed parent status, live S-curve) are the finalized, enhanced calculation engine — confirmed correct and not to be reverted to the workbook's unweighted/blank/snapshot-only behavior.
 
-Weekly buckets from project start to finish. For each week-end date `d`: planned cumulative = Σ over leaves of `weight × plannedPctToDate(d)`; actual cumulative uses each task's actual window (actualStart→actualFinish, or statusDate for in-flight tasks) — equivalent to the workbook's SUMIFS approach but exact. Series recomputed inside `recalc()` → S-curve is always real-time.
+### 5.4 S-curve series — finalized rule
+
+Weekly buckets (7-day steps) from Overall planned start to `max(Overall planned finish, statusDate)`. For each bucket date `d`:
+- **Planned cumulative** = Σ over non-cancelled leaves of `weight × plannedPctToDate(leaf, d)` — same formula as §5.2 row K, evaluated at `d` instead of the global status date. Exact, not an approximation.
+- **Actual cumulative** = Σ over non-cancelled leaves of `weight × actualProgressAt(leaf, d)`, where `actualProgressAt(leaf, d) = 0` if `d < actualStart` (or no `actualStart` recorded), else `leaf.actualPct` (the task's current recorded actual %, flat-extrapolated backward from `actualStart`). This intentionally does not fabricate a smooth historical ramp — actual progress before now is only known precisely at snapshot dates (§6.6); the live curve is deliberately honest about that limit. Comparing the live curve against a snapshot's stored curve (S-Curve view overlay) is how real week-by-week history is shown.
+
+This is simpler and more honest than the workbook's SUMIFS approach (which also only approximates historical actual % via the manually-maintained weekly snapshot sheets) — same limitation, cleaner implementation. Recomputed inside `recalc()` → S-curve is always real-time on every edit.
 
 ### 5.5 Dependencies (`deps.js`)
 
@@ -220,7 +229,7 @@ Dedicated management page (reachable from Settings and from any duration cell's 
 - Bulk paste: paste rows of `date<TAB>label` (e.g. from the SDS HR sheet) → parsed and merged, duplicates skipped with notice.
 - Year calendar strip: 12 mini-months highlighting weekends (gray) and holidays (KPMG blue) so gaps are visible at a glance.
 - Impact awareness: banner shows "N tasks span this date" when adding/removing a holiday; any change triggers full `recalc()` — durations, weights, plan-%, S-curve all update live.
-- Seeded with SDS Thai holiday list from the workbook (2024), pre-extended with Thai public holidays 2025–2026 (editable).
+- Empty by default; "Load Thailand preset" populates the 2024 SDS public-holiday list (extendable to 2025–2026) as an optional, fully editable starting point.
 
 ### 6.8 Settings
 
@@ -262,7 +271,7 @@ Per panel:
 ## 10. Testing
 
 - **Unit (Node):** `networkdays`/`addWorkdays` vs Excel-derived truth table incl. Thai holidays; weight normalization incl. overrides & cancelled tasks; planned-% clamp cases; status matrix (all branches + overrides); rollup math on a fixture tree; S-curve points vs hand-computed fixture; dependency forward pass incl. chains and cycle rejection; snapshot diff.
-- **Integration:** build script output parses; boots in headless browser; seed data renders; edit → recalc → KPI change; save produces valid self-containing HTML that re-opens with identical state.
+- **Integration:** build script output parses; boots in headless browser; blank starter template renders; edit → recalc → KPI change; save produces valid self-containing HTML that re-opens with identical state. Excel-derived rows used only as fixtures verifying engine correctness (§10 Unit), never as shipped content.
 - **Manual checklist:** clipboard copy into PowerPoint/Excel, print output, dark mode, Safari + Chrome + Edge.
 
 ## 11. Build Order (implementation phases)
@@ -271,7 +280,7 @@ Per panel:
 2. **Plan view** — tree grid, inline edit, context menu, undo, filters, search, KPI header, save/load cycle.
 3. **Gantt** — SVG timeline, zoom, drag/resize, dependencies.
 4. **Analytics** — S-curve, dashboard, snapshots + comparison.
-5. **Reports & polish** — report panels, clipboard copy, print CSS, themes, settings, audit log, seed template, cross-browser pass.
+5. **Reports & polish** — report panels, clipboard copy, print CSS, themes, settings, audit log, blank starter template + "New Project" flow, cross-browser pass.
 
 Each phase ends with the single-file artifact building and opening cleanly.
 

@@ -13,6 +13,9 @@ JS_ORDER = [
     "deps.js",
     "store.js",
     "snapshot.js",
+    "filters.js",
+    "ui/tree.js",
+    "ui/app.js",
 ]
 
 

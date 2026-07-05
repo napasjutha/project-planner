@@ -204,7 +204,7 @@ node --check src/js/ui/tree.js
 python3 build.py
 node --test
 ```
-Expected: syntax check clean; build succeeds; all 96 tests pass (85 existing + 3 new — Task 1 of this plan starts from the 85 tests already on `main`, per the ledger).
+Expected: syntax check clean; build succeeds; all 88 tests pass (85 existing + 3 new — Task 1 of this plan starts from the 85 tests already on `main`, per the ledger).
 
 - [ ] **Step 7: Commit**
 
@@ -598,7 +598,7 @@ python3 build.py
 grep -c "function renderGantt" dist/ProjectPlanner.html
 node --test
 ```
-Expected: both syntax checks clean; build succeeds; grep prints `1`; all 96 tests still pass (this task adds no Node tests — pure DOM/SVG code).
+Expected: both syntax checks clean; build succeeds; grep prints `1`; all 88 tests still pass (this task adds no Node tests — pure DOM/SVG code).
 
 - [ ] **Step 7: Commit**
 
@@ -698,7 +698,7 @@ node --check src/js/ui/app.js
 python3 build.py
 node --test
 ```
-Expected: syntax clean; build succeeds; all 96 tests pass (no new Node tests — this is a UI-only feature verified in Task 5).
+Expected: syntax clean; build succeeds; all 88 tests pass (no new Node tests — this is a UI-only feature verified in Task 5).
 
 - [ ] **Step 5: Commit**
 
@@ -821,7 +821,7 @@ node --check src/js/ui/app.js
 python3 build.py
 node --test
 ```
-Expected: syntax clean; build succeeds; all 96 tests pass. Drag/resize behavior itself is verified in Task 5 (real browser, mouse events) — there is no Node-testable surface here since it's pure DOM interaction plus calls into already-tested engine functions.
+Expected: syntax clean; build succeeds; all 88 tests pass. Drag/resize behavior itself is verified in Task 5 (real browser, mouse events) — there is no Node-testable surface here since it's pure DOM interaction plus calls into already-tested engine functions.
 
 - [ ] **Step 4: Commit**
 
@@ -865,7 +865,7 @@ Dispatch a `mousedown` on a leaf task's `.gantt-resize-handle`, then `mousemove`
 
 - [ ] **Step 7: Check console errors and Node suite**
 
-Confirm no uncaught JS errors were logged to the browser console during any of the above (check via the browser tools' console-message capability, across the whole session, not just since the last navigation). Then run `cd "project-planner" && node --test` one more time and confirm all 96 tests still pass.
+Confirm no uncaught JS errors were logged to the browser console during any of the above (check via the browser tools' console-message capability, across the whole session, not just since the last navigation). Then run `cd "project-planner" && node --test` one more time and confirm all 88 tests still pass.
 
 - [ ] **Step 8: Record the result**
 

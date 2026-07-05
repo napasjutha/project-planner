@@ -130,3 +130,38 @@ test('serialize increments the revision counter', () => {
   p.serialize();
   assert.equal(p.meta.revision, 1);
 });
+
+test('moveTask reindexes the old parent siblings so orders stay contiguous after indent', () => {
+  const p = Project.empty('Test');
+  const a = p.addTask({ parentId: null, name: 'A' });
+  const b = p.addTask({ parentId: null, name: 'B' });
+  const c = p.addTask({ parentId: null, name: 'C' });
+  p.indent(b.id, 'Alice');
+  const d = p.addTask({ parentId: null, name: 'D' });
+  const rootOrders = p.tasks
+    .filter(t => t.parentId === null)
+    .map(t => t.order)
+    .sort((x, y) => x - y);
+  const uniqueOrders = new Set(rootOrders);
+  assert.equal(uniqueOrders.size, rootOrders.length, 'no two root siblings should share an order value');
+  assert.deepEqual(rootOrders, [0, 1, 2]);
+  assert.equal(p.tasks.find(t => t.id === a.id).order, 0);
+  assert.equal(p.tasks.find(t => t.id === c.id).order, 1);
+  assert.equal(p.tasks.find(t => t.id === d.id).order, 2);
+});
+
+test('updateTask with an unknown id throws without pushing an undo checkpoint', () => {
+  const p = Project.empty('Test');
+  p.addTask({ parentId: null, name: 'A' });
+  const stackLengthBefore = p._undoStack.length;
+  assert.throws(() => p.updateTask('missing', { actualPct: 1 }));
+  assert.equal(p._undoStack.length, stackLengthBefore);
+});
+
+test('deleteTask with an unknown id throws without writing an audit entry', () => {
+  const p = Project.empty('Test');
+  p.addTask({ parentId: null, name: 'A' });
+  const auditLengthBefore = p.auditLog.length;
+  assert.throws(() => p.deleteTask('missing', 'Alice'));
+  assert.equal(p.auditLog.length, auditLengthBefore);
+});

@@ -24,6 +24,14 @@
   --border: #33373d;
 }
 
+/* The `hidden` attribute must always win over any other display rule in
+   this stylesheet. Author rules (e.g. `#app { display: flex; }`) beat the
+   UA default `[hidden] { display: none }` rule regardless of specificity
+   or source order, so without this reset, toggling `element.hidden` on an
+   element that also matches an author display rule silently fails to hide
+   it. This mirrors the same rule found in normalize.css/sanitize.css. */
+[hidden] { display: none !important; }
+
 * { box-sizing: border-box; }
 
 body {

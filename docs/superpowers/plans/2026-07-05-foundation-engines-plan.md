@@ -661,7 +661,6 @@ Create `project-planner/src/js/deps.js`:
   function forwardPass(tasks, movedTaskId, holidayDates) {
     const byId = new Map(tasks.map(t => [t.id, { ...t }]));
     const queue = [movedTaskId];
-    const visited = new Set();
     while (queue.length) {
       const curId = queue.shift();
       const cur = byId.get(curId);
@@ -673,10 +672,7 @@ Create `project-planner/src/js/deps.js`:
             const shift = duration > 1 ? duration - 1 : 0;
             t.plannedStart = minStart;
             t.plannedFinish = shift > 0 ? addWorkdays(minStart, shift, holidayDates) : minStart;
-            if (!visited.has(t.id)) {
-              visited.add(t.id);
-              queue.push(t.id);
-            }
+            queue.push(t.id);
           }
         }
       }
@@ -689,6 +685,8 @@ Create `project-planner/src/js/deps.js`:
 ```
 
 Note: the UMD wrapper here differs slightly from Task 2/3 because `deps.js` depends on `schedule.js`. In Node it `require`s it directly; in the browser build both files are concatenated in `JS_ORDER` (`schedule.js` before `deps.js`), so `PP.networkdays`/`PP.addWorkdays` already exist on `globalThis.PP` by the time this factory runs.
+
+Note: `forwardPass` re-enqueues a task on *every* date change, not just the first time it's touched — a task with two predecessors both being pushed in the same pass (a diamond graph) must be able to notify its own successors again after its second predecessor updates it, or the successor ends up scheduled against a stale intermediate date. This terminates because `wouldCreateCycle` guarantees the graph is a finite DAG and dates only ever move forward.
 
 - [ ] **Step 4: Run test to verify it passes**
 

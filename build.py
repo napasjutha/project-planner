@@ -15,6 +15,7 @@ JS_ORDER = [
     "snapshot.js",
     "filters.js",
     "ui/tree.js",
+    "ui/gantt.js",
     "ui/app.js",
 ]
 

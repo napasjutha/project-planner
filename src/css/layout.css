@@ -81,3 +81,23 @@
 }
 .context-menu-item { padding: 6px 14px; font-size: 13px; cursor: pointer; }
 .context-menu-item:hover { background: var(--surface-alt); }
+
+#view-tabs { display: flex; gap: 4px; padding: 6px 20px; border-bottom: 1px solid var(--border); }
+.view-tab {
+  background: none; border: none; padding: 6px 14px; font-size: 13px; cursor: pointer;
+  color: var(--text-muted); border-bottom: 2px solid transparent;
+}
+.view-tab.active { color: var(--kpmg-blue); border-bottom-color: var(--kpmg-blue); font-weight: 600; }
+
+#plan-view, #gantt-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+
+#gantt-scroll { flex: 1; overflow: auto; display: flex; }
+#gantt-labels {
+  flex-shrink: 0; width: 200px; position: sticky; left: 0; z-index: 1;
+  background: var(--surface); border-right: 1px solid var(--border);
+}
+.gantt-label-row {
+  display: flex; align-items: center; font-size: 13px; padding-left: 8px;
+  border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#gantt-body { flex-shrink: 0; }

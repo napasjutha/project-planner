@@ -42,20 +42,32 @@
     <label><input type="checkbox" id="only-delayed-filter"> Only delayed</label>
     <label><input type="checkbox" id="only-mine-filter"> Only mine</label>
   </div>
-  <div id="tree-header">
-    <span></span>
-    <span>WBS</span>
-    <span>Task</span>
-    <span>PIC</span>
-    <span>P-Start</span>
-    <span>P-Finish</span>
-    <span>Duration</span>
-    <span>Weight</span>
-    <span>% Plan</span>
-    <span>% Actual</span>
-    <span>Status</span>
+  <div id="view-tabs">
+    <button class="view-tab active" data-view="plan">Plan</button>
+    <button class="view-tab" data-view="gantt">Gantt</button>
   </div>
-  <div id="tree-body"></div>
+  <div id="plan-view">
+    <div id="tree-header">
+      <span></span>
+      <span>WBS</span>
+      <span>Task</span>
+      <span>PIC</span>
+      <span>P-Start</span>
+      <span>P-Finish</span>
+      <span>Duration</span>
+      <span>Weight</span>
+      <span>% Plan</span>
+      <span>% Actual</span>
+      <span>Status</span>
+    </div>
+    <div id="tree-body"></div>
+  </div>
+  <div id="gantt-view" hidden>
+    <div id="gantt-scroll">
+      <div id="gantt-labels"></div>
+      <div id="gantt-body"></div>
+    </div>
+  </div>
 </div>
 
 <div id="context-menu" class="context-menu" hidden></div>

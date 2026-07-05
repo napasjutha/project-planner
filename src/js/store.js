@@ -202,6 +202,12 @@
       this.moveTask(id, grandParentId, newOrder, who);
       return true;
     }
+
+    toggleCollapse(id) {
+      const task = this.tasks.find(t => t.id === id);
+      if (!task) throw new Error(`Task not found: ${id}`);
+      task.collapsed = !task.collapsed;
+    }
   }
 
   return { Project, generateId };

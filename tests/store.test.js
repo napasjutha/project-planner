@@ -179,3 +179,23 @@ test('deleteTask with an unknown id throws without writing an audit entry', () =
   assert.throws(() => p.deleteTask('missing', 'Alice'));
   assert.equal(p.auditLog.length, auditLengthBefore);
 });
+
+test('toggleCollapse flips collapsed without pushing an undo checkpoint or audit entry', () => {
+  const p = Project.empty('Test');
+  const t = p.addTask({ parentId: null, name: 'A' });
+  const undoStackBefore = p._undoStack.length;
+  const auditLengthBefore = p.auditLog.length;
+
+  p.toggleCollapse(t.id);
+  assert.equal(p.tasks.find(x => x.id === t.id).collapsed, true);
+  assert.equal(p._undoStack.length, undoStackBefore);
+  assert.equal(p.auditLog.length, auditLengthBefore);
+
+  p.toggleCollapse(t.id);
+  assert.equal(p.tasks.find(x => x.id === t.id).collapsed, false);
+});
+
+test('toggleCollapse throws for an unknown task id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.toggleCollapse('missing'));
+});

@@ -172,6 +172,7 @@
     wireViewTabs(state);
     wireGanttZoom(state);
     PP.wireTree(state, function () { refresh(state, true); });
+    PP.wireGantt(state, function () { refresh(state, true); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();

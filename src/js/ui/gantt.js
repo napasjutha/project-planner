@@ -181,6 +181,74 @@
     });
   }
 
+  function applyForwardPass(state, movedTaskId) {
+    var holidayDates = state.project.holidays.map(function (h) { return h.date; });
+    var result = PP.forwardPass(state.project.tasks, movedTaskId, holidayDates);
+    var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
+    result.forEach(function (updated) {
+      if (updated.id === movedTaskId) return;
+      var original = byId.get(updated.id);
+      if (original.plannedStart !== updated.plannedStart || original.plannedFinish !== updated.plannedFinish) {
+        state.project.updateTask(updated.id, {
+          plannedStart: updated.plannedStart, plannedFinish: updated.plannedFinish,
+        }, state.currentUser);
+      }
+    });
+  }
+
+  function wireGantt(state, onChanged) {
+    var container = document.getElementById('gantt-body');
+    var drag = null;
+
+    container.addEventListener('mousedown', function (e) {
+      var handle = e.target.closest('.gantt-resize-handle');
+      var bar = e.target.closest('.gantt-bar');
+      var pxPerDay = currentPxPerDay(state);
+      if (handle) {
+        drag = { mode: 'resize', id: handle.dataset.id, startClientX: e.clientX, pxPerDay: pxPerDay };
+      } else if (bar) {
+        drag = {
+          mode: 'move', id: bar.dataset.id, startClientX: e.clientX, pxPerDay: pxPerDay,
+          el: bar, origX: parseFloat(bar.getAttribute('x')),
+        };
+      } else {
+        return;
+      }
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (!drag) return;
+      drag.deltaPx = e.clientX - drag.startClientX;
+      if (drag.mode === 'move' && drag.el) {
+        drag.el.setAttribute('x', drag.origX + drag.deltaPx);
+      }
+    });
+
+    document.addEventListener('mouseup', function () {
+      if (!drag) return;
+      var deltaDays = Math.round((drag.deltaPx || 0) / drag.pxPerDay);
+      if (deltaDays !== 0) {
+        var task = state.project.tasks.find(function (t) { return t.id === drag.id; });
+        if (task && task.plannedStart && task.plannedFinish) {
+          if (drag.mode === 'move') {
+            var newStart = PP.toISO(PP.parseISO(task.plannedStart) + deltaDays * DAY_MS);
+            var newFinish = PP.toISO(PP.parseISO(task.plannedFinish) + deltaDays * DAY_MS);
+            state.project.updateTask(drag.id, { plannedStart: newStart, plannedFinish: newFinish }, state.currentUser);
+          } else {
+            var candidateFinish = PP.toISO(PP.parseISO(task.plannedFinish) + deltaDays * DAY_MS);
+            if (candidateFinish < task.plannedStart) candidateFinish = task.plannedStart;
+            state.project.updateTask(drag.id, { plannedFinish: candidateFinish }, state.currentUser);
+          }
+          applyForwardPass(state, drag.id);
+          onChanged();
+        }
+      }
+      drag = null;
+    });
+  }
+
   window.PP = window.PP || {};
   window.PP.renderGantt = renderGantt;
+  window.PP.wireGantt = wireGantt;
 })();

@@ -8,7 +8,57 @@
 </style>
 </head>
 <body>
-<div id="app">Loading…</div>
+<div id="name-picker" class="overlay" hidden>
+  <div class="overlay-card">
+    <h2>Who's working on this?</h2>
+    <input id="name-picker-input" type="text" placeholder="Your name" autocomplete="off">
+    <button id="name-picker-submit">Continue</button>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <header id="app-header">
+    <div id="header-top">
+      <span id="project-name"></span>
+      <label>Status date <input type="date" id="status-date-input"></label>
+      <button id="save-button">Save</button>
+      <span id="dirty-indicator"></span>
+    </div>
+    <div id="kpi-row"></div>
+  </header>
+  <div id="toolbar">
+    <input id="search-input" type="text" placeholder="Search tasks...">
+    <select id="pic-filter"><option value="">All PICs</option></select>
+    <select id="status-filter">
+      <option value="">All statuses</option>
+      <option>Not Start</option>
+      <option>In Progress</option>
+      <option>Delayed</option>
+      <option>Complete</option>
+      <option>Blocked</option>
+      <option>Cancelled</option>
+    </select>
+    <label><input type="checkbox" id="only-delayed-filter"> Only delayed</label>
+    <label><input type="checkbox" id="only-mine-filter"> Only mine</label>
+  </div>
+  <div id="tree-header">
+    <span></span>
+    <span>WBS</span>
+    <span>Task</span>
+    <span>PIC</span>
+    <span>P-Start</span>
+    <span>P-Finish</span>
+    <span>Duration</span>
+    <span>Weight</span>
+    <span>% Plan</span>
+    <span>% Actual</span>
+    <span>Status</span>
+  </div>
+  <div id="tree-body"></div>
+</div>
+
+<div id="context-menu" class="context-menu" hidden></div>
+
 <script type="application/json" id="project-data">{"meta":{"id":"seed","name":"New Project","statusDate":"2026-01-01","revision":0,"savedBy":null,"savedAt":null,"createdAt":"2026-01-01T00:00:00.000Z"},"tasks":[],"holidays":[],"picList":[],"snapshots":[],"auditLog":[],"settings":{"theme":"kpmg-light","ganttZoom":"week"}}</script>
 <script>
 /*__JS__*/

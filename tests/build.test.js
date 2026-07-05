@@ -26,3 +26,15 @@ test('build.py output embeds a valid, blank starter project', () => {
   assert.deepEqual(data.holidays, []);
   assert.equal(typeof data.meta.id, 'string');
 });
+
+test('build.py output includes every engine in dependency order', () => {
+  execSync('python3 build.py', { cwd: ROOT });
+  const html = fs.readFileSync(path.join(ROOT, 'dist', 'ProjectPlanner.html'), 'utf8');
+  const markers = ['function networkdays', 'function deriveStatus', 'function recalc', 'function forwardPass', 'class Project', 'function takeSnapshot'];
+  let lastIndex = -1;
+  for (const marker of markers) {
+    const idx = html.indexOf(marker);
+    assert.ok(idx > lastIndex, `expected "${marker}" to appear after the previous engine`);
+    lastIndex = idx;
+  }
+});

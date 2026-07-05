@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { taskMatches, visibleIds, hasActiveFilter } = require('../src/js/filters.js');
+const { taskMatches, visibleIds, hasActiveFilter, computeVisibleRows } = require('../src/js/filters.js');
 
 function task(id, parentId, name, pic, remarks, jira) {
   return { id, parentId, name, pic: pic || '', remarks: remarks || '', jira: jira || '' };
@@ -91,4 +91,57 @@ test('hasActiveFilter is false for an all-default filter object and true when an
   assert.equal(hasActiveFilter({ search: '', pic: '', status: '', onlyDelayed: false, onlyMine: false }), false);
   assert.equal(hasActiveFilter({ search: 'x' }), true);
   assert.equal(hasActiveFilter({ onlyMine: true }), true);
+});
+
+test('computeVisibleRows returns every id in order when nothing is collapsed and no filter is active', () => {
+  const project = {
+    tasks: [
+      { id: 'phase', parentId: null, name: 'Phase', pic: '', remarks: '', jira: '', collapsed: false },
+      { id: 'leaf1', parentId: 'phase', name: 'Leaf One', pic: 'Alice', remarks: '', jira: '', collapsed: false },
+      { id: 'leaf2', parentId: 'phase', name: 'Leaf Two', pic: 'Bob', remarks: '', jira: '', collapsed: false },
+    ],
+  };
+  const calc = {
+    order: ['phase', 'leaf1', 'leaf2'],
+    computed: new Map([
+      ['phase', { status: 'In Progress' }],
+      ['leaf1', { status: 'In Progress' }],
+      ['leaf2', { status: 'In Progress' }],
+    ]),
+  };
+  assert.deepEqual(computeVisibleRows(project, calc, {}, null), ['phase', 'leaf1', 'leaf2']);
+});
+
+test('computeVisibleRows hides descendants of a collapsed ancestor when no filter is active', () => {
+  const project = {
+    tasks: [
+      { id: 'phase', parentId: null, name: 'Phase', pic: '', remarks: '', jira: '', collapsed: true },
+      { id: 'leaf1', parentId: 'phase', name: 'Leaf One', pic: 'Alice', remarks: '', jira: '', collapsed: false },
+    ],
+  };
+  const calc = {
+    order: ['phase', 'leaf1'],
+    computed: new Map([
+      ['phase', { status: 'In Progress' }],
+      ['leaf1', { status: 'In Progress' }],
+    ]),
+  };
+  assert.deepEqual(computeVisibleRows(project, calc, {}, null), ['phase']);
+});
+
+test('computeVisibleRows reveals a matching descendant even under a collapsed ancestor when a filter is active', () => {
+  const project = {
+    tasks: [
+      { id: 'phase', parentId: null, name: 'Phase', pic: '', remarks: '', jira: '', collapsed: true },
+      { id: 'leaf1', parentId: 'phase', name: 'FindMe', pic: 'Alice', remarks: '', jira: '', collapsed: false },
+    ],
+  };
+  const calc = {
+    order: ['phase', 'leaf1'],
+    computed: new Map([
+      ['phase', { status: 'In Progress' }],
+      ['leaf1', { status: 'In Progress' }],
+    ]),
+  };
+  assert.deepEqual(computeVisibleRows(project, calc, { search: 'findme' }, null), ['phase', 'leaf1']);
 });

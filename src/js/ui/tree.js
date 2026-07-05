@@ -16,18 +16,10 @@
     body.innerHTML = '';
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
     var children = state.calc.children;
-    var visible = PP.visibleIds(state.project, state.calc.computed, state.calc.order, state.filters, state.currentUser);
-    var suppressed = new Set();
-    var filterActive = PP.hasActiveFilter(state.filters);
+    var rows = PP.computeVisibleRows(state.project, state.calc, state.filters, state.currentUser);
 
-    state.calc.order.forEach(function (id) {
+    rows.forEach(function (id) {
       var task = byId.get(id);
-      var parentSuppressed = !filterActive && task.parentId != null && suppressed.has(task.parentId);
-      if (parentSuppressed || !visible.has(id)) {
-        if (!filterActive) suppressed.add(id);
-        return;
-      }
-
       var computed = state.calc.computed.get(id);
       var hasChildren = (children.get(id) || []).length > 0;
       var toggleChar = hasChildren ? (task.collapsed ? '▸' : '▾') : '';
@@ -49,8 +41,6 @@
         '<span class="cell col-actual" data-field="actualPct">' + fmtPct(computed.actualPct) + '</span>' +
         '<span class="col-status status-' + computed.status.replace(/\s+/g, '') + '">' + escapeHtml(computed.status) + '</span>';
       body.appendChild(row);
-
-      if (!filterActive && task.collapsed) suppressed.add(id);
     });
   }
 

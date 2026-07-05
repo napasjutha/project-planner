@@ -48,5 +48,24 @@
     return visible;
   }
 
-  return { taskMatches, visibleIds, hasActiveFilter };
+  function computeVisibleRows(project, calc, filters, currentUser) {
+    const byId = new Map(project.tasks.map(t => [t.id, t]));
+    const visible = visibleIds(project, calc.computed, calc.order, filters, currentUser);
+    const filterActive = hasActiveFilter(filters);
+    const suppressed = new Set();
+    const rows = [];
+    for (const id of calc.order) {
+      const task = byId.get(id);
+      const parentSuppressed = !filterActive && task.parentId != null && suppressed.has(task.parentId);
+      if (parentSuppressed || !visible.has(id)) {
+        if (!filterActive) suppressed.add(id);
+        continue;
+      }
+      rows.push(id);
+      if (!filterActive && task.collapsed) suppressed.add(id);
+    }
+    return rows;
+  }
+
+  return { taskMatches, visibleIds, hasActiveFilter, computeVisibleRows };
 });

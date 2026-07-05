@@ -765,9 +765,9 @@ const tasks = [
 ];
 
 // Durations verified against the workbook's computed column I (NETWORKDAYS with
-// 2024 holidays applied): 2, 9, 5, 1, 1, 3, 7, 3, 1, 6, 5, 1 -- sum = 45.
+// 2024 holidays applied): 2, 9, 5, 1, 1, 3, 7, 3, 1, 6, 5, 1 -- sum = 44.
 const EXPECTED_DURATIONS = { 't-1': 2, 't-2': 9, 't-3': 5, 't-4': 1, 't-5': 1, 't-6': 3, 't-7': 7, 't-8': 3, 't-9': 1, 't-10': 6, 't-11': 5, 't-12': 1 };
-const TOTAL_DURATION = 45;
+const TOTAL_DURATION = 44;
 
 module.exports = { tasks, phase, EXPECTED_DURATIONS, TOTAL_DURATION };
 ```

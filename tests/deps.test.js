@@ -89,6 +89,16 @@ test('forwardPass: diamond dependency graph re-propagates final dates regardless
   assert.ok(v.plannedStart > z.plannedFinish, 'V must start strictly after Z\'s final finish date');
 });
 
+test('forwardPass: a cyclic predecessors graph (bypassing wouldCreateCycle) still returns instead of hanging', () => {
+  const tasks = [
+    task('A', null, '2024-01-15', '2024-01-16', ['B']),
+    task('B', null, '2024-01-15', '2024-01-16', ['A']),
+  ];
+  const result = forwardPass(tasks, 'A', []);
+  assert.ok(Array.isArray(result));
+  assert.equal(result.length, 2);
+});
+
 test('forwardPass does not mutate the input array', () => {
   const tasks = [
     task('A', null, '2024-01-15', '2024-01-16', []),

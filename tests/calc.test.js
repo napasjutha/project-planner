@@ -101,3 +101,38 @@ test('recalc: scurve first bucket (project start week) has near-zero actual for 
   const first = scurve[0];
   assert.ok(first.actualCum < 1);
 });
+
+test('recalc: KPIs exclude a cancelled milestone from milestonesTotal, not just milestonesComplete', () => {
+  const twoMilestones = [
+    {
+      id: 'm-1', parentId: null, order: 0, name: 'Cancelled Milestone', milestone: true,
+      plannedStart: '2024-01-01', plannedFinish: '2024-01-01',
+      actualStart: null, actualFinish: null, actualPct: 0,
+      weightOverride: null, statusOverride: 'Cancelled', predecessors: [],
+    },
+    {
+      id: 'm-2', parentId: null, order: 1, name: 'Complete Milestone', milestone: true,
+      plannedStart: '2024-01-02', plannedFinish: '2024-01-02',
+      actualStart: '2024-01-02', actualFinish: '2024-01-02', actualPct: 1,
+      weightOverride: null, statusOverride: null, predecessors: [],
+    },
+  ];
+  const { kpis } = recalc(project({ tasks: twoMilestones, meta: { statusDate: '2024-06-01' } }));
+  assert.equal(kpis.milestonesTotal, 1);
+  assert.equal(kpis.milestonesComplete, 1);
+});
+
+test('computeScurve: last point always reaches 100% even when the span is not a multiple of 7 days', () => {
+  const { computeScurve } = require('../src/js/calc.js');
+  const leaf = {
+    plannedStart: '2024-01-01', plannedFinish: '2024-01-18',
+    duration: 12, weight: 1,
+    actualStart: '2024-01-01', actualFinish: '2024-01-18', actualPct: 1,
+  };
+  const overall = { plannedStart: '2024-01-01', plannedFinish: '2024-01-18' };
+  const scurve = computeScurve([leaf], overall, '2024-01-18', []);
+  const last = scurve[scurve.length - 1];
+  assert.equal(last.periodDate, '2024-01-18');
+  assert.ok(Math.abs(last.plannedCum - 1) < 1e-9);
+  assert.ok(Math.abs(last.actualCum - 1) < 1e-9);
+});

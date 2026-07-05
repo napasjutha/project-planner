@@ -131,6 +131,20 @@ test('serialize increments the revision counter', () => {
   assert.equal(p.meta.revision, 1);
 });
 
+test('serialize called twice in a row increases revision by exactly 1 each time', () => {
+  // Documents current (accepted) behavior: serialize() unconditionally bumps
+  // meta.revision. Note this is a separate concern from undo/redo, which
+  // snapshots the whole meta object and so can roll revision backward if
+  // undo() is called after a serialize() — that interaction is an open
+  // design question for the save/load phase, not covered by this test.
+  const p = Project.empty('Test');
+  assert.equal(p.meta.revision, 0);
+  p.serialize();
+  assert.equal(p.meta.revision, 1);
+  p.serialize();
+  assert.equal(p.meta.revision, 2);
+});
+
 test('moveTask reindexes the old parent siblings so orders stay contiguous after indent', () => {
   const p = Project.empty('Test');
   const a = p.addTask({ parentId: null, name: 'A' });

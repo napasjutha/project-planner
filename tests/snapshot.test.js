@@ -14,7 +14,7 @@ function fakeComputed() {
   return {
     overall: { actualPct: 0.5, plannedPctToDate: 0.4 },
     kpis: { actualPct: 0.5, plannedPct: 0.4, variance: 0.1 },
-    scurve: [{ weekEndDate: '2024-01-01', plannedCum: 0.4, actualCum: 0.5 }],
+    scurve: [{ periodDate: '2024-01-01', plannedCum: 0.4, actualCum: 0.5 }],
   };
 }
 

@@ -72,15 +72,29 @@
     let cursor = parseISO(overall.plannedStart);
     const finish = parseISO(endBound);
     while (cursor <= finish) {
-      const weekEndISO = toISO(cursor);
+      const periodISO = toISO(cursor);
       let plannedCum = 0;
       let actualCum = 0;
       for (const leaf of leaves) {
-        plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, weekEndISO, leaf.duration, holidayDates);
-        actualCum += leaf.weight * actualPctAt(leaf, weekEndISO);
+        plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, periodISO, leaf.duration, holidayDates);
+        actualCum += leaf.weight * actualPctAt(leaf, periodISO);
       }
-      points.push({ weekEndDate: weekEndISO, plannedCum, actualCum });
+      points.push({ periodDate: periodISO, plannedCum, actualCum });
       cursor += 7 * DAY_MS;
+    }
+    // The fixed 7-day step above won't necessarily land exactly on endBound
+    // when the span isn't an exact multiple of 7 days, which would otherwise
+    // leave the curve's last visible point short of the true end-of-range
+    // state. Add one final point pinned to endBound so the curve always
+    // reaches its actual completion percentage.
+    if (!points.length || points[points.length - 1].periodDate !== endBound) {
+      let plannedCum = 0;
+      let actualCum = 0;
+      for (const leaf of leaves) {
+        plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, endBound, leaf.duration, holidayDates);
+        actualCum += leaf.weight * actualPctAt(leaf, endBound);
+      }
+      points.push({ periodDate: endBound, plannedCum, actualCum });
     }
     return points;
   }
@@ -185,7 +199,7 @@
       delayedCount: leafStatuses.filter(s => s === 'Delayed').length,
       completeCount: leafStatuses.filter(s => s === 'Complete').length,
       totalCount: leafStatuses.length,
-      milestonesTotal: leafIds.filter(id => byId.get(id).milestone).length,
+      milestonesTotal: leafIds.filter(id => !isCancelled(id) && byId.get(id).milestone).length,
       milestonesComplete: leafIds.filter(id => byId.get(id).milestone && computed.get(id).status === 'Complete').length,
       remainingWorkdays: overall.plannedFinish ? remainingWorkdays(statusDate, overall.plannedFinish, holidayDates) : 0,
     };

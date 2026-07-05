@@ -31,7 +31,17 @@
   function forwardPass(tasks, movedTaskId, holidayDates) {
     const byId = new Map(tasks.map(t => [t.id, { ...t }]));
     const queue = [movedTaskId];
+    // Safety net only: forwardPass assumes an acyclic predecessors graph
+    // (normally guaranteed by wouldCreateCycle at link-creation time), but
+    // nothing stops a corrupted/hand-edited project file from feeding in a
+    // cyclic or self-referencing predecessors array directly, which would
+    // otherwise make the re-enqueue below loop forever. This cap is sized
+    // generously so it never trips on any legitimate acyclic graph of
+    // realistic project size, but always trips on a genuine cycle.
+    const maxIterations = tasks.length * tasks.length;
+    let iterations = 0;
     while (queue.length) {
+      if (++iterations > maxIterations) break;
       const curId = queue.shift();
       const cur = byId.get(curId);
       for (const t of byId.values()) {

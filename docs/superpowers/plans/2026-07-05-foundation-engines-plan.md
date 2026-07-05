@@ -718,7 +718,7 @@ git commit -m "Add dependency engine: cycle detection and finish-to-start forwar
   - `buildTree(tasks)` → `{ byId: Map<id, Task>, children: Map<parentId|null, id[]>, order: id[], depth: Map<id, number>, wbs: Map<id, string> }`. `order` is DFS pre-order; `wbs` is dotted numbering (`"1"`, `"1.2"`, `"3.2.4"`) computed from sibling position, 1-indexed.
   - `planPctToDate(plannedStart, plannedFinish, atDate, duration, holidayDates)` → number in `[0, 1]`.
   - `actualPctAt(task, atDate)` → number in `[0, 1]`. `task` needs `{ actualStart, actualFinish, actualPct }`.
-  - `computeScurve(leaves, overall, statusDate, holidayDates)` → `Array<{ weekEndDate, plannedCum, actualCum }>`. `leaves` is an array of merged task+computed objects each needing `{ weight, plannedStart, plannedFinish, duration, actualStart, actualFinish, actualPct }`.
+  - `computeScurve(leaves, overall, statusDate, holidayDates)` → `Array<{ periodDate, plannedCum, actualCum }>`. `leaves` is an array of merged task+computed objects each needing `{ weight, plannedStart, plannedFinish, duration, actualStart, actualFinish, actualPct }`.
   - `recalc(project)` → `{ computed: Map<id, TaskComputed>, order: id[], children: Map, wbs: Map, overall: OverallComputed, kpis: KpiSummary, scurve: ScurvePoint[] }` where:
     - `TaskComputed = { id, wbs, depth, isLeaf, plannedStart, plannedFinish, actualStart, actualFinish, duration, weight, plannedPctToDate, actualPct, status, isMilestone }`
     - `OverallComputed = { plannedStart, plannedFinish, duration, weight, plannedPctToDate, actualPct, status }`
@@ -966,14 +966,14 @@ Create `project-planner/src/js/calc.js`:
     let cursor = parseISO(overall.plannedStart);
     const finish = parseISO(endBound);
     while (cursor <= finish) {
-      const weekEndISO = toISO(cursor);
+      const periodISO = toISO(cursor);
       let plannedCum = 0;
       let actualCum = 0;
       for (const leaf of leaves) {
-        plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, weekEndISO, leaf.duration, holidayDates);
-        actualCum += leaf.weight * actualPctAt(leaf, weekEndISO);
+        plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, periodISO, leaf.duration, holidayDates);
+        actualCum += leaf.weight * actualPctAt(leaf, periodISO);
       }
-      points.push({ weekEndDate: weekEndISO, plannedCum, actualCum });
+      points.push({ periodDate: periodISO, plannedCum, actualCum });
       cursor += 7 * DAY_MS;
     }
     return points;
@@ -1543,7 +1543,7 @@ function fakeComputed() {
   return {
     overall: { actualPct: 0.5, plannedPctToDate: 0.4 },
     kpis: { actualPct: 0.5, plannedPct: 0.4, variance: 0.1 },
-    scurve: [{ weekEndDate: '2024-01-01', plannedCum: 0.4, actualCum: 0.5 }],
+    scurve: [{ periodDate: '2024-01-01', plannedCum: 0.4, actualCum: 0.5 }],
   };
 }
 

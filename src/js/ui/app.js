@@ -119,6 +119,22 @@
     });
   }
 
+  function wireGanttZoom(state) {
+    var buttons = document.querySelectorAll('.gantt-zoom-btn');
+    function updateActive() {
+      var zoom = state.project.settings.ganttZoom || 'week';
+      buttons.forEach(function (b) { b.classList.toggle('active', b.dataset.zoom === zoom); });
+    }
+    buttons.forEach(function (b) {
+      b.addEventListener('click', function () {
+        state.project.settings.ganttZoom = b.dataset.zoom;
+        updateActive();
+        refresh(state, true);
+      });
+    });
+    updateActive();
+  }
+
   function handleSave(state) {
     state.project.meta.savedBy = state.currentUser;
     state.project.meta.savedAt = new Date().toISOString();
@@ -154,6 +170,7 @@
     wireHeader(state);
     wireToolbar(state);
     wireViewTabs(state);
+    wireGanttZoom(state);
     PP.wireTree(state, function () { refresh(state, true); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {

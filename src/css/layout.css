@@ -101,3 +101,10 @@
   border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #gantt-body { flex-shrink: 0; }
+
+#gantt-toolbar { display: flex; gap: 4px; padding: 6px 20px; border-bottom: 1px solid var(--border); }
+.gantt-zoom-btn {
+  background: var(--surface-alt); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 12px; font-size: 12px; cursor: pointer; color: var(--text-muted);
+}
+.gantt-zoom-btn.active { background: var(--kpmg-blue); border-color: var(--kpmg-blue); color: #fff; }

@@ -21,9 +21,12 @@
     return true;
   }
 
+  function hasActiveFilter(filters) {
+    return !!(filters.search || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine);
+  }
+
   function visibleIds(project, computedMap, order, filters, currentUser) {
-    const hasActiveFilter = !!(filters.search || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine);
-    if (!hasActiveFilter) return new Set(order);
+    if (!hasActiveFilter(filters)) return new Set(order);
 
     const byId = new Map(project.tasks.map(t => [t.id, t]));
     const matched = new Set();
@@ -45,5 +48,5 @@
     return visible;
   }
 
-  return { taskMatches, visibleIds };
+  return { taskMatches, visibleIds, hasActiveFilter };
 });

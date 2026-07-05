@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { taskMatches, visibleIds } = require('../src/js/filters.js');
+const { taskMatches, visibleIds, hasActiveFilter } = require('../src/js/filters.js');
 
 function task(id, parentId, name, pic, remarks, jira) {
   return { id, parentId, name, pic: pic || '', remarks: remarks || '', jira: jira || '' };
@@ -85,4 +85,10 @@ test('visibleIds: a matching parent is visible even if no child matches', () => 
   ]);
   const result = visibleIds(project, computedMap, ['phase', 'leaf'], { search: 'special' }, null);
   assert.deepEqual([...result].sort(), ['phase']);
+});
+
+test('hasActiveFilter is false for an all-default filter object and true when any field is set', () => {
+  assert.equal(hasActiveFilter({ search: '', pic: '', status: '', onlyDelayed: false, onlyMine: false }), false);
+  assert.equal(hasActiveFilter({ search: 'x' }), true);
+  assert.equal(hasActiveFilter({ onlyMine: true }), true);
 });

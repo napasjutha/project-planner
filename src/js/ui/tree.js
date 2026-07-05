@@ -18,12 +18,13 @@
     var children = state.calc.children;
     var visible = PP.visibleIds(state.project, state.calc.computed, state.calc.order, state.filters, state.currentUser);
     var suppressed = new Set();
+    var filterActive = PP.hasActiveFilter(state.filters);
 
     state.calc.order.forEach(function (id) {
       var task = byId.get(id);
-      var parentSuppressed = task.parentId != null && suppressed.has(task.parentId);
+      var parentSuppressed = !filterActive && task.parentId != null && suppressed.has(task.parentId);
       if (parentSuppressed || !visible.has(id)) {
-        suppressed.add(id);
+        if (!filterActive) suppressed.add(id);
         return;
       }
 
@@ -49,7 +50,7 @@
         '<span class="col-status status-' + computed.status.replace(/\s+/g, '') + '">' + escapeHtml(computed.status) + '</span>';
       body.appendChild(row);
 
-      if (task.collapsed) suppressed.add(id);
+      if (!filterActive && task.collapsed) suppressed.add(id);
     });
   }
 
@@ -91,6 +92,8 @@
       var value = input.value;
       if (field === 'actualPct') {
         value = Math.max(0, Math.min(100, Number(value) || 0)) / 100;
+      } else if ((field === 'plannedStart' || field === 'plannedFinish') && value === '') {
+        value = null;
       }
       state.project.updateTask(id, buildPatch(field, value), state.currentUser);
       onCommitted();
@@ -144,6 +147,12 @@
       });
       menu.appendChild(item);
     });
+
+    var rect = menu.getBoundingClientRect();
+    var clampedX = Math.max(4, Math.min(x, window.innerWidth - rect.width - 4));
+    var clampedY = Math.max(4, Math.min(y, window.innerHeight - rect.height - 4));
+    menu.style.left = clampedX + 'px';
+    menu.style.top = clampedY + 'px';
   }
 
   function wireTree(state, onChanged) {

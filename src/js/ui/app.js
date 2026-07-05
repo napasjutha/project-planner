@@ -10,10 +10,12 @@
   function refresh(state, markDirty) {
     state.calc = PP.recalc(state.project);
     renderHeader(state);
+    renderPicFilter(state);
     PP.renderTree(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
+      state.project.meta.revision += 1;
     }
     localStorage.setItem(storageKey(state.project.meta.id), JSON.stringify(state.project.toJSON()));
   }
@@ -44,6 +46,25 @@
     });
   }
 
+  function renderPicFilter(state) {
+    var select = document.getElementById('pic-filter');
+    var current = select.value;
+    var picSet = new Set(state.project.picList || []);
+    state.project.tasks.forEach(function (t) { if (t.pic) picSet.add(t.pic); });
+    select.innerHTML = '';
+    var allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All PICs';
+    select.appendChild(allOption);
+    Array.from(picSet).sort().forEach(function (pic) {
+      var option = document.createElement('option');
+      option.value = pic;
+      option.textContent = pic;
+      select.appendChild(option);
+    });
+    select.value = current;
+  }
+
   function wireHeader(state) {
     document.getElementById('status-date-input').addEventListener('change', function (e) {
       state.project.meta.statusDate = e.target.value;
@@ -55,6 +76,10 @@
   }
 
   function wireToolbar(state) {
+    document.getElementById('add-task-button').addEventListener('click', function () {
+      state.project.addTask({ parentId: null, name: 'New Task' });
+      refresh(state, true);
+    });
     function onFilterChange() {
       PP.renderTree(state);
     }

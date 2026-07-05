@@ -16,6 +16,7 @@
     PP.renderScurve(state);
     PP.renderScurveOverlaySelect(state);
     PP.renderDashboard(state);
+    PP.renderSnapshots(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -187,6 +188,7 @@
     PP.wireTree(state, function () { refresh(state, true); });
     PP.wireGantt(state, function () { refresh(state, true); });
     PP.wireScurve(state, function () { PP.renderScurve(state); });
+    PP.wireSnapshots(state, function () { refresh(state, true); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();
@@ -238,6 +240,8 @@
       calc: null,
       filters: { search: '', pic: '', status: '', onlyDelayed: false, onlyMine: false },
       scurveOverlaySnapshotId: null,
+      snapshotCompareA: null,
+      snapshotCompareB: null,
     };
 
     if (state.currentUser) {

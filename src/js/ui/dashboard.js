@@ -31,12 +31,17 @@
     var total = Object.keys(counts).reduce(function (s, k) { return s + counts[k]; }, 0);
     var svg = svgEl('svg', { width: 160, height: 160, viewBox: '0 0 160 160' });
     if (total === 0) return svg;
-    var acc = 0;
-    Object.keys(counts).forEach(function (status) {
-      var frac = counts[status] / total;
-      svg.appendChild(svgEl('path', { d: donutPath(80, 80, 70, acc, acc + frac), fill: STATUS_COLORS[status] || '#ccc' }));
-      acc += frac;
-    });
+    var statusKeys = Object.keys(counts);
+    if (statusKeys.length === 1) {
+      svg.appendChild(svgEl('circle', { cx: 80, cy: 80, r: 70, fill: STATUS_COLORS[statusKeys[0]] || '#ccc' }));
+    } else {
+      var acc = 0;
+      statusKeys.forEach(function (status) {
+        var frac = counts[status] / total;
+        svg.appendChild(svgEl('path', { d: donutPath(80, 80, 70, acc, acc + frac), fill: STATUS_COLORS[status] || '#ccc' }));
+        acc += frac;
+      });
+    }
     svg.appendChild(svgEl('circle', { cx: 80, cy: 80, r: 40, fill: 'var(--surface)' }));
     return svg;
   }

@@ -111,6 +111,7 @@
       state.project.snapshots = state.project.snapshots.filter(function (s) { return s.id !== id; });
       if (state.snapshotCompareA === id) state.snapshotCompareA = null;
       if (state.snapshotCompareB === id) state.snapshotCompareB = null;
+      if (state.scurveOverlaySnapshotId === id) state.scurveOverlaySnapshotId = null;
       onChanged();
     });
 

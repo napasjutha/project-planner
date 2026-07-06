@@ -180,8 +180,7 @@
         '<foreignObject width="100%" height="100%">' +
         '<div xmlns="http://www.w3.org/1999/xhtml"><style>' + styleText + '</style>' + xml + '</div>' +
         '</foreignObject></svg>';
-      var svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      var url = URL.createObjectURL(svgBlob);
+      var dataUri = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
       var img = new Image();
       img.onload = function () {
         var canvas = document.createElement('canvas');
@@ -190,16 +189,14 @@
         var ctx = canvas.getContext('2d');
         ctx.scale(2, 2);
         ctx.drawImage(img, 0, 0, width, height);
-        URL.revokeObjectURL(url);
         canvas.toBlob(function (blob) {
           if (blob) resolve(blob); else reject(new Error('canvas.toBlob returned null'));
         }, 'image/png');
       };
       img.onerror = function () {
-        URL.revokeObjectURL(url);
         reject(new Error('failed to rasterize report panel'));
       };
-      img.src = url;
+      img.src = dataUri;
     });
   }
 

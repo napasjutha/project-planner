@@ -201,8 +201,8 @@
   }
 
   function copyPanelAsImage() {
-    var panel = document.getElementById('report-panel').firstChild;
-    if (!panel) return;
+    var panel = document.getElementById('report-panel');
+    if (!panel.firstChild) return;
     panelToPngBlob(panel).then(function (blob) {
       return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
     }).catch(function (err) {

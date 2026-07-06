@@ -225,6 +225,7 @@ Add this function right after `handleSave` (which Task 1 already updated):
       state.snapshotCompareA = null;
       state.snapshotCompareB = null;
       state.holidaysViewYear = null;
+      document.getElementById('dirty-indicator').textContent = '';
       refresh(state, false);
     };
     reader.onerror = function () {

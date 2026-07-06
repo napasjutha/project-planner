@@ -25,12 +25,69 @@
 
 **Files:**
 - Modify: `project-planner/src/js/ui/app.js`
+- Modify: `project-planner/src/js/store.js`
+- Modify: `project-planner/src/index.html`
 
 **Interfaces:**
 - Consumes: `PP.Project.serialize()`, `slugifyProjectName(name)` (both already shipped, unchanged).
-- Produces: nothing new for later tasks — `handleSave`'s signature (`handleSave(state)`, called from the Save button's click listener) is unchanged, only its internal behavior changes.
+- Produces: `meta.schemaVersion` (number, currently always `1`) — a new field on every project's `meta` object, present from this task forward on every project created via `Project.empty()` and in the shipped seed. Not yet read/enforced anywhere (no migration logic exists yet — that's future roadmap, out of scope here) — this task only ensures the field exists on every project going forward, before real `.json` files start circulating without it. `handleSave`'s signature (`handleSave(state)`, called from the Save button's click listener) is unchanged, only its internal behavior changes.
 
-- [ ] **Step 1: Replace `handleSave` in `src/js/ui/app.js`**
+- [ ] **Step 1: Write the failing test**
+
+Add to `project-planner/tests/store.test.js` (append near the other `Project.empty` tests):
+```js
+test('Project.empty sets schemaVersion 1 on meta', () => {
+  const p = Project.empty('Test');
+  assert.equal(p.meta.schemaVersion, 1);
+});
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `cd "project-planner" && node --test tests/store.test.js`
+Expected: FAIL — `p.meta.schemaVersion` is `undefined`, not `1`.
+
+- [ ] **Step 3: Add `schemaVersion` to `Project.empty()` in `src/js/store.js`**
+
+Change:
+```js
+    static empty(name) {
+      const now = new Date().toISOString();
+      return new Project({
+        meta: {
+          id: generateId(), name, statusDate: now.slice(0, 10),
+          revision: 0, savedBy: null, savedAt: null, createdAt: now,
+        },
+```
+to:
+```js
+    static empty(name) {
+      const now = new Date().toISOString();
+      return new Project({
+        meta: {
+          id: generateId(), name, statusDate: now.slice(0, 10),
+          revision: 0, savedBy: null, savedAt: null, createdAt: now,
+          schemaVersion: 1,
+        },
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `cd "project-planner" && node --test tests/store.test.js`
+Expected: PASS, all tests pass (92 existing + 1 new = 93).
+
+- [ ] **Step 5: Add `schemaVersion` to the seed JSON in `src/index.html`**
+
+Change:
+```html
+<script type="application/json" id="project-data">{"meta":{"id":"seed","name":"New Project","statusDate":"2026-01-01","revision":0,"savedBy":null,"savedAt":null,"createdAt":"2026-01-01T00:00:00.000Z"},"tasks":[],"holidays":[],"picList":[],"snapshots":[],"auditLog":[],"settings":{"theme":"kpmg-light","ganttZoom":"week"}}</script>
+```
+to:
+```html
+<script type="application/json" id="project-data">{"meta":{"id":"seed","name":"New Project","statusDate":"2026-01-01","revision":0,"savedBy":null,"savedAt":null,"createdAt":"2026-01-01T00:00:00.000Z","schemaVersion":1},"tasks":[],"holidays":[],"picList":[],"snapshots":[],"auditLog":[],"settings":{"theme":"kpmg-light","ganttZoom":"week"}}</script>
+```
+
+- [ ] **Step 6: Replace `handleSave` in `src/js/ui/app.js`**
 
 Change:
 ```js
@@ -89,7 +146,7 @@ to:
 
 This removes the entire `document.documentElement.cloneNode`/`#project-data`/`#dirty-indicator`/`#app`/`#name-picker` DOM-surgery block — none of it is needed once Save only ever produces a small data file, not a full page clone. `slugifyProjectName` and the `<slug>_rev<N>_<date>` naming convention are unchanged, just with a `.json` extension.
 
-- [ ] **Step 2: Syntax-check, build, confirm nothing regressed**
+- [ ] **Step 7: Syntax-check, build, confirm nothing regressed**
 
 Run:
 ```bash
@@ -98,14 +155,14 @@ node --check src/js/ui/app.js
 python3 build.py
 node --test
 ```
-Expected: syntax clean; build succeeds; all 92 tests still pass (this task adds no Node tests — pure DOM/File code, verified in Task 3).
+Expected: syntax clean; build succeeds; all 93 tests pass (92 existing + the `schemaVersion` test from Step 1 — this task adds no further Node tests beyond that, since `handleSave` itself is pure DOM/File code, verified in Task 3).
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 cd "project-planner"
-git add src/js/ui/app.js
-git commit -m "Change Save to download a versioned JSON data file instead of a full HTML copy"
+git add src/js/ui/app.js src/js/store.js src/index.html
+git commit -m "Add schemaVersion to project metadata; change Save to download a versioned JSON data file instead of a full HTML copy"
 ```
 
 ---
@@ -221,7 +278,7 @@ python3 build.py
 grep -c "function handleLoadProject" dist/ProjectPlanner.html
 node --test
 ```
-Expected: syntax clean; build succeeds; grep prints `1`; all 92 tests pass (no new Node tests — verified in Task 3).
+Expected: syntax clean; build succeeds; grep prints `1`; all 93 tests pass (no new Node tests — verified in Task 3).
 
 - [ ] **Step 4: Commit**
 
@@ -261,7 +318,7 @@ Make an edit (e.g. change a task's `% Actual`) so `state.dirty` is true, then cl
 
 - [ ] **Step 6: Check console errors and Node suite**
 
-Confirm no uncaught JS errors were logged to the browser console during any of the above (check via the browser tools' console-message capability, across the whole session). Then run `cd "project-planner" && node --test` one more time and confirm all 92 tests still pass.
+Confirm no uncaught JS errors were logged to the browser console during any of the above (check via the browser tools' console-message capability, across the whole session). Then run `cd "project-planner" && node --test` one more time and confirm all 93 tests still pass.
 
 - [ ] **Step 7: Record the result**
 

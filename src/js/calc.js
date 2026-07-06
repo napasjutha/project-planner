@@ -158,6 +158,10 @@
       const plannedStart = starts.length ? starts.reduce((a, b) => (a < b ? a : b)) : null;
       const plannedFinish = finishes.length ? finishes.reduce((a, b) => (a > b ? a : b)) : null;
       const duration = (plannedStart && plannedFinish) ? networkdays(plannedStart, plannedFinish, holidayDates) : 0;
+      const actualStarts = kidComputed.map(c => c.actualStart).filter(Boolean);
+      const actualFinishes = kidComputed.map(c => c.actualFinish).filter(Boolean);
+      const actualStart = actualStarts.length ? actualStarts.reduce((a, b) => (a < b ? a : b)) : null;
+      const actualFinish = actualFinishes.length ? actualFinishes.reduce((a, b) => (a > b ? a : b)) : null;
       const weightedPlan = kidComputed.reduce((s, c) => s + c.weight * c.plannedPctToDate, 0);
       const weightedActual = kidComputed.reduce((s, c) => s + c.weight * c.actualPct, 0);
       const plannedPctToDate = weight > 0 ? weightedPlan / weight : 0;
@@ -167,7 +171,7 @@
       });
       computed.set(id, {
         id, wbs: wbs.get(id), depth: depth.get(id), isLeaf: false,
-        plannedStart, plannedFinish, actualStart: null, actualFinish: null,
+        plannedStart, plannedFinish, actualStart, actualFinish,
         duration, weight, plannedPctToDate, actualPct, status, isMilestone: false,
       });
     }
@@ -177,9 +181,13 @@
     const overallWeight = rootComputed.reduce((s, c) => s + c.weight, 0);
     const overallStarts = rootComputed.map(c => c.plannedStart).filter(Boolean);
     const overallFinishes = rootComputed.map(c => c.plannedFinish).filter(Boolean);
+    const overallActualStarts = rootComputed.map(c => c.actualStart).filter(Boolean);
+    const overallActualFinishes = rootComputed.map(c => c.actualFinish).filter(Boolean);
     const overall = {
       plannedStart: overallStarts.length ? overallStarts.reduce((a, b) => (a < b ? a : b)) : null,
       plannedFinish: overallFinishes.length ? overallFinishes.reduce((a, b) => (a > b ? a : b)) : null,
+      actualStart: overallActualStarts.length ? overallActualStarts.reduce((a, b) => (a < b ? a : b)) : null,
+      actualFinish: overallActualFinishes.length ? overallActualFinishes.reduce((a, b) => (a > b ? a : b)) : null,
       weight: overallWeight,
       plannedPctToDate: overallWeight > 0 ? rootComputed.reduce((s, c) => s + c.weight * c.plannedPctToDate, 0) / overallWeight : 0,
       actualPct: overallWeight > 0 ? rootComputed.reduce((s, c) => s + c.weight * c.actualPct, 0) / overallWeight : 0,

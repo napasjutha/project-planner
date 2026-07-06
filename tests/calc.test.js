@@ -77,6 +77,27 @@ test('recalc: phase rollup is 100% complete when every child is 100% complete an
   assert.equal(overall.plannedFinish, '2024-03-04');
 });
 
+test('recalc: a parent task rolls up actualStart/actualFinish as min/max of its children, not its own raw fields', () => {
+  const varied = tasks.map(t => {
+    if (t.id === 't-1') return { ...t, actualStart: '2020-01-01', actualFinish: '2020-01-02' };
+    if (t.id === 't-2') return { ...t, actualStart: '2020-01-03', actualFinish: '2030-01-01' };
+    return t;
+  });
+  const { computed, overall } = recalc(project({ tasks: varied }));
+  const phase = computed.get('phase-1');
+  assert.equal(phase.actualStart, '2020-01-01');
+  assert.equal(phase.actualFinish, '2030-01-01');
+  assert.equal(overall.actualStart, '2020-01-01');
+  assert.equal(overall.actualFinish, '2030-01-01');
+});
+
+test('recalc: a parent with no children carrying an actualStart/actualFinish rolls up to null', () => {
+  const blank = tasks.map(t => (t.parentId === 'phase-1' ? { ...t, actualStart: null, actualFinish: null } : t));
+  const { computed } = recalc(project({ tasks: blank }));
+  assert.equal(computed.get('phase-1').actualStart, null);
+  assert.equal(computed.get('phase-1').actualFinish, null);
+});
+
 test('recalc: KPIs count complete/delayed leaves and milestones', () => {
   const { kpis } = recalc(project());
   assert.equal(kpis.totalCount, 12);

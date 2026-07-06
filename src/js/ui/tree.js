@@ -24,6 +24,16 @@
       var hasChildren = (children.get(id) || []).length > 0;
       var toggleChar = hasChildren ? (task.collapsed ? '▸' : '▾') : '';
 
+      var startCell = hasChildren
+        ? '<span class="col-start">' + escapeHtml(computed.plannedStart || '') + '</span>'
+        : '<span class="cell col-start" data-field="plannedStart">' + escapeHtml(computed.plannedStart || '') + '</span>';
+      var finishCell = hasChildren
+        ? '<span class="col-finish">' + escapeHtml(computed.plannedFinish || '') + '</span>'
+        : '<span class="cell col-finish" data-field="plannedFinish">' + escapeHtml(computed.plannedFinish || '') + '</span>';
+      var actualCell = hasChildren
+        ? '<span class="col-actual">' + fmtPct(computed.actualPct) + '</span>'
+        : '<span class="cell col-actual" data-field="actualPct">' + fmtPct(computed.actualPct) + '</span>';
+
       var row = document.createElement('div');
       row.className = 'tree-row';
       row.dataset.id = id;
@@ -33,12 +43,12 @@
           '<span class="toggle">' + toggleChar + '</span>' + escapeHtml(task.name) +
         '</span>' +
         '<span class="cell col-pic" data-field="pic">' + escapeHtml(task.pic || '') + '</span>' +
-        '<span class="cell col-start" data-field="plannedStart">' + escapeHtml(task.plannedStart || '') + '</span>' +
-        '<span class="cell col-finish" data-field="plannedFinish">' + escapeHtml(task.plannedFinish || '') + '</span>' +
+        startCell +
+        finishCell +
         '<span class="col-duration">' + computed.duration + '</span>' +
         '<span class="col-weight">' + fmtPct(computed.weight) + '</span>' +
         '<span class="col-plan">' + fmtPct(computed.plannedPctToDate) + '</span>' +
-        '<span class="cell col-actual" data-field="actualPct">' + fmtPct(computed.actualPct) + '</span>' +
+        actualCell +
         '<span class="col-status status-' + computed.status.replace(/\s+/g, '') + '">' + escapeHtml(computed.status) + '</span>';
       body.appendChild(row);
     });

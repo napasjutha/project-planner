@@ -19,6 +19,7 @@
     PP.renderSnapshots(state);
     PP.renderSettings(state);
     PP.renderHolidays(state);
+    PP.renderReport(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -112,7 +113,7 @@
     });
   }
 
-  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view'];
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'settings-view', 'holidays-view', 'reports-view'];
 
   function wireViewTabs(state) {
     var tabs = document.querySelectorAll('.view-tab');
@@ -193,6 +194,7 @@
     PP.wireSnapshots(state, function () { refresh(state, true); });
     PP.wireSettings(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
+    PP.wireReports(state, function () { PP.renderReport(state); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();

@@ -1,0 +1,6 @@
+@media print {
+  body * { visibility: hidden; }
+  #report-panel, #report-panel * { visibility: visible; }
+  #report-panel { position: absolute; top: 0; left: 0; width: 100%; }
+  #app-header, #toolbar, #view-tabs, #reports-toolbar, #name-picker, #context-menu, #scurve-tooltip { display: none !important; }
+}

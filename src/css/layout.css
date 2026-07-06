@@ -180,3 +180,19 @@
 .holiday-day-weekend { background: var(--border); }
 .holiday-day-holiday { background: var(--kpmg-blue); color: #fff; }
 .holiday-remove-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); }
+#reports-view { flex: 1; overflow: auto; padding: 12px 20px; }
+#reports-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+#reports-toolbar select, #reports-toolbar button {
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; cursor: pointer;
+}
+#report-copy-image-button, #report-copy-table-button { background: var(--kpmg-blue); color: #fff; border: none; }
+#report-panel-wrap { overflow: auto; }
+#report-panel { width: 1280px; min-height: 720px; background: #ffffff; color: #1a1a1a; padding: 40px; box-sizing: border-box; }
+.report-panel-inner h1 { font-size: 28px; color: #00338D; margin: 0 0 8px 0; }
+.report-panel-inner h2 { font-size: 18px; margin: 20px 0 10px 0; color: #005EB8; }
+.report-meta { font-size: 14px; color: #5b6470; margin-bottom: 6px; }
+.report-kpi-row { display: flex; gap: 20px; margin: 16px 0; }
+.report-kpi { background: #f5f6f7; border-radius: 6px; padding: 10px 16px; font-size: 15px; font-weight: 600; }
+.report-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.report-table th, .report-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #e1e4e8; }
+.report-list { font-size: 14px; padding-left: 20px; margin: 8px 0; }

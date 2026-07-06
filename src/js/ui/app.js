@@ -18,6 +18,7 @@
     PP.renderDashboard(state);
     PP.renderSnapshots(state);
     PP.renderSettings(state);
+    PP.renderHolidays(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -191,6 +192,7 @@
     PP.wireScurve(state, function () { PP.renderScurve(state); });
     PP.wireSnapshots(state, function () { refresh(state, true); });
     PP.wireSettings(state, function () { refresh(state, true); });
+    PP.wireHolidays(state, function () { refresh(state, true); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();
@@ -244,6 +246,7 @@
       scurveOverlaySnapshotId: null,
       snapshotCompareA: null,
       snapshotCompareB: null,
+      holidaysViewYear: null,
     };
 
     if (state.currentUser) {

@@ -162,3 +162,21 @@
 .theme-btn.active { background: var(--kpmg-blue); color: #fff; border-color: var(--kpmg-blue); }
 .pic-editor-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .pic-remove-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); }
+#holidays-view { flex: 1; overflow: auto; padding: 12px 20px; }
+#holidays-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+#holidays-toolbar input[type="text"], #holidays-toolbar input[type="date"] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+#add-holiday-button { background: var(--kpmg-blue); color: #fff; border: none; border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
+#holiday-impact-banner { font-size: 12px; color: var(--status-delayed); }
+#holidays-bulk { display: flex; gap: 8px; margin-bottom: 14px; }
+#holidays-bulk-input { flex: 1; font-size: 12px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; }
+#holidays-bulk-import-button { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
+#holidays-year-nav { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+#holidays-year-nav button { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
+#holidays-calendar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.holiday-month { background: var(--surface-alt); border-radius: 6px; padding: 8px; }
+.holiday-month-title { font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+.holiday-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.holiday-day { font-size: 10px; text-align: center; padding: 2px 0; border-radius: 2px; }
+.holiday-day-weekend { background: var(--border); }
+.holiday-day-holiday { background: var(--kpmg-blue); color: #fff; }
+.holiday-remove-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); }

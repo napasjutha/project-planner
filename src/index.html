@@ -121,6 +121,25 @@
       <div id="audit-log-body"></div>
     </div>
   </div>
+  <div id="holidays-view" hidden>
+    <div id="holidays-toolbar">
+      <input id="new-holiday-date" type="date">
+      <input id="new-holiday-label" type="text" placeholder="Label">
+      <button id="add-holiday-button">Add</button>
+      <span id="holiday-impact-banner"></span>
+    </div>
+    <div id="holidays-bulk">
+      <textarea id="holidays-bulk-input" rows="3" placeholder="Paste rows: date&#9;label (one per line)"></textarea>
+      <button id="holidays-bulk-import-button">Import</button>
+    </div>
+    <div id="holidays-year-nav">
+      <button id="holidays-year-prev">&laquo; Prev Year</button>
+      <span id="holidays-year-label"></span>
+      <button id="holidays-year-next">Next Year &raquo;</button>
+    </div>
+    <div id="holidays-calendar"></div>
+    <div id="holidays-table"></div>
+  </div>
 </div>
 
 <div id="context-menu" class="context-menu" hidden></div>

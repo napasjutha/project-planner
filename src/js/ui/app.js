@@ -81,6 +81,14 @@
     document.getElementById('save-button').addEventListener('click', function () {
       handleSave(state);
     });
+    document.getElementById('load-project-button').addEventListener('click', function () {
+      document.getElementById('load-project-input').click();
+    });
+    document.getElementById('load-project-input').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (file) handleLoadProject(state, file);
+      e.target.value = '';
+    });
   }
 
   function wireToolbar(state) {
@@ -170,6 +178,35 @@
     state.dirty = false;
     document.getElementById('dirty-indicator').textContent = '';
     localStorage.setItem(storageKey(state.project.meta.id), json);
+  }
+
+  function handleLoadProject(state, file) {
+    if (state.dirty && !window.confirm('Unsaved changes will be lost — load anyway?')) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed;
+      try {
+        parsed = JSON.parse(reader.result);
+      } catch (e) {
+        window.alert('That file is not valid JSON.');
+        return;
+      }
+      if (!parsed || !parsed.meta || !Array.isArray(parsed.tasks)) {
+        window.alert('That file does not look like a ProjectPlanner project (missing meta/tasks).');
+        return;
+      }
+      state.project = new PP.Project(parsed);
+      state.dirty = false;
+      state.scurveOverlaySnapshotId = null;
+      state.snapshotCompareA = null;
+      state.snapshotCompareB = null;
+      state.holidaysViewYear = null;
+      refresh(state, false);
+    };
+    reader.onerror = function () {
+      window.alert('Failed to read that file.');
+    };
+    reader.readAsText(file);
   }
 
   function showApp(state) {

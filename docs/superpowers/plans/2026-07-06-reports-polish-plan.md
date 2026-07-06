@@ -254,6 +254,17 @@ to:
     PP.wireSettings(state, function () { refresh(state, true); });
 ```
 
+Also update the `VIEW_IDS` array (used by `wireViewTabs` to decide which view `<div>` to un-hide when a tab is clicked) to include the new tab, or the Settings tab will click but never actually show its content. Change:
+```js
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view'];
+```
+to:
+```js
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'settings-view'];
+```
+
+**Correction — this step was missing when this task was originally implemented.** Tasks 1-2 of this plan initially shipped their tab buttons/view containers without this `VIEW_IDS` update, so the Settings and Holidays tabs clicked but never displayed anything until Task 3's review caught the gap (Task 3 needed the analogous update for its own `reports-view` tab, and the implementer noticed and fixed all three missing entries — `settings-view`, `holidays-view`, `reports-view` — in one commit). This plan text has been corrected after the fact so a reader following it top-to-bottom doesn't reproduce the same gap; the actual shipped fix landed in Task 3's commit, not here.
+
 - [ ] **Step 5: Register `settings.js` in `build.py`**
 
 Change `JS_ORDER` from:
@@ -579,6 +590,8 @@ to:
     PP.wireSettings(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
 ```
+
+Also add `'holidays-view'` to the `VIEW_IDS` array in `app.js` (same correction as Task 1 — see that task's note on this).
 
 In `boot()`, add `holidaysViewYear: null,` to the `state` object literal, right after `snapshotCompareB: null,`.
 

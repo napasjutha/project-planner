@@ -255,3 +255,8 @@ test('toggleCollapse throws for an unknown task id', () => {
   const p = Project.empty('Test');
   assert.throws(() => p.toggleCollapse('missing'));
 });
+
+test('Project.empty sets schemaVersion 1 on meta', () => {
+  const p = Project.empty('Test');
+  assert.equal(p.meta.schemaVersion, 1);
+});

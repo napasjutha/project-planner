@@ -31,6 +31,7 @@
         meta: {
           id: generateId(), name, statusDate: now.slice(0, 10),
           revision: 0, savedBy: null, savedAt: null, createdAt: now,
+          schemaVersion: 1,
         },
         tasks: [],
         holidays: [],

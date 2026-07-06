@@ -156,20 +156,12 @@
     state.project.meta.savedAt = new Date().toISOString();
     var json = state.project.serialize();
 
-    var clone = document.documentElement.cloneNode(true);
-    var dataScript = clone.querySelector('#project-data');
-    dataScript.textContent = json;
-    clone.querySelector('#dirty-indicator').textContent = '';
-    clone.querySelector('#app').hidden = true;
-    clone.querySelector('#name-picker').hidden = true;
-    var html = '<!doctype html>\n' + clone.outerHTML;
-
-    var blob = new Blob([html], { type: 'text/html' });
+    var blob = new Blob([json], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
     var dateStr = state.project.meta.savedAt.slice(0, 10);
-    a.download = slugifyProjectName(state.project.meta.name) + '_rev' + state.project.meta.revision + '_' + dateStr + '.html';
+    a.download = slugifyProjectName(state.project.meta.name) + '_rev' + state.project.meta.revision + '_' + dateStr + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

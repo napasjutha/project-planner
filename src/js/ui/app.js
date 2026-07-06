@@ -201,6 +201,7 @@
       state.snapshotCompareA = null;
       state.snapshotCompareB = null;
       state.holidaysViewYear = null;
+      document.getElementById('dirty-indicator').textContent = '';
       refresh(state, false);
     };
     reader.onerror = function () {

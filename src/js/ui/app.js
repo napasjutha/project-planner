@@ -17,6 +17,7 @@
     PP.renderScurveOverlaySelect(state);
     PP.renderDashboard(state);
     PP.renderSnapshots(state);
+    PP.renderSettings(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -189,6 +190,7 @@
     PP.wireGantt(state, function () { refresh(state, true); });
     PP.wireScurve(state, function () { PP.renderScurve(state); });
     PP.wireSnapshots(state, function () { refresh(state, true); });
+    PP.wireSettings(state, function () { refresh(state, true); });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();

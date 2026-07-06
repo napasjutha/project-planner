@@ -19,6 +19,9 @@ JS_ORDER = [
     "ui/scurve.js",
     "ui/dashboard.js",
     "ui/snapshots.js",
+    "ui/settings.js",
+    "ui/holidays.js",
+    "ui/reports.js",
     "ui/app.js",
 ]
 

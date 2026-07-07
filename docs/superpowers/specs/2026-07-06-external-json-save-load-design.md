@@ -143,8 +143,9 @@ A bundle of small, mostly-independent Plan-view improvements: enforce that every
 
 | Question | Decision |
 |---|---|
-| Required fields | `plannedStart` and `plannedFinish` are mandatory on every task. **Save is blocked** or `plannedFinish`/`plannedStart` is missing on any task; the Save action shows which task(s) are incomplete rather than silently failing. |
+| Required fields | `plannedStart` and `plannedFinish` are mandatory on every **leaf** task (no children). **Save is blocked** if `plannedFinish`/`plannedStart` is missing on any leaf task; the Save action shows which task(s) are incomplete rather than silently failing. |
 | New tasks default | `addTask` still creates with `plannedStart`/`plannedFinish` as `null` (unchanged) — the block only fires at Save time, not at task-creation time, so a user can create several tasks in a row and fill in dates before saving, without being interrupted per-task. |
+| Parent/phase date fields | Parent/phase tasks (any row with children) never have raw, user-entered `plannedStart`/`plannedFinish`/`actualStart`/`actualFinish`/`% Actual` — those are always **computed rollups** (min start / max finish across children, weighted `% Actual` across children), never required at Save time, and rendered read-only in the Plan tree. Already shipped ahead of this spec (`calc.js`/`tree.js`, commit `231ae65` on `main`) — confirmed with the user directly; this section documents the existing behavior so Part II's required-field validation and new Actual Start/Finish columns build on it correctly rather than re-deriving it. |
 | Last-updated-by | New "Updated By" + "Updated At" columns in the Plan tree, populated from the same per-field audit write path `updateTask` already uses — shows the most recent edit to *any* field on that task, not just dates. |
 | Parent vs child styling | Parent/phase rows (any row with children) render bold with a slightly darker row background; leaf rows unchanged. Indentation already conveys depth — this is a one-level visual distinction (parent vs not), not a per-depth color ramp. |
 | Missing columns from original spec | Add Actual Start, Actual Finish, Remarks. (Deliverable and Jira were also originally spec'd and never shipped — explicitly deferred, not part of this bundle, per the user's answer.) |
@@ -155,10 +156,12 @@ A bundle of small, mostly-independent Plan-view improvements: enforce that every
 
 **Data model:** no change — `plannedStart`/`plannedFinish` already exist and are already nullable; this is enforcement at the UI boundary, not a schema change.
 
-**Enforcement point:** `handleSave` (both the existing full flow and Part I's new json-only flow — this validation must run before either produces a download). Before serializing:
+**Enforcement point:** `handleSave` (both the existing full flow and Part I's new json-only flow — this validation must run before either produces a download). Before serializing, only **leaf** tasks (no children) are checked — parent/phase tasks are computed rollups (see the Decisions Log row above) and are never required:
 ```js
 function findIncompleteTasks(project) {
+  var parentIds = new Set(project.tasks.map(function (t) { return t.parentId; }).filter(Boolean));
   return project.tasks.filter(function (t) {
+    if (parentIds.has(t.id)) return false; // parent/phase row: dates are a computed rollup, never required
     return !t.plannedStart || !t.plannedFinish;
   });
 }

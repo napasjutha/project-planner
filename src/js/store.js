@@ -12,6 +12,22 @@
     return 't_' + Math.random().toString(36).slice(2, 10);
   }
 
+  function findIncompleteTasks(project) {
+    const parentIds = new Set(project.tasks.map(t => t.parentId).filter(Boolean));
+    return project.tasks.filter(t => {
+      if (parentIds.has(t.id)) return false;
+      return !t.plannedStart || !t.plannedFinish;
+    });
+  }
+
+  function computeLastUpdated(project) {
+    const result = new Map();
+    project.auditLog.forEach(entry => {
+      result.set(entry.taskId, { who: entry.who, when: entry.when });
+    });
+    return result;
+  }
+
   class Project {
     constructor(data) {
       this.meta = data.meta;
@@ -131,6 +147,7 @@
         actualStart: null, actualFinish: null,
         actualPct: 0, weightOverride: null, milestone: false,
         statusOverride: null, predecessors: [], collapsed: false,
+        billingAmount: null, billingStatus: null,
       };
       this.tasks.push(task);
       return task;
@@ -224,5 +241,5 @@
     }
   }
 
-  return { Project, generateId };
+  return { Project, generateId, findIncompleteTasks, computeLastUpdated };
 });

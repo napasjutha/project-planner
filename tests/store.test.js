@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { Project, generateId } = require('../src/js/store.js');
+const { Project, generateId, findIncompleteTasks, computeLastUpdated } = require('../src/js/store.js');
 
 test('generateId produces distinct string ids', () => {
   const a = generateId();
@@ -259,4 +259,48 @@ test('toggleCollapse throws for an unknown task id', () => {
 test('Project.empty sets schemaVersion 1 on meta', () => {
   const p = Project.empty('Test');
   assert.equal(p.meta.schemaVersion, 1);
+});
+
+test('addTask defaults billingAmount and billingStatus to null', () => {
+  const p = Project.empty('Test');
+  const t = p.addTask({ parentId: null, name: 'Milestone' });
+  assert.equal(t.billingAmount, null);
+  assert.equal(t.billingStatus, null);
+});
+
+test('findIncompleteTasks returns leaf tasks missing plannedStart or plannedFinish', () => {
+  const p = Project.empty('Test');
+  const complete = p.addTask({ parentId: null, name: 'Complete' });
+  p.updateTask(complete.id, { plannedStart: '2024-01-01', plannedFinish: '2024-01-05' }, 'user');
+  const missingStart = p.addTask({ parentId: null, name: 'Missing Start' });
+  p.updateTask(missingStart.id, { plannedFinish: '2024-01-05' }, 'user');
+  const missingBoth = p.addTask({ parentId: null, name: 'Missing Both' });
+  const incomplete = findIncompleteTasks(p);
+  assert.equal(incomplete.length, 2);
+  assert.deepEqual(incomplete.map(t => t.id).sort(), [missingBoth.id, missingStart.id].sort());
+});
+
+test('findIncompleteTasks excludes parent/phase tasks even when their raw dates are null', () => {
+  const p = Project.empty('Test');
+  const parent = p.addTask({ parentId: null, name: 'Phase' });
+  const child = p.addTask({ parentId: parent.id, name: 'Child' });
+  p.updateTask(child.id, { plannedStart: '2024-01-01', plannedFinish: '2024-01-05' }, 'user');
+  const incomplete = findIncompleteTasks(p);
+  assert.equal(incomplete.length, 0);
+});
+
+test('computeLastUpdated returns the most recent audit entry per task across any field', () => {
+  const p = Project.empty('Test');
+  const t = p.addTask({ parentId: null, name: 'A' });
+  p.updateTask(t.id, { pic: 'Alice' }, 'user1');
+  p.updateTask(t.id, { name: 'A renamed' }, 'user2');
+  const lastUpdated = computeLastUpdated(p);
+  assert.equal(lastUpdated.get(t.id).who, 'user2');
+});
+
+test('computeLastUpdated has no entry for a task that was never updated', () => {
+  const p = Project.empty('Test');
+  const t = p.addTask({ parentId: null, name: 'A' });
+  const lastUpdated = computeLastUpdated(p);
+  assert.equal(lastUpdated.has(t.id), false);
 });

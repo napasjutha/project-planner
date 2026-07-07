@@ -19,7 +19,7 @@ test('full lifecycle: build a project via the store, recalc, snapshot, edit, rec
   const snap1 = takeSnapshot(project, firstPass, 'Baseline', 'Alice');
   assert.equal(project.snapshots.length, 1);
 
-  project.updateTask('t-12', { plannedFinish: '2024-03-11', actualPct: 0.5 }, 'Bob');
+  project.updateTask('t-12', { plannedFinish: '2024-03-11', actualFinish: null }, 'Bob');
   const secondPass = recalc(project);
   assert.equal(secondPass.overall.status, 'In Progress');
   assert.ok(secondPass.kpis.actualPct < 1);

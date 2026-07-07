@@ -35,6 +35,7 @@ The app works correctly across all 5 shipped phases plus the Save/Load and Data 
 | `--text` | `#1a1a1a` | `#1d1d1f` | refined near-black |
 | `--text-secondary` | *(was `--text-muted` `#5b6470`)* | `#6e6e73` | **renamed** from `--text-muted` — every `var(--text-muted)` usage updates to `var(--text-secondary)` |
 | `--text-tertiary` | *(none)* | `#98989d` | **new** — least-prominent text (timestamps, Updated At, placeholder-like text) |
+| `--focus-ring` | *(none)* | `#0091DA` (= `--kpmg-blue-light`) | **new** — keyboard focus ring color, see §3.9 |
 
 ### 3.2 Status colors (harmonized family, both themes)
 
@@ -95,6 +96,10 @@ Two radii replace today's inconsistent 3/4/6/8px mix:
 - `200ms ease` — transform-based transitions (button press `scale(0.98)`, tab underline color/width change).
 - Wrap all transition declarations so `@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }` disables them — cheap accessibility addition, consistent with the polish goal.
 
+### 3.9 Keyboard focus
+
+Every focusable interactive element (buttons, inputs, selects, tabs, the tree's inline cell editors) gets a consistent focus treatment on `:focus-visible`: `outline: 2px solid var(--focus-ring); outline-offset: 1px;` — replacing the browser default outline, not removing focus indication entirely. Same rule in both themes (`--focus-ring` is theme-invariant, already legible against both `--surface` values).
+
 ## 4. Component Treatment
 
 1. **Header / KPI row** — `.kpi-card` padding `12px 20px` (was `8px 14px`), `--radius-lg`, `--shadow-sm`/dark-border. `.kpi-value` → 28px, weight 500, tabular-nums. `.kpi-label` → 11px uppercase tracked, `--text-tertiary`. `#project-name` → 18px, slight negative tracking.
@@ -103,7 +108,7 @@ Two radii replace today's inconsistent 3/4/6/8px mix:
    - *Secondary* (`#add-task-button`, `#load-project-button`, holidays/settings buttons, inactive gantt-zoom): `--surface` bg, `1px solid var(--border)`, `--radius-sm`; hover → `--surface-sunken`.
    - All buttons: `transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease`.
 3. **Tabs** (`.view-tab`) — padding `8px 16px` (was `6px 14px`), inactive → `--text-secondary`, active → `--kpmg-blue` with `border-bottom-color` transitioning 200ms on switch (pure CSS, no JS change).
-4. **Plan tree** — row padding `8px 20px` (was `6px 20px`, targets ~32-34px row height); divider stays `1px solid var(--border)` (now reads as hairline via the refined token); row hover → `--surface-sunken` (softer than today's flat `--surface-alt`); `.tree-row.is-parent` keeps `font-weight: 600` + `--surface-sunken` background, adds `border-left: 3px solid var(--kpmg-blue-light)` as an accent hint. Status cells (`.status-*`) become small pill badges: `padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;`, background = status color at ~12% opacity, text = status color at full opacity (e.g. Delayed → `background: rgba(255,59,48,0.12); color: var(--status-delayed);`).
+4. **Plan tree** — row padding `8px 20px` (was `6px 20px`, targets ~32-34px row height); divider stays `1px solid var(--border)` (now reads as hairline via the refined token); row hover → `--surface-sunken` (softer than today's flat `--surface-alt`); `.tree-row.is-parent` keeps `font-weight: 600` + `--surface-sunken` background, adds `border-left: 3px solid var(--kpmg-blue-light)` as an accent hint. Status cells (`.status-*`) become small pill badges: `padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;`, background = status color at ~12% opacity, text = status color at full opacity (e.g. Delayed → `background: rgba(255,59,48,0.12); color: var(--status-delayed);`). **No zebra striping** — hover + the parent-row background treatment are the only row-level background differentiation; alternating-row shading would visually clash with `.is-parent`'s own background. **Numeric/date columns right-align** (P-Start/P-Finish/A-Start/A-Finish/Duration/Weight/%Plan/%Actual/Billing Amt — `text-align: right`; WBS/Task/PIC/Status/Updated By/Updated At/Remarks/Billing Status stay left-aligned) for column-to-column scannability of stacked numbers. **WBS and Task columns become sticky** (`position: sticky; left: 0` / `left: 40px` respectively, both with `background: var(--surface)` — or `var(--surface-sunken)` on `.is-parent` rows — so they don't show underlying scrolled content through) while the other 15 columns scroll horizontally underneath, so identifying which task a scrolled-right row belongs to never requires scrolling back.
 5. **Gantt** — bars get `border-radius: 4px` + `--shadow-sm`; status-date line refined to `1px` width in `--kpmg-blue` (existing marker element restyled, not restructured); holiday shading opacity reduced (~0.5 → ~0.35) for subtlety.
 6. **Dashboard** — `.dashboard-section` padding `20px` (was `14px`), `--radius-lg`, `--shadow-sm`/dark-border. Donut colors remapped to the new status palette. `.dashboard-bar-wrap` track → `--surface-sunken`; bars get `--radius-sm` rounded ends; the "plan" ghost bar's opacity drops slightly (0.5 → 0.35) for cleaner layering under the solid "actual" bar.
 7. **Snapshots / Settings** — `.settings-section` gets the same card treatment as `.dashboard-section`. Row dividers (`.snapshot-row`, `.pic-editor-row`) stay hairline via the refined `--border`. Delete/remove buttons (`.snapshot-delete-btn`, `.pic-remove-btn`, `.holiday-remove-btn`) lose their permanent border/background, becoming quiet text-only buttons that show background + border only on hover — reduces visual noise when not being interacted with.
@@ -111,7 +116,7 @@ Two radii replace today's inconsistent 3/4/6/8px mix:
 9. **Reports panel** — stays hardcoded/theme-independent per §2. Hex values updated: `#1a1a1a` → `#1d1d1f`, `#5b6470` → `#6e6e73`, `#f5f6f7` → `#f7f7f8`, `#e1e4e8` → `#e5e5ea`, `#00338D`/`#005EB8` unchanged. `.report-kpi` tiles get the same shadow/radius/padding refinement as the live KPI cards.
 10. **Overlays / context menu** — `.overlay-card` and `.context-menu` get `--radius-lg`, `--shadow-md` (light) / dark-mode shadow variant, generous padding (`24px` card, `8px 0` menu — unchanged for the menu, already correct).
 
-### 3.9 Opacity-tint contrast (status pills, holiday pill)
+### 4.1 Opacity-tint contrast (status pills, holiday pill)
 
 The status-pill and holiday-pill backgrounds in §4 use a color at ~12% opacity against `--surface`. This is a light-mode value; verified live in both themes per §5 — if the 12% tint reads with insufficient contrast against the dark-mode `--surface` (`#1c1c1e`), raise it to ~20% opacity in `[data-theme="dark"]` only. This is a live-verification adjustment, not an open design question — the light-mode value is locked at 12%.
 

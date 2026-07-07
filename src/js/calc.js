@@ -123,11 +123,12 @@
       const duration = (t.plannedStart && t.plannedFinish)
         ? networkdays(t.plannedStart, t.plannedFinish, holidayDates)
         : 0;
+      const actualPct = actualPctToDate(t.actualStart, t.actualFinish, statusDate, duration, holidayDates) || 0;
       computed.set(id, {
         id, wbs: wbs.get(id), depth: depth.get(id), isLeaf: true,
         plannedStart: t.plannedStart, plannedFinish: t.plannedFinish,
         actualStart: t.actualStart, actualFinish: t.actualFinish,
-        duration, weight: 0, plannedPctToDate: 0, actualPct: t.actualPct,
+        duration, weight: 0, plannedPctToDate: 0, actualPct,
         status: null, isMilestone: !!t.milestone,
       });
     }
@@ -151,7 +152,7 @@
       const c = computed.get(id);
       c.plannedPctToDate = planPctToDate(t.plannedStart, t.plannedFinish, statusDate, c.duration, holidayDates);
       c.status = deriveStatus({
-        actualPct: t.actualPct, plannedStart: t.plannedStart, plannedFinish: t.plannedFinish,
+        actualPct: c.actualPct, plannedStart: t.plannedStart, plannedFinish: t.plannedFinish,
         statusDate, statusOverride: t.statusOverride,
       });
     }

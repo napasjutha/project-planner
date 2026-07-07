@@ -124,6 +124,30 @@ test('recalc: a parent with no children carrying an actualStart/actualFinish rol
   assert.equal(computed.get('phase-1').actualFinish, null);
 });
 
+test('recalc: leaf actualPct is derived from actualStart/actualFinish dates, ignoring a stale raw actualPct field', () => {
+  const customTasks = [{
+    id: 'x-1', parentId: null, order: 0, name: 'X', pic: '',
+    plannedStart: '2024-01-01', plannedFinish: '2024-01-31',
+    actualStart: null, actualFinish: null, actualPct: 0.9,
+    weightOverride: null, milestone: false, statusOverride: null, predecessors: [],
+  }];
+  const { computed } = recalc({ meta: { statusDate: '2024-01-15' }, tasks: customTasks, holidays: [] });
+  assert.equal(computed.get('x-1').actualPct, 0);
+  assert.notEqual(computed.get('x-1').status, 'Complete');
+});
+
+test('recalc: a leaf only reaches Complete once actualFinish is genuinely reached, not from a stale raw actualPct alone', () => {
+  const customTasks = [{
+    id: 'x-1', parentId: null, order: 0, name: 'X', pic: '',
+    plannedStart: '2024-01-01', plannedFinish: '2024-01-31',
+    actualStart: '2024-01-01', actualFinish: null, actualPct: 1,
+    weightOverride: null, milestone: false, statusOverride: null, predecessors: [],
+  }];
+  const { computed } = recalc({ meta: { statusDate: '2024-01-05' }, tasks: customTasks, holidays: [] });
+  assert.ok(computed.get('x-1').actualPct < 1);
+  assert.notEqual(computed.get('x-1').status, 'Complete');
+});
+
 test('recalc: KPIs count complete/delayed leaves and milestones', () => {
   const { kpis } = recalc(project());
   assert.equal(kpis.totalCount, 12);

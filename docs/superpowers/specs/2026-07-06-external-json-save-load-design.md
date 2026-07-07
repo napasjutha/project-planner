@@ -180,16 +180,16 @@ function actualPctToDate(actualStart, actualFinish, statusDate, plannedDuration,
   if (actualFinish && statusDate >= actualFinish) return 1;   // done
   if (plannedDuration <= 0) return actualFinish ? 1 : null;
   var elapsed = networkdays(actualStart, statusDate, holidayDates);
-  return Math.max(0, Math.min(1, elapsed / plannedDuration));  // ramping, paced by the PLANNED duration
+  return Math.max(0, Math.min(0.99, elapsed / plannedDuration));  // ramping, paced by the PLANNED duration
 }
 ```
 - No Actual Start yet → `null` (displayed as blank, not `0%`).
-- Actual Start set, no Actual Finish yet → ramps from 0 toward 1, using **elapsed workdays since Actual Start ÷ the task's planned duration** as the pacing reference (there is no "actual duration" to divide by until the task is actually finished, so the planned duration is the only meaningful denominator available while work is in progress).
+- Actual Start set, no Actual Finish yet → ramps from 0 toward 0.99, using **elapsed workdays since Actual Start ÷ the task's planned duration** as the pacing reference (there is no "actual duration" to divide by until the task is actually finished, so the planned duration is the only meaningful denominator available while work is in progress).
 - Actual Finish set and reached → exactly `1` (100%), regardless of how the ramp was tracking beforehand.
-- Capped at `1` so a task running long (past its planned finish, still without an Actual Finish) shows 100%-pending rather than an invalid >100%.
+- Capped at `0.99` (deliberately never `1`) so a task running long (past its planned finish, still without an Actual Finish) shows 99%-pending rather than an invalid >100% **and** never silently reads as "Complete" — `deriveStatus`'s `actualPct >= 1` check can only be satisfied by a genuinely reached `actualFinish`. (Decided after final review flagged that capping at exactly `1` let an overdue-but-unfinished task auto-flip to Complete and drop out of the Delayed view — confirmed with the user, who chose to require a real Actual Finish.)
 
 **Cascading effects (all contained, since every downstream consumer already reads the *computed* `actualPct` field, never the raw stored one):**
-- `status.js`'s `deriveStatus` still checks `actualPct >= 1` for `"Complete"` — now this can only be true once `actualFinish` is genuinely set and reached, which is a **data-integrity improvement** over today (today a user could type `100` without ever setting an actual finish date).
+- `status.js`'s `deriveStatus` still checks `actualPct >= 1` for `"Complete"` — this can now ONLY be true once `actualFinish` is genuinely set and reached (the ramp itself can never reach `1`), which is a **data-integrity improvement** over today (today a user could type `100` without ever setting an actual finish date).
 - S-curve, Dashboard bars, Gantt fill, Reports, Snapshots — all already consume `computed.actualPct`; none need to change.
 - The Plan tree's `% Actual` cell becomes **read-only** (no more double-click-to-edit); the editable cells become the new Actual Start / Actual Finish date columns instead.
 - **Migration note for existing saved projects:** any project saved under the old model has `task.actualPct` as a raw user-typed value that may not agree with that task's `actualStart`/`actualFinish`. Once loaded under the new engine, the displayed `% Actual` will be silently recomputed from dates and may visibly change from what was previously shown. This is an accepted, intentional behavior change — flagged here so it isn't mistaken for a bug when it's first noticed on an old project file.

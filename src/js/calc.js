@@ -65,7 +65,7 @@
     if (actualFinish && statusDate >= actualFinish) return 1;
     if (plannedDuration <= 0) return actualFinish ? 1 : null;
     const elapsed = networkdays(actualStart, statusDate, holidayDates);
-    return Math.max(0, Math.min(1, elapsed / plannedDuration));
+    return Math.max(0, Math.min(0.99, elapsed / plannedDuration));
   }
 
   function actualPctAt(task, atDate, holidayDates) {

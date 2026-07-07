@@ -20,9 +20,10 @@
     if (actualFinish && statusDate >= actualFinish) return 1;
     if (plannedDuration <= 0) return actualFinish ? 1 : null;
     const elapsed = networkdays(actualStart, statusDate, holidayDates);
-    return Math.max(0, Math.min(1, elapsed / plannedDuration));
+    return Math.max(0, Math.min(0.99, elapsed / plannedDuration));
   }
   ```
+  (Ramp caps at `0.99`, deliberately never `1`, when no `actualFinish` is set — the final whole-branch review flagged that capping at exactly `1` let an overdue-but-unfinished task auto-flip to `deriveStatus`'s `"Complete"` with nobody ever recording a finish date. Confirmed with the user: a task can only read Complete once a real `actualFinish` is entered.)
 - Billing fields (`billingAmount`, `billingStatus`) are optional on every task, only meaningful when `task.milestone === true`, harmless/unenforced otherwise.
 - Deliverable and Jira columns are explicitly **out of scope** — still not shipped, not part of this plan.
 - Engines (`calc.js`, `store.js`): pure logic, no DOM, UMD-lite wrapper (`module.exports` / `globalThis.PP`), TDD via `node:test`.
@@ -63,8 +64,8 @@ test('actualPctToDate ramps by elapsed workdays since actual start divided by pl
   assert.ok(Math.abs(actualPctToDate('2024-01-01', null, '2024-01-10', plannedDuration, []) - expected) < 1e-9);
 });
 
-test('actualPctToDate caps the ramp at 1 when elapsed exceeds planned duration and actual finish is not set', () => {
-  assert.equal(actualPctToDate('2024-01-01', null, '2024-06-01', 5, []), 1);
+test('actualPctToDate caps the ramp at 0.99 (never 1) when elapsed exceeds planned duration and actual finish is not set', () => {
+  assert.equal(actualPctToDate('2024-01-01', null, '2024-06-01', 5, []), 0.99);
 });
 
 test('actualPctToDate with plannedDuration <= 0 is 1 once actual finish is set, else null', () => {
@@ -96,7 +97,7 @@ function actualPctToDate(actualStart, actualFinish, statusDate, plannedDuration,
   if (actualFinish && statusDate >= actualFinish) return 1;
   if (plannedDuration <= 0) return actualFinish ? 1 : null;
   const elapsed = networkdays(actualStart, statusDate, holidayDates);
-  return Math.max(0, Math.min(1, elapsed / plannedDuration));
+  return Math.max(0, Math.min(0.99, elapsed / plannedDuration));
 }
 ```
 

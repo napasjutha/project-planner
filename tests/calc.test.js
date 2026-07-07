@@ -48,8 +48,8 @@ test('actualPctToDate ramps by elapsed workdays since actual start divided by pl
   assert.ok(Math.abs(actualPctToDate('2024-01-01', null, '2024-01-10', plannedDuration, []) - expected) < 1e-9);
 });
 
-test('actualPctToDate caps the ramp at 1 when elapsed exceeds planned duration and actual finish is not set', () => {
-  assert.equal(actualPctToDate('2024-01-01', null, '2024-06-01', 5, []), 1);
+test('actualPctToDate caps the ramp at 0.99 (never 1) when elapsed exceeds planned duration and actual finish is not set', () => {
+  assert.equal(actualPctToDate('2024-01-01', null, '2024-06-01', 5, []), 0.99);
 });
 
 test('actualPctToDate with plannedDuration <= 0 is 1 once actual finish is set, else null', () => {

@@ -183,6 +183,32 @@
     });
     delayedSection.appendChild(table);
     container.appendChild(delayedSection);
+
+    var billingSection = document.createElement('div');
+    billingSection.className = 'dashboard-section';
+    var billingTitle = document.createElement('h3');
+    billingTitle.textContent = 'Billing Summary';
+    billingSection.appendChild(billingTitle);
+    var billingTotals = { 'Not Billed': 0, 'Invoiced': 0, 'Paid': 0 };
+    var grandTotal = 0;
+    state.project.tasks.forEach(function (t) {
+      if (!t.milestone || t.billingAmount == null) return;
+      var key = t.billingStatus || 'Not Billed';
+      billingTotals[key] = (billingTotals[key] || 0) + t.billingAmount;
+      grandTotal += t.billingAmount;
+    });
+    var billingList = document.createElement('ul');
+    billingList.className = 'dashboard-list';
+    var totalLi = document.createElement('li');
+    totalLi.textContent = 'Total: $' + grandTotal.toLocaleString();
+    billingList.appendChild(totalLi);
+    ['Not Billed', 'Invoiced', 'Paid'].forEach(function (key) {
+      var li = document.createElement('li');
+      li.textContent = key + ': $' + (billingTotals[key] || 0).toLocaleString();
+      billingList.appendChild(li);
+    });
+    billingSection.appendChild(billingList);
+    container.appendChild(billingSection);
   }
 
   window.PP = window.PP || {};

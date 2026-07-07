@@ -9,6 +9,7 @@
 
   function refresh(state, markDirty) {
     state.calc = PP.recalc(state.project);
+    state.lastUpdated = PP.computeLastUpdated(state.project);
     renderHeader(state);
     renderPicFilter(state);
     PP.renderTree(state);
@@ -160,6 +161,11 @@
   }
 
   function handleSave(state) {
+    var incomplete = PP.findIncompleteTasks(state.project);
+    if (incomplete.length) {
+      window.alert('Cannot save — missing planned dates on: ' + incomplete.map(function (t) { return t.name; }).join(', '));
+      return;
+    }
     state.project.meta.savedBy = state.currentUser;
     state.project.meta.savedAt = new Date().toISOString();
     var json = state.project.serialize();

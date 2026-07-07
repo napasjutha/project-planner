@@ -11,6 +11,12 @@
     return Math.round(x * 100) + '%';
   }
 
+  function dateCell(hasChildren, className, dataField, computedValue, rawValue) {
+    return hasChildren
+      ? '<span class="' + className + '">' + escapeHtml(computedValue || '') + '</span>'
+      : '<span class="cell ' + className + '" data-field="' + dataField + '">' + escapeHtml(rawValue || '') + '</span>';
+  }
+
   function renderTree(state) {
     var body = document.getElementById('tree-body');
     body.innerHTML = '';
@@ -23,19 +29,22 @@
       var computed = state.calc.computed.get(id);
       var hasChildren = (children.get(id) || []).length > 0;
       var toggleChar = hasChildren ? (task.collapsed ? '▸' : '▾') : '';
+      var lu = state.lastUpdated.get(id);
 
-      var startCell = hasChildren
-        ? '<span class="col-start">' + escapeHtml(computed.plannedStart || '') + '</span>'
-        : '<span class="cell col-start" data-field="plannedStart">' + escapeHtml(computed.plannedStart || '') + '</span>';
-      var finishCell = hasChildren
-        ? '<span class="col-finish">' + escapeHtml(computed.plannedFinish || '') + '</span>'
-        : '<span class="cell col-finish" data-field="plannedFinish">' + escapeHtml(computed.plannedFinish || '') + '</span>';
-      var actualCell = hasChildren
-        ? '<span class="col-actual">' + fmtPct(computed.actualPct) + '</span>'
-        : '<span class="cell col-actual" data-field="actualPct">' + fmtPct(computed.actualPct) + '</span>';
+      var startCell = dateCell(hasChildren, 'col-start', 'plannedStart', computed.plannedStart, task.plannedStart);
+      var finishCell = dateCell(hasChildren, 'col-finish', 'plannedFinish', computed.plannedFinish, task.plannedFinish);
+      var actualStartCell = dateCell(hasChildren, 'col-astart', 'actualStart', computed.actualStart, task.actualStart);
+      var actualFinishCell = dateCell(hasChildren, 'col-afinish', 'actualFinish', computed.actualFinish, task.actualFinish);
+      var actualPctText = computed.actualStart ? fmtPct(computed.actualPct) : '';
+      var billingAmountCell = task.milestone
+        ? '<span class="cell col-billing-amount" data-field="billingAmount">' + (task.billingAmount != null ? escapeHtml(String(task.billingAmount)) : '') + '</span>'
+        : '<span class="col-billing-amount"></span>';
+      var billingStatusCell = task.milestone
+        ? '<span class="cell col-billing-status" data-field="billingStatus">' + escapeHtml(task.billingStatus || '') + '</span>'
+        : '<span class="col-billing-status"></span>';
 
       var row = document.createElement('div');
-      row.className = 'tree-row';
+      row.className = 'tree-row' + (hasChildren ? ' is-parent' : '');
       row.dataset.id = id;
       row.innerHTML =
         '<span class="col-wbs">' + computed.wbs + '</span>' +
@@ -45,11 +54,18 @@
         '<span class="cell col-pic" data-field="pic">' + escapeHtml(task.pic || '') + '</span>' +
         startCell +
         finishCell +
+        actualStartCell +
+        actualFinishCell +
         '<span class="col-duration">' + computed.duration + '</span>' +
         '<span class="col-weight">' + fmtPct(computed.weight) + '</span>' +
         '<span class="col-plan">' + fmtPct(computed.plannedPctToDate) + '</span>' +
-        actualCell +
-        '<span class="col-status status-' + computed.status.replace(/\s+/g, '') + '">' + escapeHtml(computed.status) + '</span>';
+        '<span class="col-actual">' + actualPctText + '</span>' +
+        '<span class="col-status status-' + computed.status.replace(/\s+/g, '') + '">' + escapeHtml(computed.status) + '</span>' +
+        '<span class="col-updated-by">' + (lu ? escapeHtml(lu.who) : '') + '</span>' +
+        '<span class="col-updated-at">' + (lu ? escapeHtml(lu.when.slice(0, 16).replace('T', ' ')) : '') + '</span>' +
+        '<span class="cell col-remarks" data-field="remarks">' + escapeHtml(task.remarks || '') + '</span>' +
+        billingAmountCell +
+        billingStatusCell;
       body.appendChild(row);
     });
   }
@@ -63,36 +79,48 @@
   function beginEdit(state, cell, id, field, onCommitted) {
     var task = state.project.tasks.find(function (t) { return t.id === id; });
     var raw = task[field];
-    var input = document.createElement('input');
-    input.className = 'cell-editor';
+    var el;
 
-    if (field === 'plannedStart' || field === 'plannedFinish') {
-      input.type = 'date';
-      input.value = raw || '';
-    } else if (field === 'actualPct') {
-      input.type = 'number';
-      input.min = '0';
-      input.max = '100';
-      input.value = Math.round((raw || 0) * 100);
+    if (field === 'billingStatus') {
+      el = document.createElement('select');
+      el.className = 'cell-editor';
+      ['Not Billed', 'Invoiced', 'Paid'].forEach(function (opt) {
+        var option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        if (raw === opt) option.selected = true;
+        el.appendChild(option);
+      });
     } else {
-      input.type = 'text';
-      input.value = raw || '';
+      el = document.createElement('input');
+      el.className = 'cell-editor';
+      if (field === 'plannedStart' || field === 'plannedFinish' || field === 'actualStart' || field === 'actualFinish') {
+        el.type = 'date';
+        el.value = raw || '';
+      } else if (field === 'billingAmount') {
+        el.type = 'number';
+        el.min = '0';
+        el.value = raw != null ? raw : '';
+      } else {
+        el.type = 'text';
+        el.value = raw || '';
+      }
     }
 
     cell.innerHTML = '';
-    cell.appendChild(input);
-    input.focus();
-    input.select();
+    cell.appendChild(el);
+    el.focus();
+    if (el.select) el.select();
 
     var settled = false;
 
     function commit() {
       if (settled) return;
       settled = true;
-      var value = input.value;
-      if (field === 'actualPct') {
-        value = Math.max(0, Math.min(100, Number(value) || 0)) / 100;
-      } else if ((field === 'plannedStart' || field === 'plannedFinish') && value === '') {
+      var value = el.value;
+      if (field === 'billingAmount') {
+        value = value === '' ? null : Number(value);
+      } else if ((field === 'plannedStart' || field === 'plannedFinish' || field === 'actualStart' || field === 'actualFinish') && value === '') {
         value = null;
       }
       state.project.updateTask(id, buildPatch(field, value), state.currentUser);
@@ -105,11 +133,11 @@
       renderTree(state);
     }
 
-    input.addEventListener('keydown', function (e) {
+    el.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') commit();
       if (e.key === 'Escape') cancel();
     });
-    input.addEventListener('blur', commit);
+    el.addEventListener('blur', commit);
   }
 
   function showContextMenu(state, id, x, y, onChanged) {

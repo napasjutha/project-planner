@@ -207,3 +207,16 @@ test('computeScurve: last point always reaches 100% even when the span is not a 
   assert.ok(Math.abs(last.plannedCum - 1) < 1e-9);
   assert.ok(Math.abs(last.actualCum - 1) < 1e-9);
 });
+
+test('computeScurve: the actual line is a real historical ramp, not a flat snapshot of the current actualPct', () => {
+  const { computeScurve } = require('../src/js/calc.js');
+  const leaf = {
+    plannedStart: '2024-01-01', plannedFinish: '2024-01-31',
+    duration: 23, weight: 1,
+    actualStart: '2024-01-01', actualFinish: null,
+  };
+  const overall = { plannedStart: '2024-01-01', plannedFinish: '2024-01-31' };
+  const scurve = computeScurve([leaf], overall, '2024-01-31', []);
+  assert.ok(scurve[0].actualCum < scurve[scurve.length - 1].actualCum);
+  assert.ok(scurve[0].actualCum >= 0);
+});

@@ -68,9 +68,9 @@
     return Math.max(0, Math.min(1, elapsed / plannedDuration));
   }
 
-  function actualPctAt(task, atDate) {
-    if (!task.actualStart || atDate < task.actualStart) return 0;
-    return task.actualPct;
+  function actualPctAt(task, atDate, holidayDates) {
+    const pct = actualPctToDate(task.actualStart, task.actualFinish, atDate, task.duration, holidayDates);
+    return pct == null ? 0 : pct;
   }
 
   function computeScurve(leaves, overall, statusDate, holidayDates) {
@@ -85,7 +85,7 @@
       let actualCum = 0;
       for (const leaf of leaves) {
         plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, periodISO, leaf.duration, holidayDates);
-        actualCum += leaf.weight * actualPctAt(leaf, periodISO);
+        actualCum += leaf.weight * actualPctAt(leaf, periodISO, holidayDates);
       }
       points.push({ periodDate: periodISO, plannedCum, actualCum });
       cursor += 7 * DAY_MS;
@@ -100,7 +100,7 @@
       let actualCum = 0;
       for (const leaf of leaves) {
         plannedCum += leaf.weight * planPctToDate(leaf.plannedStart, leaf.plannedFinish, endBound, leaf.duration, holidayDates);
-        actualCum += leaf.weight * actualPctAt(leaf, endBound);
+        actualCum += leaf.weight * actualPctAt(leaf, endBound, holidayDates);
       }
       points.push({ periodDate: endBound, plannedCum, actualCum });
     }

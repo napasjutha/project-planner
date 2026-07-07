@@ -54,7 +54,7 @@
 .tree-row.is-parent:hover { background: var(--border); }
 
 .toggle { cursor: pointer; display: inline-block; width: 14px; color: var(--text-muted); }
-.cell { cursor: text; }
+.cell { cursor: text; min-height: 16px; }
 .cell-editor { width: 100%; font-size: 13px; padding: 2px 4px; }
 
 .status-NotStart { color: var(--status-not-start); }

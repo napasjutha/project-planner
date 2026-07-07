@@ -60,6 +60,14 @@
     return Math.max(0, Math.min(1, pct));
   }
 
+  function actualPctToDate(actualStart, actualFinish, statusDate, plannedDuration, holidayDates) {
+    if (!actualStart) return null;
+    if (actualFinish && statusDate >= actualFinish) return 1;
+    if (plannedDuration <= 0) return actualFinish ? 1 : null;
+    const elapsed = networkdays(actualStart, statusDate, holidayDates);
+    return Math.max(0, Math.min(1, elapsed / plannedDuration));
+  }
+
   function actualPctAt(task, atDate) {
     if (!task.actualStart || atDate < task.actualStart) return 0;
     return task.actualPct;
@@ -220,5 +228,5 @@
     return { computed, order, children, wbs, overall, kpis, scurve };
   }
 
-  return { recalc, buildTree, planPctToDate, actualPctAt, computeScurve };
+  return { recalc, buildTree, planPctToDate, actualPctAt, computeScurve, actualPctToDate };
 });

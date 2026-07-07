@@ -1,6 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { recalc, buildTree, planPctToDate } = require('../src/js/calc.js');
+const { recalc, buildTree, planPctToDate, actualPctToDate } = require('../src/js/calc.js');
+const { networkdays } = require('../src/js/schedule.js');
 const HOLIDAYS_2024 = require('./fixtures/holidays-2024.js');
 const { tasks, EXPECTED_DURATIONS, TOTAL_DURATION } = require('./fixtures/vision-phase.js');
 
@@ -29,6 +30,31 @@ test('planPctToDate is 1 once the status date reaches the planned finish', () =>
 
 test('planPctToDate is 0 before the planned start', () => {
   assert.equal(planPctToDate('2024-01-10', '2024-01-20', '2024-01-01', 8, []), 0);
+});
+
+test('actualPctToDate is null before any actual start', () => {
+  assert.equal(actualPctToDate(null, null, '2024-01-10', 10, []), null);
+});
+
+test('actualPctToDate is 1 once the status date reaches actual finish', () => {
+  assert.equal(actualPctToDate('2024-01-01', '2024-01-10', '2024-01-10', 8, []), 1);
+  assert.equal(actualPctToDate('2024-01-01', '2024-01-10', '2024-02-01', 8, []), 1);
+});
+
+test('actualPctToDate ramps by elapsed workdays since actual start divided by planned duration', () => {
+  const elapsed = networkdays('2024-01-01', '2024-01-10', []);
+  const plannedDuration = 15;
+  const expected = elapsed / plannedDuration;
+  assert.ok(Math.abs(actualPctToDate('2024-01-01', null, '2024-01-10', plannedDuration, []) - expected) < 1e-9);
+});
+
+test('actualPctToDate caps the ramp at 1 when elapsed exceeds planned duration and actual finish is not set', () => {
+  assert.equal(actualPctToDate('2024-01-01', null, '2024-06-01', 5, []), 1);
+});
+
+test('actualPctToDate with plannedDuration <= 0 is 1 once actual finish is set, else null', () => {
+  assert.equal(actualPctToDate('2024-01-01', '2024-01-01', '2024-01-01', 0, []), 1);
+  assert.equal(actualPctToDate('2024-01-01', null, '2024-01-01', 0, []), null);
 });
 
 test('recalc: each leaf duration matches the workbook truth table', () => {

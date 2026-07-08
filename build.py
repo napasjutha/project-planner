@@ -16,6 +16,7 @@ JS_ORDER = [
     "filters.js",
     "csv.js",
     "criticalpath.js",
+    "workload.js",
     "ui/predecessor-picker.js",
     "ui/tree.js",
     "ui/gantt.js",

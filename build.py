@@ -14,6 +14,7 @@ JS_ORDER = [
     "store.js",
     "snapshot.js",
     "filters.js",
+    "csv.js",
     "ui/tree.js",
     "ui/gantt.js",
     "ui/scurve.js",

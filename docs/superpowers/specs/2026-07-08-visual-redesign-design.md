@@ -65,7 +65,7 @@ Status colors are unchanged between themes — already vivid enough against a da
 
 ### 3.4 Spacing
 
-A 4px-based scale used as literal values (matching the codebase's existing convention of literal px in rules, not spacing custom properties): **4, 8, 12, 16, 24, 32, 48**. Every padding/margin/gap touched by this redesign snaps to one of these.
+A 4px-based scale used as literal values (matching the codebase's existing convention of literal px in rules, not spacing custom properties): **4, 8, 12, 16, 24, 32, 48**. Most padding/margin/gap values touched by this redesign are drawn from this scale; a handful of component-specific values in §4 (e.g. button horizontal padding at 18px, small pill padding at 2px/10px) intentionally use an adjacent value where it reads better — the scale is the default, not an absolute constraint that overrides a deliberately-chosen component value.
 
 ### 3.5 Typography scale
 

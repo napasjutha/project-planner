@@ -157,12 +157,15 @@
 
 #scurve-view, #dashboard-view, #snapshots-view { flex: 1; display: flex; flex-direction: column; overflow: auto; min-height: 0; padding: 12px 20px; }
 
-#scurve-toolbar, #snapshots-toolbar { display: flex; gap: 10px; align-items: center; padding-bottom: 10px; }
-#snapshots-toolbar input[type="text"] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; flex: 1; max-width: 300px; }
+#scurve-toolbar, #snapshots-toolbar { display: flex; gap: 10px; align-items: center; padding-bottom: 16px; }
+#snapshots-toolbar input[type="text"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; flex: 1; max-width: 300px; }
 #take-snapshot-button {
-  background: var(--kpmg-blue); color: #fff; border: none; border-radius: 4px;
-  padding: 6px 14px; cursor: pointer; font-size: 13px;
+  background: var(--kpmg-blue); color: #fff; border: none; border-radius: var(--radius-sm);
+  padding: 8px 18px; cursor: pointer; font-size: 13px; box-shadow: var(--shadow-sm);
+  transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
+#take-snapshot-button:hover { background: var(--kpmg-blue-mid); box-shadow: var(--shadow-md); }
+#take-snapshot-button:active { transform: scale(0.98); }
 
 #scurve-tooltip {
   position: fixed; background: var(--surface); border: 1px solid var(--border);
@@ -189,44 +192,56 @@
 .dashboard-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .dashboard-table th, .dashboard-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
 
-.snapshot-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.snapshot-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .snapshot-delete-btn {
-  background: none; border: 1px solid var(--border); border-radius: 4px;
+  background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
   padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--status-delayed);
+  transition: background 150ms ease, border-color 150ms ease;
 }
-#snapshot-comparison { margin-top: 14px; font-size: 13px; }
+.snapshot-delete-btn:hover { background: var(--surface-sunken); border-color: var(--border); }
+#snapshot-comparison { margin-top: 16px; font-size: 13px; }
 #snapshot-comparison ul { margin: 4px 0; padding-left: 20px; }
 
-#settings-view { flex: 1; overflow: auto; padding: 12px 20px; }
-.settings-section { background: var(--surface-alt); border-radius: 8px; padding: 14px; margin-bottom: 12px; max-width: 500px; }
+#settings-view { flex: 1; overflow: auto; padding: 16px 24px; }
+.settings-section { background: var(--surface-alt); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; max-width: 500px; box-shadow: var(--shadow-sm); }
+[data-theme="dark"] .settings-section { box-shadow: none; border: 1px solid var(--border); }
 .settings-section-wide { max-width: none; }
-.settings-section h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
-.settings-section input[type="text"] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
+.settings-section h3 { margin: 0 0 12px 0; font-size: 11px; letter-spacing: 0.04em; color: var(--text-secondary); text-transform: uppercase; }
+.settings-section input[type="text"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
 .theme-btn, #new-project-button, #add-pic-button {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 4px;
-  padding: 5px 12px; font-size: 13px; cursor: pointer; margin-right: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 7px 14px; font-size: 13px; cursor: pointer; margin-right: 6px;
+  transition: background 150ms ease;
 }
+.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover { background: var(--surface-sunken); }
 .theme-btn.active { background: var(--kpmg-blue); color: #fff; border-color: var(--kpmg-blue); }
-.pic-editor-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-.pic-remove-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); }
-#holidays-view { flex: 1; overflow: auto; padding: 12px 20px; }
-#holidays-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-#holidays-toolbar input[type="text"], #holidays-toolbar input[type="date"] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; }
-#add-holiday-button { background: var(--kpmg-blue); color: #fff; border: none; border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
+.pic-editor-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.pic-remove-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }
+.pic-remove-btn:hover { background: var(--surface-sunken); border-color: var(--border); }
+#holidays-view { flex: 1; overflow: auto; padding: 16px 24px; }
+#holidays-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+#holidays-toolbar input[type="text"], #holidays-toolbar input[type="date"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+#add-holiday-button { background: var(--kpmg-blue); color: #fff; border: none; border-radius: var(--radius-sm); padding: 7px 14px; cursor: pointer; font-size: 13px; transition: background 150ms ease; }
+#add-holiday-button:hover { background: var(--kpmg-blue-mid); }
 #holiday-impact-banner { font-size: 12px; color: var(--status-delayed); }
-#holidays-bulk { display: flex; gap: 8px; margin-bottom: 14px; }
-#holidays-bulk-input { flex: 1; font-size: 12px; padding: 6px; border: 1px solid var(--border); border-radius: 4px; }
-#holidays-bulk-import-button { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
-#holidays-year-nav { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; font-size: 13px; }
-#holidays-year-nav button { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px; cursor: pointer; font-size: 12px; }
-#holidays-calendar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
-.holiday-month { background: var(--surface-alt); border-radius: 6px; padding: 8px; }
-.holiday-month-title { font-size: 11px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
+#holidays-bulk { display: flex; gap: 8px; margin-bottom: 20px; }
+#holidays-bulk-input { flex: 1; font-size: 12px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+#holidays-bulk-import-button { background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 14px; cursor: pointer; font-size: 13px; transition: background 150ms ease; }
+#holidays-bulk-import-button:hover { background: var(--surface-sunken); }
+#holidays-year-nav { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; font-size: 13px; }
+#holidays-year-nav button { background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 12px; cursor: pointer; font-size: 12px; transition: background 150ms ease; }
+#holidays-year-nav button:hover { background: var(--surface-sunken); }
+#holidays-calendar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.holiday-month { background: var(--surface-alt); border-radius: var(--radius-lg); padding: 12px; box-shadow: var(--shadow-sm); }
+[data-theme="dark"] .holiday-month { box-shadow: none; border: 1px solid var(--border); }
+.holiday-month-title { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 8px; color: var(--text-secondary); text-transform: uppercase; }
 .holiday-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.holiday-day { font-size: 10px; text-align: center; padding: 2px 0; border-radius: 2px; }
-.holiday-day-weekend { background: var(--border); }
-.holiday-day-holiday { background: var(--kpmg-blue); color: #fff; }
-.holiday-remove-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); }
+.holiday-day { font-size: 10px; text-align: center; padding: 2px 0; border-radius: var(--radius-sm); }
+.holiday-day-weekend { background: var(--surface-sunken); }
+.holiday-day-holiday { background: rgba(0,51,141,0.12); color: var(--kpmg-blue); font-weight: 600; }
+[data-theme="dark"] .holiday-day-holiday { background: rgba(0,145,218,0.2); color: var(--kpmg-blue-light); }
+.holiday-remove-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }
+.holiday-remove-btn:hover { background: var(--surface-sunken); border-color: var(--border); }
 #reports-view { flex: 1; overflow: auto; padding: 12px 20px; }
 #reports-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
 #reports-toolbar select, #reports-toolbar button {

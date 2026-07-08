@@ -212,12 +212,12 @@
 .settings-section-wide { max-width: none; }
 .settings-section h3 { margin: 0 0 12px 0; font-size: 11px; letter-spacing: 0.04em; color: var(--text-secondary); text-transform: uppercase; }
 .settings-section input[type="text"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
-.theme-btn, #new-project-button, #add-pic-button {
+.theme-btn, #new-project-button, #add-pic-button, #csv-template-button, #import-csv-button {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 7px 14px; font-size: 13px; cursor: pointer; margin-right: 6px;
   transition: background 150ms ease;
 }
-.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover { background: var(--surface-sunken); }
+.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover, #csv-template-button:hover, #import-csv-button:hover { background: var(--surface-sunken); }
 .theme-btn.active { background: var(--kpmg-blue); color: #fff; border-color: var(--kpmg-blue); }
 .pic-editor-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .pic-remove-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }

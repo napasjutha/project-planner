@@ -216,6 +216,46 @@
     reader.readAsText(file);
   }
 
+  function handleDownloadCsvTemplate() {
+    var blob = new Blob([PP.csvTemplateText()], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'project-planner-template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportCsv(state, file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var rows = PP.parseCsvText(PP.stripBom(reader.result));
+      if (rows.length < 2) {
+        window.alert('CSV has no data rows.');
+        return;
+      }
+      var result = PP.validateCsvRows(rows);
+      if (result.errors.length) {
+        window.alert('Cannot import — ' + result.errors.length + ' error(s):\n' + result.errors.join('\n'));
+        return;
+      }
+      var created = state.project.addTasks(result.tasks, state.currentUser);
+      var rowToId = {};
+      result.tasks.forEach(function (spec, i) { rowToId[spec._row] = created[i].id; });
+      created.forEach(function (task) {
+        task.predecessors = task.predecessors.map(function (rowNum) { return rowToId[rowNum]; });
+      });
+      window.alert('Imported ' + created.length + ' task(s).');
+      refresh(state, true);
+    };
+    reader.onerror = function () {
+      window.alert('Failed to read that file.');
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
   function showApp(state) {
     document.getElementById('name-picker').hidden = true;
     document.getElementById('app').hidden = false;
@@ -231,6 +271,15 @@
     PP.wireSettings(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
     PP.wireReports(state, function () { PP.renderReport(state); });
+    document.getElementById('csv-template-button').addEventListener('click', handleDownloadCsvTemplate);
+    document.getElementById('import-csv-button').addEventListener('click', function () {
+      document.getElementById('import-csv-input').click();
+    });
+    document.getElementById('import-csv-input').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (file) handleImportCsv(state, file);
+      e.target.value = '';
+    });
     window.addEventListener('beforeunload', function (e) {
       if (state.dirty) {
         e.preventDefault();

@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --kpmg-blue: #00338D;
   --kpmg-blue-mid: #005EB8;
   --kpmg-blue-light: #0091DA;
@@ -25,6 +26,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --surface: #1c1c1e;
   --surface-alt: #2c2c2e;
   --surface-sunken: #232325;

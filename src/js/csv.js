@@ -70,5 +70,106 @@
     return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
   }
 
-  return { stripBom, parseCsvText, csvTemplateText, CSV_HEADERS };
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const MILESTONE_TRUE = ['y', 'yes', 'true', '1'];
+  const BILLING_STATUSES = ['Not Billed', 'Invoiced', 'Paid'];
+
+  function validateCsvRows(rows) {
+    const errors = [];
+    if (!rows.length || rows[0].map(c => c.trim()).join(',') !== CSV_HEADERS.join(',')) {
+      errors.push("Header row must be exactly: " + CSV_HEADERS.join(','));
+      return { errors, tasks: [] };
+    }
+    const dataRows = rows.slice(1);
+    const seenRowNums = new Set();
+    const specs = [];
+
+    dataRows.forEach((cells, idx) => {
+      const label = 'Row ' + (cells[0] !== undefined ? cells[0].trim() || '#' + (idx + 1) : '#' + (idx + 1));
+      if (cells.length !== CSV_HEADERS.length) {
+        errors.push(label + ': expected ' + CSV_HEADERS.length + ' columns, found ' + cells.length);
+        return;
+      }
+      const c = cells.map(v => v.trim());
+      const rowNum = Number(c[0]);
+      if (!Number.isInteger(rowNum) || rowNum < 1) {
+        errors.push(label + ": Row number '" + c[0] + "' must be a positive integer");
+        return;
+      }
+      if (seenRowNums.has(rowNum)) {
+        errors.push('Row ' + rowNum + ': duplicate Row number');
+        return;
+      }
+      seenRowNums.add(rowNum);
+
+      const level = Number(c[1]);
+      if (!Number.isInteger(level) || level < 0) {
+        errors.push('Row ' + rowNum + ": Level '" + c[1] + "' must be a non-negative integer");
+      } else {
+        const prevLevel = specs.length ? specs[specs.length - 1]._level : -1;
+        if (level > prevLevel + 1) {
+          errors.push('Row ' + rowNum + ': Level ' + level + ' skips from the previous row\'s Level ' + (specs.length ? prevLevel : 'none') + ' — indent one level at a time');
+        }
+      }
+
+      if (!c[2]) errors.push('Row ' + rowNum + ': Task Name is required');
+      if (c[4] && !DATE_RE.test(c[4])) errors.push('Row ' + rowNum + ": Planned Start '" + c[4] + "' is not a valid date (expected YYYY-MM-DD)");
+      if (c[5] && !DATE_RE.test(c[5])) errors.push('Row ' + rowNum + ": Planned Finish '" + c[5] + "' is not a valid date (expected YYYY-MM-DD)");
+
+      const milestone = MILESTONE_TRUE.indexOf(c[7].toLowerCase()) !== -1;
+
+      let billingAmount = null;
+      if (c[8]) {
+        billingAmount = Number(c[8]);
+        if (!isFinite(billingAmount)) {
+          errors.push('Row ' + rowNum + ": Billing Amount '" + c[8] + "' is not a number");
+          billingAmount = null;
+        }
+      }
+
+      let billingStatus = null;
+      if (c[9]) {
+        if (BILLING_STATUSES.indexOf(c[9]) === -1) {
+          errors.push('Row ' + rowNum + ": Billing Status '" + c[9] + "' must be one of: " + BILLING_STATUSES.join(', '));
+        } else {
+          billingStatus = c[9];
+        }
+      }
+
+      const predecessors = [];
+      if (c[10]) {
+        c[10].split(';').forEach(part => {
+          const p = Number(part.trim());
+          if (!Number.isInteger(p) || p < 1) {
+            errors.push('Row ' + rowNum + ": Predecessor '" + part.trim() + "' must be a Row number");
+          } else if (p === rowNum) {
+            errors.push('Row ' + rowNum + ': a task cannot depend on itself');
+          } else {
+            predecessors.push(p);
+          }
+        });
+      }
+
+      specs.push({
+        _row: rowNum, _level: Number.isInteger(level) && level >= 0 ? level : 0,
+        name: c[2], pic: c[3],
+        plannedStart: c[4] || null, plannedFinish: c[5] || null,
+        remarks: c[6], milestone,
+        billingAmount, billingStatus, predecessors,
+      });
+    });
+
+    const allRowNums = new Set(specs.map(s => s._row));
+    specs.forEach(s => {
+      s.predecessors.forEach(p => {
+        if (!allRowNums.has(p)) {
+          errors.push('Row ' + s._row + ': Predecessor ' + p + ' does not exist in this file');
+        }
+      });
+    });
+
+    return errors.length ? { errors, tasks: [] } : { errors: [], tasks: specs };
+  }
+
+  return { stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS };
 });

@@ -120,7 +120,7 @@
     const cell = state.workload.cells.get(pic + '|' + weekISO);
     if (!cell || !cell.taskIds.length) return;
     const title = document.createElement('div');
-    title.textContent = pic + ' — week of ' + weekISO + ' (' + cell.demand + ' manday(s) / ' + cell.available + ' available)';
+    title.textContent = pic + ' — week of ' + weekISO + ' (' + cell.demand + ' manday(s) / ' + (Math.round(cell.available * 100) / 100) + ' available)';
     box.appendChild(title);
     const byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
     const ul = document.createElement('ul');
@@ -158,7 +158,7 @@
       if (!input) return;
       const pic = input.dataset.pic;
       const week = input.dataset.week;
-      let v = Number(input.value);
+      let v = input.value.trim() === '' ? 1 : Number(input.value);
       if (!isFinite(v) || v < 0) v = 1;
       const picFte = (state.project.settings.picFte = state.project.settings.picFte || {});
       if (v === 1) {

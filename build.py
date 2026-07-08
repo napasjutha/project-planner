@@ -15,6 +15,7 @@ JS_ORDER = [
     "snapshot.js",
     "filters.js",
     "csv.js",
+    "criticalpath.js",
     "ui/tree.js",
     "ui/gantt.js",
     "ui/scurve.js",

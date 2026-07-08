@@ -42,6 +42,13 @@
       var billingStatusCell = task.milestone
         ? '<span class="cell col-billing-status" data-field="billingStatus">' + escapeHtml(task.billingStatus || '') + '</span>'
         : '<span class="col-billing-status"></span>';
+      var predText = (task.predecessors || [])
+        .map(function (pid) { var pc = state.calc.computed.get(pid); return pc ? pc.wbs : null; })
+        .filter(Boolean)
+        .join(', ');
+      var predecessorsCell = hasChildren
+        ? '<span class="col-predecessors"></span>'
+        : '<span class="cell col-predecessors" data-field="__predecessors">' + escapeHtml(predText) + '</span>';
 
       var row = document.createElement('div');
       row.className = 'tree-row' + (hasChildren ? ' is-parent' : '');
@@ -65,7 +72,8 @@
         '<span class="col-updated-at">' + (lu ? escapeHtml(lu.when.slice(0, 16).replace('T', ' ')) : '') + '</span>' +
         '<span class="cell col-remarks" data-field="remarks">' + escapeHtml(task.remarks || '') + '</span>' +
         billingAmountCell +
-        billingStatusCell;
+        billingStatusCell +
+        predecessorsCell;
       body.appendChild(row);
     });
   }
@@ -198,6 +206,10 @@
       var cell = e.target.closest('.cell');
       if (!cell) return;
       var row = e.target.closest('.tree-row');
+      if (cell.dataset.field === '__predecessors') {
+        PP.openPredecessorPicker(state, row.dataset.id, cell, onChanged);
+        return;
+      }
       beginEdit(state, cell, row.dataset.id, cell.dataset.field, onChanged);
     });
 

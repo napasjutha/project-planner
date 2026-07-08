@@ -19,22 +19,6 @@
     var nameInput = document.getElementById('project-rename-input');
     if (document.activeElement !== nameInput) nameInput.value = state.project.meta.name;
 
-    var picEditor = document.getElementById('pic-list-editor');
-    picEditor.innerHTML = '';
-    (state.project.picList || []).forEach(function (pic) {
-      var row = document.createElement('div');
-      row.className = 'pic-editor-row';
-      var label = document.createElement('span');
-      label.textContent = pic;
-      var removeBtn = document.createElement('button');
-      removeBtn.textContent = 'Remove';
-      removeBtn.className = 'pic-remove-btn';
-      removeBtn.dataset.pic = pic;
-      row.appendChild(label);
-      row.appendChild(removeBtn);
-      picEditor.appendChild(row);
-    });
-
     var auditBody = document.getElementById('audit-log-body');
     auditBody.innerHTML = '';
     var table = document.createElement('table');
@@ -70,23 +54,6 @@
 
     document.getElementById('project-rename-input').addEventListener('change', function (e) {
       state.project.meta.name = e.target.value;
-      onChanged();
-    });
-
-    document.getElementById('add-pic-button').addEventListener('click', function () {
-      var input = document.getElementById('new-pic-input');
-      var name = input.value.trim();
-      if (!name) return;
-      state.project.picList = state.project.picList || [];
-      if (state.project.picList.indexOf(name) === -1) state.project.picList.push(name);
-      input.value = '';
-      onChanged();
-    });
-
-    document.getElementById('pic-list-editor').addEventListener('click', function (e) {
-      var btn = e.target.closest('.pic-remove-btn');
-      if (!btn) return;
-      state.project.picList = state.project.picList.filter(function (p) { return p !== btn.dataset.pic; });
       onChanged();
     });
 

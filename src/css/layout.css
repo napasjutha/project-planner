@@ -224,12 +224,25 @@
 #snapshot-comparison { margin-top: 16px; font-size: 13px; }
 #snapshot-comparison ul { margin: 4px 0; padding-left: 20px; }
 
-#settings-view { flex: 1; overflow: auto; padding: 16px 24px; }
+#settings-view, #resources-view { flex: 1; overflow: auto; padding: 16px 24px; }
 .settings-section { background: var(--surface-alt); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; max-width: 500px; box-shadow: var(--shadow-sm); }
 [data-theme="dark"] .settings-section { box-shadow: none; border: 1px solid var(--border); }
 .settings-section-wide { max-width: none; }
 .settings-section h3 { margin: 0 0 12px 0; font-size: 11px; letter-spacing: 0.04em; color: var(--text-secondary); text-transform: uppercase; }
 .settings-section input[type="text"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+.resource-grid-wrap { overflow-x: auto; }
+.resource-grid { border-collapse: collapse; font-size: 12px; }
+.resource-grid th, .resource-grid td { padding: 4px 8px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.resource-grid th { font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); }
+.resource-grid th:first-child, .resource-grid td:first-child { text-align: left; position: sticky; left: 0; background: var(--surface-alt); z-index: 1; }
+.resource-grid .week-sub { display: block; font-size: 10px; color: var(--text-tertiary); text-transform: none; letter-spacing: 0; }
+.resource-grid input[type="number"] { width: 56px; font-size: 12px; padding: 2px 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: right; }
+.workload-cell-over { background: rgba(255,59,48,0.12); color: var(--status-delayed); font-weight: 600; cursor: pointer; }
+.workload-cell-full { background: rgba(255,204,0,0.18); cursor: pointer; }
+.workload-cell-ok { cursor: pointer; }
+[data-theme="dark"] .workload-cell-over { background: rgba(255,59,48,0.2); }
+[data-theme="dark"] .workload-cell-full { background: rgba(255,204,0,0.24); }
+#workload-drilldown { margin-top: 12px; font-size: 13px; }
 .theme-btn, #new-project-button, #add-pic-button, #csv-template-button, #import-csv-button {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 7px 14px; font-size: 13px; cursor: pointer; margin-right: 6px;

@@ -304,3 +304,47 @@ test('computeLastUpdated has no entry for a task that was never updated', () => 
   const lastUpdated = computeLastUpdated(p);
   assert.equal(lastUpdated.has(t.id), false);
 });
+
+test('addTasks builds hierarchy from _level and appends in order under one undo checkpoint', () => {
+  const p = Project.empty('Test');
+  const created = p.addTasks([
+    { _row: 1, _level: 0, name: 'Phase A', pic: '', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 2, _level: 1, name: 'Design', pic: 'Alice', plannedStart: '2026-07-01', plannedFinish: '2026-07-10', remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 3, _level: 1, name: 'Build', pic: 'Bob', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 4, _level: 0, name: 'Phase B', pic: '', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+  ], 'importer');
+  assert.equal(created.length, 4);
+  assert.equal(created[0].parentId, null);
+  assert.equal(created[1].parentId, created[0].id);
+  assert.equal(created[2].parentId, created[0].id);
+  assert.equal(created[3].parentId, null);
+  assert.equal(created[1].order, 0);
+  assert.equal(created[2].order, 1);
+  assert.ok(p.undo());
+  assert.equal(p.tasks.length, 0);
+});
+
+test('addTasks appends after existing root tasks with contiguous order', () => {
+  const p = Project.empty('Test');
+  p.addTask({ parentId: null, name: 'Existing' });
+  const created = p.addTasks([
+    { _row: 1, _level: 0, name: 'Imported', pic: '', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+  ], 'importer');
+  assert.equal(created[0].order, 1);
+});
+
+test('addTasks fills the full task shape with defaults', () => {
+  const p = Project.empty('Test');
+  const created = p.addTasks([
+    { _row: 1, _level: 0, name: 'A', pic: '', plannedStart: null, plannedFinish: null, remarks: 'note', milestone: true, billingAmount: 500, billingStatus: 'Paid', predecessors: [] },
+  ], 'importer');
+  const t = created[0];
+  assert.equal(t.actualPct, 0);
+  assert.equal(t.weightOverride, null);
+  assert.equal(t.statusOverride, null);
+  assert.equal(t.collapsed, false);
+  assert.equal(t.deliverable, '');
+  assert.equal(t.milestone, true);
+  assert.equal(t.billingAmount, 500);
+  assert.equal(t.billingStatus, 'Paid');
+});

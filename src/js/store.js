@@ -153,6 +153,37 @@
       return task;
     }
 
+    addTasks(taskSpecs, who) {
+      this._pushUndo();
+      const created = [];
+      taskSpecs.forEach(spec => {
+        let parentId = null;
+        for (let i = created.length - 1; i >= 0; i--) {
+          if (taskSpecs[i]._level < spec._level) {
+            parentId = created[i].id;
+            break;
+          }
+        }
+        const siblings = this.tasks.filter(t => t.parentId === parentId);
+        const task = {
+          id: generateId(), parentId, order: siblings.length,
+          name: spec.name, pic: spec.pic || '',
+          deliverable: '', jira: '', remarks: spec.remarks || '',
+          plannedStart: spec.plannedStart || null, plannedFinish: spec.plannedFinish || null,
+          actualStart: null, actualFinish: null,
+          actualPct: 0, weightOverride: null, milestone: !!spec.milestone,
+          statusOverride: null, predecessors: spec.predecessors ? spec.predecessors.slice() : [],
+          collapsed: false,
+          billingAmount: spec.billingAmount != null ? spec.billingAmount : null,
+          billingStatus: spec.billingStatus || null,
+        };
+        this.tasks.push(task);
+        created.push(task);
+      });
+      this._audit(who, null, 'csvImport', null, created.length + ' task(s) imported');
+      return created;
+    }
+
     updateTask(id, patch, who) {
       const task = this.tasks.find(t => t.id === id);
       if (!task) throw new Error(`Task not found: ${id}`);

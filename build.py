@@ -26,6 +26,7 @@ JS_ORDER = [
     "ui/settings.js",
     "ui/holidays.js",
     "ui/reports.js",
+    "ui/resources.js",
     "ui/app.js",
 ]
 

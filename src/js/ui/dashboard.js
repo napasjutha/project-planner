@@ -8,8 +8,8 @@
   }
 
   var STATUS_COLORS = {
-    'Not Start': '#9aa5b1', 'In Progress': '#0091DA', 'Delayed': '#d64545',
-    'Complete': '#1a8f5e', 'Blocked': '#d64545', 'Cancelled': '#9aa5b1',
+    'Not Start': 'var(--status-not-start)', 'In Progress': 'var(--status-in-progress)', 'Delayed': 'var(--status-delayed)',
+    'Complete': 'var(--status-complete)', 'Blocked': 'var(--status-blocked)', 'Cancelled': 'var(--status-cancelled)',
   };
 
   function donutPath(cx, cy, r, startFrac, endFrac) {

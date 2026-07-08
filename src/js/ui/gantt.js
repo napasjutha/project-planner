@@ -47,6 +47,12 @@
     var height = Math.max(60, HEADER_HEIGHT + rows.length * ROW_HEIGHT);
 
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
+    var holidayDates = state.project.holidays.map(function (h) { return h.date; });
+    var cp = PP.computeCriticalPath(state.project.tasks, state.calc.computed, state.calc.overall, holidayDates);
+    var TIER_STROKE = {};
+    TIER_STROKE[PP.TIERS.CRITICAL] = { stroke: 'var(--status-delayed)', width: 2 };
+    TIER_STROKE[PP.TIERS.NEAR_CRITICAL] = { stroke: 'var(--tier-near-critical)', width: 2 };
+    TIER_STROKE[PP.TIERS.WATCH] = { stroke: 'var(--tier-watch)', width: 2 };
     var svg = svgEl('svg', { width: width, height: height, style: 'display:block' });
 
     var d;
@@ -108,9 +114,13 @@
         return;
       }
 
+      var tf = cp.taskFloat.get(id);
+      var tierStroke = tf ? TIER_STROKE[tf.tier] : null;
       svg.appendChild(svgEl('rect', {
         x: x1, y: y, width: barWidth, height: BAR_HEIGHT, rx: 4,
-        fill: 'var(--surface-sunken)', stroke: 'var(--kpmg-blue)', 'stroke-width': 1,
+        fill: 'var(--surface-sunken)',
+        stroke: tierStroke ? tierStroke.stroke : 'var(--kpmg-blue)',
+        'stroke-width': tierStroke ? tierStroke.width : 1,
         'data-id': id, class: 'gantt-bar',
       }));
 
@@ -146,10 +156,15 @@
         var predX = dateToX(predComputed.plannedFinish, range.startMs, pxPerDay) + pxPerDay;
         var midX = predX + 8;
         var pathD = 'M ' + predX + ' ' + predY + ' L ' + midX + ' ' + predY + ' L ' + midX + ' ' + thisY + ' L ' + thisX + ' ' + thisY;
-        svg.appendChild(svgEl('path', { d: pathD, fill: 'none', stroke: 'var(--text-tertiary)', 'stroke-width': 1 }));
+        var isCriticalEdge = cp.criticalEdges.has(predId + '->' + id);
+        svg.appendChild(svgEl('path', {
+          d: pathD, fill: 'none',
+          stroke: isCriticalEdge ? 'var(--status-delayed)' : 'var(--text-tertiary)',
+          'stroke-width': isCriticalEdge ? 2 : 1,
+        }));
         svg.appendChild(svgEl('polygon', {
           points: [thisX, thisY, thisX - 6, thisY - 3, thisX - 6, thisY + 3].join(','),
-          fill: 'var(--text-tertiary)',
+          fill: isCriticalEdge ? 'var(--status-delayed)' : 'var(--text-tertiary)',
         }));
       });
     });

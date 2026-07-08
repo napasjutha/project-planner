@@ -26,8 +26,8 @@
 
     for (var g = 0; g <= 4; g++) {
       var gy = padding + (g / 4) * plotH;
-      svg.appendChild(svgEl('line', { x1: padding, y1: gy, x2: width - padding, y2: gy, stroke: '#e1e4e8', 'stroke-width': 1 }));
-      var label = svgEl('text', { x: 4, y: gy + 4, 'font-size': 10, fill: '#5b6470' });
+      svg.appendChild(svgEl('line', { x1: padding, y1: gy, x2: width - padding, y2: gy, stroke: 'var(--border)', 'stroke-width': 1 }));
+      var label = svgEl('text', { x: 4, y: gy + 4, 'font-size': 10, fill: 'var(--text-secondary)' });
       label.textContent = Math.round((1 - g / 4) * 100) + '%';
       svg.appendChild(label);
     }
@@ -48,7 +48,7 @@
         var overlayPath = snap.scurve.map(function (p, i) {
           return (i === 0 ? 'M ' : 'L ') + xAt(Math.min(i, points.length - 1)) + ' ' + yAt(p.actualCum);
         }).join(' ');
-        svg.appendChild(svgEl('path', { d: overlayPath, fill: 'none', stroke: '#9aa5b1', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
+        svg.appendChild(svgEl('path', { d: overlayPath, fill: 'none', stroke: 'var(--text-tertiary)', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
       }
     }
 

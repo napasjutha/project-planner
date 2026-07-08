@@ -58,7 +58,8 @@
       if (dow === 0 || dow === 6 || isHoliday) {
         svg.appendChild(svgEl('rect', {
           x: d * pxPerDay, y: 0, width: pxPerDay, height: height,
-          fill: isHoliday ? '#e8f2fb' : '#f5f6f7',
+          fill: isHoliday ? 'var(--kpmg-blue-light)' : 'var(--surface-alt)',
+          'fill-opacity': isHoliday ? 0.12 : 1,
         }));
       }
     }
@@ -70,12 +71,12 @@
       var monthKey = dt.getUTCFullYear() + '-' + dt.getUTCMonth();
       if (monthKey !== monthSeen && dt.getUTCDate() <= 7) {
         monthSeen = monthKey;
-        var label = svgEl('text', { x: d * pxPerDay + 4, y: 14, 'font-size': 11, fill: '#5b6470' });
+        var label = svgEl('text', { x: d * pxPerDay + 4, y: 14, 'font-size': 11, fill: 'var(--text-secondary)' });
         label.textContent = dt.toLocaleString('en', { month: 'short', year: 'numeric', timeZone: 'UTC' });
         svg.appendChild(label);
         svg.appendChild(svgEl('line', {
           x1: d * pxPerDay, y1: 0, x2: d * pxPerDay, y2: height,
-          stroke: '#e1e4e8', 'stroke-width': 1,
+          stroke: 'var(--border)', 'stroke-width': 1,
         }));
       }
     }
@@ -108,15 +109,15 @@
       }
 
       svg.appendChild(svgEl('rect', {
-        x: x1, y: y, width: barWidth, height: BAR_HEIGHT, rx: 3,
-        fill: '#dce6f5', stroke: 'var(--kpmg-blue)', 'stroke-width': 1,
+        x: x1, y: y, width: barWidth, height: BAR_HEIGHT, rx: 4,
+        fill: 'var(--surface-sunken)', stroke: 'var(--kpmg-blue)', 'stroke-width': 1,
         'data-id': id, class: 'gantt-bar',
       }));
 
       var fillWidth = barWidth * Math.max(0, Math.min(1, computed.actualPct));
       if (fillWidth > 0) {
         svg.appendChild(svgEl('rect', {
-          x: x1, y: y, width: fillWidth, height: BAR_HEIGHT, rx: 3,
+          x: x1, y: y, width: fillWidth, height: BAR_HEIGHT, rx: 4,
           fill: computed.status === 'Delayed' ? 'var(--status-delayed)' : 'var(--status-complete)',
           style: 'pointer-events:none',
         }));
@@ -145,10 +146,10 @@
         var predX = dateToX(predComputed.plannedFinish, range.startMs, pxPerDay) + pxPerDay;
         var midX = predX + 8;
         var pathD = 'M ' + predX + ' ' + predY + ' L ' + midX + ' ' + predY + ' L ' + midX + ' ' + thisY + ' L ' + thisX + ' ' + thisY;
-        svg.appendChild(svgEl('path', { d: pathD, fill: 'none', stroke: '#9aa5b1', 'stroke-width': 1 }));
+        svg.appendChild(svgEl('path', { d: pathD, fill: 'none', stroke: 'var(--text-tertiary)', 'stroke-width': 1 }));
         svg.appendChild(svgEl('polygon', {
           points: [thisX, thisY, thisX - 6, thisY - 3, thisX - 6, thisY + 3].join(','),
-          fill: '#9aa5b1',
+          fill: 'var(--text-tertiary)',
         }));
       });
     });

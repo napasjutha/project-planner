@@ -36,12 +36,6 @@
       var actualStartCell = dateCell(hasChildren, 'col-astart', 'actualStart', computed.actualStart, task.actualStart);
       var actualFinishCell = dateCell(hasChildren, 'col-afinish', 'actualFinish', computed.actualFinish, task.actualFinish);
       var actualPctText = computed.actualStart ? fmtPct(computed.actualPct) : '';
-      var billingAmountCell = task.milestone
-        ? '<span class="cell col-billing-amount" data-field="billingAmount">' + (task.billingAmount != null ? escapeHtml(String(task.billingAmount)) : '') + '</span>'
-        : '<span class="col-billing-amount"></span>';
-      var billingStatusCell = task.milestone
-        ? '<span class="cell col-billing-status" data-field="billingStatus">' + escapeHtml(task.billingStatus || '') + '</span>'
-        : '<span class="col-billing-status"></span>';
       var predText = (task.predecessors || [])
         .map(function (pid) { var pc = state.calc.computed.get(pid); return pc ? pc.wbs : null; })
         .filter(Boolean)
@@ -73,8 +67,6 @@
         '<span class="col-updated-by">' + (lu ? escapeHtml(lu.who) : '') + '</span>' +
         '<span class="col-updated-at">' + (lu ? escapeHtml(lu.when.slice(0, 16).replace('T', ' ')) : '') + '</span>' +
         '<span class="cell col-remarks" data-field="remarks">' + escapeHtml(task.remarks || '') + '</span>' +
-        billingAmountCell +
-        billingStatusCell +
         predecessorsCell;
       body.appendChild(row);
     });
@@ -91,17 +83,7 @@
     var raw = task[field];
     var el;
 
-    if (field === 'billingStatus') {
-      el = document.createElement('select');
-      el.className = 'cell-editor';
-      ['Not Billed', 'Invoiced', 'Paid'].forEach(function (opt) {
-        var option = document.createElement('option');
-        option.value = opt;
-        option.textContent = opt;
-        if (raw === opt) option.selected = true;
-        el.appendChild(option);
-      });
-    } else if (field === 'pic') {
+    if (field === 'pic') {
       el = document.createElement('select');
       el.className = 'cell-editor';
       var picSet = new Set(state.project.picList || []);
@@ -124,10 +106,6 @@
       if (field === 'plannedStart' || field === 'plannedFinish' || field === 'actualStart' || field === 'actualFinish') {
         el.type = 'date';
         el.value = raw || '';
-      } else if (field === 'billingAmount') {
-        el.type = 'number';
-        el.min = '0';
-        el.value = raw != null ? raw : '';
       } else {
         el.type = 'text';
         el.value = raw || '';
@@ -145,9 +123,7 @@
       if (settled) return;
       settled = true;
       var value = el.value;
-      if (field === 'billingAmount') {
-        value = value === '' ? null : Number(value);
-      } else if ((field === 'plannedStart' || field === 'plannedFinish' || field === 'actualStart' || field === 'actualFinish') && value === '') {
+      if ((field === 'plannedStart' || field === 'plannedFinish' || field === 'actualStart' || field === 'actualFinish') && value === '') {
         value = null;
       }
       state.project.updateTask(id, buildPatch(field, value), state.currentUser);

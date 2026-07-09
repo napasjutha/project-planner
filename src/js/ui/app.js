@@ -20,6 +20,7 @@
     PP.renderDashboard(state);
     PP.renderSnapshots(state);
     PP.renderResources(state);
+    PP.renderBilling(state);
     PP.renderSettings(state);
     PP.renderHolidays(state);
     PP.renderReport(state);
@@ -151,7 +152,7 @@
     });
   }
 
-  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'settings-view', 'holidays-view', 'reports-view'];
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'reports-view'];
 
   function wireViewTabs(state) {
     var tabs = document.querySelectorAll('.view-tab');
@@ -303,6 +304,7 @@
     PP.wireSnapshots(state, function () { refresh(state, true); });
     PP.wireSettings(state, function () { refresh(state, true); });
     PP.wireResources(state, function () { refresh(state, true); });
+    PP.wireBilling(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
     PP.wireReports(state, function () { PP.renderReport(state); });
     document.getElementById('csv-template-button').addEventListener('click', handleDownloadCsvTemplate);

@@ -53,6 +53,7 @@
     <button class="view-tab" data-view="dashboard">Dashboard</button>
     <button class="view-tab" data-view="snapshots">Snapshots</button>
     <button class="view-tab" data-view="resources">Resources</button>
+    <button class="view-tab" data-view="billing">Billing</button>
     <button class="view-tab" data-view="settings">Settings</button>
     <button class="view-tab" data-view="holidays">Holidays</button>
     <button class="view-tab" data-view="reports">Reports</button>
@@ -75,8 +76,6 @@
       <span>Updated By</span>
       <span>Updated At</span>
       <span>Remarks</span>
-      <span>Billing Amt</span>
-      <span>Billing Status</span>
       <span>Predecessors</span>
     </div>
     <div id="tree-body"></div>
@@ -128,6 +127,9 @@
       <div id="workload-grid" class="resource-grid-wrap"></div>
       <div id="workload-drilldown"></div>
     </div>
+  </div>
+  <div id="billing-view" hidden>
+    <div id="billing-body"></div>
   </div>
   <div id="settings-view" hidden>
     <div class="settings-section">

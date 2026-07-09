@@ -12,6 +12,7 @@
     state.lastUpdated = PP.computeLastUpdated(state.project);
     renderHeader(state);
     renderPicFilter(state);
+    renderOwnerFilter(state);
     PP.renderTree(state);
     PP.renderGantt(state);
     PP.renderScurve(state);
@@ -75,6 +76,25 @@
     select.value = current;
   }
 
+  function renderOwnerFilter(state) {
+    var select = document.getElementById('owner-filter');
+    var current = select.value;
+    var ownerSet = new Set();
+    state.project.tasks.forEach(function (t) { if (t.owner) ownerSet.add(t.owner); });
+    select.innerHTML = '';
+    var allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Owners';
+    select.appendChild(allOption);
+    Array.from(ownerSet).sort().forEach(function (owner) {
+      var option = document.createElement('option');
+      option.value = owner;
+      option.textContent = owner;
+      select.appendChild(option);
+    });
+    select.value = current;
+  }
+
   function wireHeader(state) {
     document.getElementById('status-date-input').addEventListener('change', function (e) {
       state.project.meta.statusDate = e.target.value;
@@ -115,6 +135,10 @@
     });
     document.getElementById('only-mine-filter').addEventListener('change', function (e) {
       state.filters.onlyMine = e.target.checked;
+      onFilterChange();
+    });
+    document.getElementById('owner-filter').addEventListener('change', function (e) {
+      state.filters.owner = e.target.value;
       onFilterChange();
     });
     document.getElementById('pic-filter').addEventListener('change', function (e) {
@@ -162,9 +186,13 @@
   }
 
   function handleSave(state) {
-    var incomplete = PP.findIncompleteTasks(state.project);
-    if (incomplete.length) {
-      window.alert('Cannot save — missing planned dates on: ' + incomplete.map(function (t) { return t.name; }).join(', '));
+    var missingDates = PP.findIncompleteTasks(state.project);
+    var missingOwner = PP.findTasksMissingOwner(state.project);
+    if (missingDates.length || missingOwner.length) {
+      var msgs = [];
+      if (missingDates.length) msgs.push('missing planned dates on: ' + missingDates.map(function (t) { return t.name; }).join(', '));
+      if (missingOwner.length) msgs.push('missing Owner on: ' + missingOwner.map(function (t) { return t.name; }).join(', '));
+      window.alert('Cannot save — ' + msgs.join('; '));
       return;
     }
     state.project.meta.savedBy = state.currentUser;
@@ -331,7 +359,7 @@
       currentUser: localStorage.getItem('pp:currentUser'),
       dirty: false,
       calc: null,
-      filters: { search: '', pic: '', status: '', onlyDelayed: false, onlyMine: false },
+      filters: { search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyMine: false },
       scurveOverlaySnapshotId: null,
       snapshotCompareA: null,
       snapshotCompareB: null,

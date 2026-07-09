@@ -135,12 +135,12 @@
 
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
     var table = el('table', { class: 'report-table' });
-    table.appendChild(el('tr', {}, ['WBS', 'Task', 'PIC', 'P-Start', 'P-Finish', '% Actual', 'Status'].map(function (h) { return el('th', {}, [h]); })));
+    table.appendChild(el('tr', {}, ['WBS', 'Task', 'Owner', 'PIC', 'P-Start', 'P-Finish', '% Actual', 'Status'].map(function (h) { return el('th', {}, [h]); })));
     state.calc.order.forEach(function (id) {
       var task = byId.get(id);
       var c = state.calc.computed.get(id);
       table.appendChild(el('tr', {}, [
-        el('td', {}, [c.wbs]), el('td', {}, [task.name]), el('td', {}, [task.pic || '']),
+        el('td', {}, [c.wbs]), el('td', {}, [task.name]), el('td', {}, [task.owner || '']), el('td', {}, [task.pic || '']),
         el('td', {}, [c.plannedStart || '']), el('td', {}, [c.plannedFinish || '']),
         el('td', {}, [pct(c.actualPct)]), el('td', {}, [c.status]),
       ]));

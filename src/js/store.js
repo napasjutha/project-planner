@@ -20,6 +20,10 @@
     });
   }
 
+  function findTasksMissingOwner(project) {
+    return project.tasks.filter(t => !t.owner || !t.owner.trim());
+  }
+
   function computeLastUpdated(project) {
     const result = new Map();
     project.auditLog.forEach(entry => {
@@ -39,6 +43,12 @@
       this.settings = data.settings;
       this._undoStack = [];
       this._redoStack = [];
+      this.tasks.forEach(t => {
+        if (t.owner === undefined) {
+          t.owner = t.pic || '';
+          t.pic = '';
+        }
+      });
     }
 
     static empty(name) {
@@ -137,11 +147,11 @@
       if (this.auditLog.length > 2000) this.auditLog.shift();
     }
 
-    addTask({ parentId = null, name = 'New Task', pic = '' }) {
+    addTask({ parentId = null, name = 'New Task', owner = '', pic = '' }) {
       this._pushUndo();
       const siblings = this.tasks.filter(t => t.parentId === parentId);
       const task = {
-        id: generateId(), parentId, order: siblings.length, name, pic,
+        id: generateId(), parentId, order: siblings.length, name, owner, pic,
         deliverable: '', jira: '', remarks: '',
         plannedStart: null, plannedFinish: null,
         actualStart: null, actualFinish: null,
@@ -167,7 +177,7 @@
         const siblings = this.tasks.filter(t => t.parentId === parentId);
         const task = {
           id: generateId(), parentId, order: siblings.length,
-          name: spec.name, pic: spec.pic || '',
+          name: spec.name, owner: spec.owner || '', pic: spec.pic || '',
           deliverable: '', jira: '', remarks: spec.remarks || '',
           plannedStart: spec.plannedStart || null, plannedFinish: spec.plannedFinish || null,
           actualStart: null, actualFinish: null,
@@ -272,5 +282,5 @@
     }
   }
 
-  return { Project, generateId, findIncompleteTasks, computeLastUpdated };
+  return { Project, generateId, findIncompleteTasks, findTasksMissingOwner, computeLastUpdated };
 });

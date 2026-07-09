@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { Project, generateId, findIncompleteTasks, computeLastUpdated } = require('../src/js/store.js');
+const { Project, generateId, findIncompleteTasks, findTasksMissingOwner, computeLastUpdated } = require('../src/js/store.js');
 
 test('generateId produces distinct string ids', () => {
   const a = generateId();
@@ -347,4 +347,56 @@ test('addTasks fills the full task shape with defaults', () => {
   assert.equal(t.milestone, true);
   assert.equal(t.billingAmount, 500);
   assert.equal(t.billingStatus, 'Paid');
+});
+
+test('addTask sets owner alongside pic, both defaulting to empty string', () => {
+  const p = Project.empty('Test');
+  const t = p.addTask({ parentId: null, name: 'Task A' });
+  assert.equal(t.owner, '');
+  assert.equal(t.pic, '');
+  const t2 = p.addTask({ parentId: null, name: 'Task B', owner: 'KPMG', pic: 'Alice' });
+  assert.equal(t2.owner, 'KPMG');
+  assert.equal(t2.pic, 'Alice');
+});
+
+test('addTasks reads owner from specs, defaulting to empty string', () => {
+  const p = Project.empty('Test');
+  const created = p.addTasks([
+    { _row: 1, _level: 0, name: 'Phase A', owner: 'KPMG', pic: '' },
+    { _row: 2, _level: 0, name: 'Phase B' },
+  ], 'Alice');
+  assert.equal(created[0].owner, 'KPMG');
+  assert.equal(created[1].owner, '');
+});
+
+test('Project migrates a legacy task (owner undefined) by moving pic into owner and blanking pic', () => {
+  const p = new Project({
+    meta: { id: 'legacy', name: 'Legacy', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [{ id: 't1', parentId: null, order: 0, name: 'Old Task', pic: 'KPMG/Central Team', deliverable: '', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, milestone: false, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
+    holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.equal(p.tasks[0].owner, 'KPMG/Central Team');
+  assert.equal(p.tasks[0].pic, '');
+});
+
+test('Project does not re-migrate a task that already has owner, even if owner is blank', () => {
+  const p = new Project({
+    meta: { id: 'migrated', name: 'Migrated', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [{ id: 't1', parentId: null, order: 0, name: 'New-Style Task', owner: '', pic: 'Somchai', deliverable: '', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, milestone: false, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
+    holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.equal(p.tasks[0].owner, '');
+  assert.equal(p.tasks[0].pic, 'Somchai');
+});
+
+test('findTasksMissingOwner returns tasks with blank or whitespace-only owner, leaf and parent alike', () => {
+  const p = Project.empty('Test');
+  const parent = p.addTask({ parentId: null, name: 'Phase', owner: '' });
+  const leafOk = p.addTask({ parentId: parent.id, name: 'Leaf OK', owner: 'KPMG' });
+  const leafBlank = p.addTask({ parentId: parent.id, name: 'Leaf Blank', owner: '' });
+  const leafWhitespace = p.addTask({ parentId: parent.id, name: 'Leaf Whitespace', owner: '   ' });
+  const missing = findTasksMissingOwner(p);
+  const missingIds = missing.map(t => t.id).sort();
+  assert.deepEqual(missingIds, [leafBlank.id, leafWhitespace.id, parent.id].sort());
+  assert.ok(!missingIds.includes(leafOk.id));
 });

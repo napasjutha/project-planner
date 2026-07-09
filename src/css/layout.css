@@ -45,8 +45,8 @@
 
 #tree-header, .tree-row {
   display: grid;
-  grid-template-columns: 40px 220px 90px 95px 95px 95px 95px 70px 65px 65px 65px 90px 100px 140px 160px 100px 110px 140px;
-  min-width: 1835px;
+  grid-template-columns: 40px 220px 90px 90px 95px 95px 95px 95px 70px 65px 65px 65px 90px 100px 140px 160px 100px 110px 140px;
+  min-width: 1925px;
   align-items: center;
   padding: 8px 20px;
   gap: 8px;
@@ -104,7 +104,7 @@
 [data-theme="dark"] .status-Delayed, [data-theme="dark"] .status-Blocked { background: rgba(255,59,48,0.2); }
 [data-theme="dark"] .status-Complete { background: rgba(52,199,89,0.2); }
 
-#tree-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 1835px; }
+#tree-body { flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 1925px; }
 
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; }
 .overlay-card { background: var(--surface); padding: 24px; border-radius: var(--radius-lg); min-width: 280px; box-shadow: var(--shadow-md); }

@@ -59,6 +59,7 @@
         '<span class="cell col-name" data-field="name" style="padding-left:' + (computed.depth * 20) + 'px">' +
           '<span class="toggle">' + toggleChar + '</span>' + milestoneMarker + escapeHtml(task.name) +
         '</span>' +
+        '<span class="cell col-owner" data-field="owner">' + escapeHtml(task.owner || '') + '</span>' +
         '<span class="cell col-pic" data-field="pic">' + escapeHtml(task.pic || '') + '</span>' +
         startCell +
         finishCell +
@@ -161,7 +162,7 @@
       ['New Task', function () { state.project.addTask({ parentId: task.parentId, name: 'New Task' }); }],
       ['New Child', function () { state.project.addTask({ parentId: id, name: 'New Task' }); }],
       ['Duplicate', function () {
-        var copy = state.project.addTask({ parentId: task.parentId, name: task.name + ' (copy)', pic: task.pic });
+        var copy = state.project.addTask({ parentId: task.parentId, name: task.name + ' (copy)', owner: task.owner, pic: task.pic });
         state.project.updateTask(copy.id, {
           plannedStart: task.plannedStart, plannedFinish: task.plannedFinish,
           deliverable: task.deliverable, remarks: task.remarks,

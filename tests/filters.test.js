@@ -87,6 +87,23 @@ test('visibleIds: a matching parent is visible even if no child matches', () => 
   assert.deepEqual([...result].sort(), ['phase']);
 });
 
+test('taskMatches: owner filter is an exact match', () => {
+  const t = { id: 't1', parentId: null, name: 'Task', owner: 'KPMG', pic: 'Alice', remarks: '', jira: '' };
+  assert.equal(taskMatches(t, { status: 'In Progress' }, { owner: 'KPMG' }, null), true);
+  assert.equal(taskMatches(t, { status: 'In Progress' }, { owner: 'Client Team' }, null), false);
+});
+
+test('taskMatches: owner and pic filters compose with AND', () => {
+  const t = { id: 't1', parentId: null, name: 'Task', owner: 'KPMG', pic: 'Alice', remarks: '', jira: '' };
+  assert.equal(taskMatches(t, { status: 'In Progress' }, { owner: 'KPMG', pic: 'Alice' }, null), true);
+  assert.equal(taskMatches(t, { status: 'In Progress' }, { owner: 'KPMG', pic: 'Bob' }, null), false);
+});
+
+test('hasActiveFilter is true when only owner is set', () => {
+  assert.equal(hasActiveFilter({ search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyMine: false }), false);
+  assert.equal(hasActiveFilter({ owner: 'KPMG' }), true);
+});
+
 test('hasActiveFilter is false for an all-default filter object and true when any field is set', () => {
   assert.equal(hasActiveFilter({ search: '', pic: '', status: '', onlyDelayed: false, onlyMine: false }), false);
   assert.equal(hasActiveFilter({ search: 'x' }), true);

@@ -14,6 +14,7 @@
       const haystack = `${task.name} ${task.remarks} ${task.jira}`.toLowerCase();
       if (!haystack.includes(search)) return false;
     }
+    if (filters.owner && task.owner !== filters.owner) return false;
     if (filters.pic && task.pic !== filters.pic) return false;
     if (filters.status && computed.status !== filters.status) return false;
     if (filters.onlyDelayed && computed.status !== 'Delayed') return false;
@@ -22,7 +23,7 @@
   }
 
   function hasActiveFilter(filters) {
-    return !!(filters.search || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine);
+    return !!(filters.search || filters.owner || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine);
   }
 
   function visibleIds(project, computedMap, order, filters, currentUser) {

@@ -21,6 +21,8 @@ Real project data (the RAM UAT import) shows the existing `pic` field is populat
 | CSV import/template column order | New "Owner" column inserted between "Task Name" and "PIC": `Row, Level, Task Name, Owner, PIC, Planned Start, Planned Finish, Remarks, Milestone, Billing Amount, Billing Status, Predecessors`. |
 | Reports (Weekly/Executive/Summary tables) | Add an Owner column alongside the existing PIC column in every report table that currently shows PIC. |
 | Duplicate action (right-click menu) | Copies `owner` alongside `pic`, matching the existing duplicate behavior for `pic`. |
+| Owner required? | Yes — every task (leaf and parent/phase rows alike) must have a non-blank `owner`. Enforced the same way planned dates are today: not blocked while typing/adding tasks, but blocked at Save time with an alert, and rejected per-row on CSV import. Unlike planned dates, this check is **not** restricted to leaf tasks — `owner` is plain free text with no parent/child roll-up, so there's no reason a phase row should be exempt. |
+| PIC required? | No — stays optional, by design. Resource capacity planning (`workload.js`) only ever concerns KPMG's own staff, since that's the only side of the engagement whose capacity is being managed; client-side or not-yet-assigned tasks legitimately have no individual PIC. This is a usage convention, not a new mechanical "KPMG-only" validation rule — no company/client field is introduced. |
 
 ## 3. Data Model
 
@@ -59,7 +61,33 @@ this.tasks.forEach(t => {
 
 This runs on every `new Project(data)` call (both `Project.fromJSON` and the app's boot-time load from `localStorage`/the embedded `#project-data` script), so it's automatic and requires no user action. Because it checks `owner === undefined` (not falsy), a task that's already been migrated — even one where `owner` was subsequently cleared back to `''` by a user — is never re-migrated (`''` is defined, not `undefined`), so this is safe to run unconditionally on every load, forever.
 
-### 3.3 Filters engine (`filters.js`)
+### 3.3 Owner-required validation (`store.js`, `app.js`)
+
+A new function alongside the existing `findIncompleteTasks(project)` (which checks only *leaf* tasks for missing planned dates):
+
+```js
+function findTasksMissingOwner(project) {
+  return project.tasks.filter(t => !t.owner);
+}
+```
+
+Unlike `findIncompleteTasks`, this checks **every** task — no leaf/parent distinction, since `owner` isn't a computed/rolled-up value the way parent dates are.
+
+`handleSave` (`app.js`) checks both and combines them into one alert, so a user fixing one problem doesn't get blocked a second time by the other on their next Save attempt:
+
+```js
+var missingDates = PP.findIncompleteTasks(state.project);
+var missingOwner = PP.findTasksMissingOwner(state.project);
+if (missingDates.length || missingOwner.length) {
+  var msgs = [];
+  if (missingDates.length) msgs.push('missing planned dates on: ' + missingDates.map(function (t) { return t.name; }).join(', '));
+  if (missingOwner.length) msgs.push('missing Owner on: ' + missingOwner.map(function (t) { return t.name; }).join(', '));
+  window.alert('Cannot save — ' + msgs.join('; '));
+  return;
+}
+```
+
+### 3.4 Filters engine (`filters.js`)
 
 `taskMatches` gains an `owner` check parallel to the existing `pic` check:
 
@@ -69,13 +97,13 @@ if (filters.owner && task.owner !== filters.owner) return false;
 
 `hasActiveFilter` includes `filters.owner` in its OR-chain. `filters.search`'s haystack (`task.name`, `task.remarks`, `task.jira`) is **not** extended to include `owner` — search stays scoped to free-text descriptive fields; `owner`/`pic` already have their own dedicated dropdown filters, matching the existing convention that `pic` isn't part of the search haystack either.
 
-### 3.4 CSV (`csv.js`)
+### 3.5 CSV (`csv.js`)
 
 `CSV_HEADERS` becomes:
 ```js
 ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Milestone', 'Billing Amount', 'Billing Status', 'Predecessors']
 ```
-Every fixed-index column read in `validateCsvRows` shifts by one from index 3 onward (today's `c[3]` PIC → `c[4]`; today's `c[4..10]` → `c[5..11]`). The new `c[3]` (Owner) has no validation rule — same as PIC today (any string, including empty, is valid). `specs.push({...})` gains `owner: c[3]` alongside `pic: c[4]`.
+Every fixed-index column read in `validateCsvRows` shifts by one from index 3 onward (today's `c[3]` PIC → `c[4]`; today's `c[4..10]` → `c[5..11]`). The new `c[3]` (Owner) **is required**, same style as the existing Task Name check: `if (!c[3]) errors.push('Row ' + rowNum + ': Owner is required');`. The new `c[4]` (PIC) keeps the old PIC column's validation — none; any string, including empty, is valid. `specs.push({...})` gains `owner: c[3]` alongside `pic: c[4]`.
 
 ## 4. UI Components
 
@@ -88,10 +116,10 @@ Every fixed-index column read in `validateCsvRows` shifts by one from index 3 on
 
 ## 5. Testing
 
-- `store.test.js`: new tests for the migration pass (a task loaded with only `pic` set gets `owner` populated and `pic` cleared; a task that already has `owner` — including `owner: ''` — is left untouched by the migration; `addTask`/`addTasks` correctly set `owner`).
+- `store.test.js`: new tests for the migration pass (a task loaded with only `pic` set gets `owner` populated and `pic` cleared; a task that already has `owner` — including `owner: ''` — is left untouched by the migration; `addTask`/`addTasks` correctly set `owner`); new tests for `findTasksMissingOwner` (returns tasks — leaf and parent alike — with blank `owner`, excludes tasks with a non-blank `owner`).
 - `filters.test.js`: new tests for the `owner` filter (matches, non-matches, combined with existing filters, `hasActiveFilter` includes it).
-- `csv.test.js`: update existing fixtures/tests for the new column order and index shift; new tests for Owner column parsing (present, blank, combined with existing validation errors).
-- UI files (`tree.js`, `app.js`, `reports.js`) have no automated test coverage by this project's standing convention (no jsdom) — verified via controller-run Playwright checks: Owner column renders/edits correctly in the Plan tree, Owner filter dropdown populates and filters correctly, CSV template downloads with the new header and a round-trip import (export template → fill Owner+PIC → import) produces tasks with both fields set correctly, Reports tables show both columns, Duplicate copies both fields, Resources/workload/capacity are visually unchanged.
+- `csv.test.js`: update existing fixtures/tests for the new column order and index shift; new tests for Owner column parsing (present, blank → row rejected with "Owner is required", combined with existing validation errors) and for PIC staying optional at its new index.
+- UI files (`tree.js`, `app.js`, `reports.js`) have no automated test coverage by this project's standing convention (no jsdom) — verified via controller-run Playwright checks: Owner column renders/edits correctly in the Plan tree, Owner filter dropdown populates and filters correctly, CSV template downloads with the new header and a round-trip import (export template → fill Owner+PIC → import) produces tasks with both fields set correctly, Save is blocked with a combined alert when a task is missing Owner and/or planned dates and succeeds once fixed, Reports tables show both columns, Duplicate copies both fields, Resources/workload/capacity are visually unchanged.
 - Regression: existing 147 tests must all still pass (none of them assert against the previous CSV column indices in a way that would silently pass with shifted data — this must be confirmed, not assumed, since shifted-but-still-parseable data is exactly the kind of bug that survives a naive test run).
 
 ## 6. Out of Scope

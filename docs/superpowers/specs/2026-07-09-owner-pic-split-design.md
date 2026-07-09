@@ -67,11 +67,11 @@ A new function alongside the existing `findIncompleteTasks(project)` (which chec
 
 ```js
 function findTasksMissingOwner(project) {
-  return project.tasks.filter(t => !t.owner);
+  return project.tasks.filter(t => !t.owner || !t.owner.trim());
 }
 ```
 
-Unlike `findIncompleteTasks`, this checks **every** task — no leaf/parent distinction, since `owner` isn't a computed/rolled-up value the way parent dates are.
+Unlike `findIncompleteTasks`, this checks **every** task — no leaf/parent distinction, since `owner` isn't a computed/rolled-up value the way parent dates are. The `.trim()` check catches whitespace-only owner values (`"   "`) that would otherwise pass a bare truthiness check while being visually blank — the stored value itself is left as the user typed it (not force-trimmed), matching this codebase's existing convention of not auto-trimming other free-text fields (`name`, `remarks`); only the *required-ness check* accounts for whitespace.
 
 `handleSave` (`app.js`) checks both and combines them into one alert, so a user fixing one problem doesn't get blocked a second time by the other on their next Save attempt:
 
@@ -103,12 +103,12 @@ if (filters.owner && task.owner !== filters.owner) return false;
 ```js
 ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Milestone', 'Billing Amount', 'Billing Status', 'Predecessors']
 ```
-Every fixed-index column read in `validateCsvRows` shifts by one from index 3 onward (today's `c[3]` PIC → `c[4]`; today's `c[4..10]` → `c[5..11]`). The new `c[3]` (Owner) **is required**, same style as the existing Task Name check: `if (!c[3]) errors.push('Row ' + rowNum + ': Owner is required');`. The new `c[4]` (PIC) keeps the old PIC column's validation — none; any string, including empty, is valid. `specs.push({...})` gains `owner: c[3]` alongside `pic: c[4]`.
+Every fixed-index column read in `validateCsvRows` shifts by one from index 3 onward (today's `c[3]` PIC → `c[4]`; today's `c[4..10]` → `c[5..11]`). The new `c[3]` (Owner) **is required**, same style as the existing Task Name check: `if (!c[3] || !c[3].trim()) errors.push('Row ' + rowNum + ': Owner is required');` — matching the `.trim()`-aware check from §3.3, so a whitespace-only cell is rejected the same way a truly empty one is. This error message follows the exact bare `'Row ' + rowNum + ': ...'` format every other error in this function already uses (no task-name context is added, since none of the existing errors — including the pre-existing Task Name check itself — include it either; a one-off richer format here would be inconsistent with the rest of this function). The new `c[4]` (PIC) keeps the old PIC column's validation — none; any string, including empty, is valid. `specs.push({...})` gains `owner: c[3]` alongside `pic: c[4]`.
 
 ## 4. UI Components
 
 1. **Plan tree** (`tree.js`, `index.html`, `layout.css`) — new "Owner" grid column immediately before "PIC" (19th column overall). Same rendering pattern as PIC: `<span class="cell col-owner" data-field="owner">...</span>`, same inline dblclick-to-edit text behavior via the existing `beginEdit()` generic text-field path (no new editor type needed — `owner` behaves exactly like `pic` does today for editing purposes). `grid-template-columns` and the shared `min-width` literal both grow to fit the new column.
-2. **Toolbar filter** (`app.js`, `index.html`) — new `<select id="owner-filter">` next to `#pic-filter`, wired the same way `renderPicFilter`/`#pic-filter`'s change handler already are, but sourcing distinct values purely from `task.owner` across all tasks (no managed list to union in, unlike PIC's `picList`).
+2. **Toolbar filter** (`app.js`, `index.html`) — new `<select id="owner-filter">` next to `#pic-filter`, wired the same way `renderPicFilter`/`#pic-filter`'s change handler already are, including its existing `Array.from(set).sort()` alphabetical ordering — but sourcing distinct values purely from `task.owner` across all tasks (no managed list to union in, unlike PIC's `picList`). Matching is exact-string, case-sensitive, same as the existing PIC filter (`task.pic !== filters.pic`) — no new case-normalization behavior is introduced for either field.
 3. **CSV template/import** — covered in §3.4; the "Download CSV Template" button's output and the import validation/mapping both follow the new header order.
 4. **Reports** (`reports.js`) — every report table that renders a PIC column (Weekly Status, Executive Dashboard, Management Summary — wherever `task.pic` is read today) gains an adjacent Owner column reading `task.owner`.
 5. **Duplicate action** (`tree.js`'s context menu) — the `Duplicate` handler's `state.project.addTask({ parentId: task.parentId, name: ..., pic: task.pic })` call gains `owner: task.owner` alongside it.
@@ -122,7 +122,11 @@ Every fixed-index column read in `validateCsvRows` shifts by one from index 3 on
 - UI files (`tree.js`, `app.js`, `reports.js`) have no automated test coverage by this project's standing convention (no jsdom) — verified via controller-run Playwright checks: Owner column renders/edits correctly in the Plan tree, Owner filter dropdown populates and filters correctly, CSV template downloads with the new header and a round-trip import (export template → fill Owner+PIC → import) produces tasks with both fields set correctly, Save is blocked with a combined alert when a task is missing Owner and/or planned dates and succeeds once fixed, Reports tables show both columns, Duplicate copies both fields, Resources/workload/capacity are visually unchanged.
 - Regression: existing 147 tests must all still pass (none of them assert against the previous CSV column indices in a way that would silently pass with shifted data — this must be confirmed, not assumed, since shifted-but-still-parseable data is exactly the kind of bug that survives a naive test run).
 
-## 6. Out of Scope
+## 6. Guardrail
+
+`owner` is a display-text field, same as `pic`, `remarks`, `name` — never a lookup key or identifier. No future code should branch on a specific owner string (e.g. `if (task.owner === 'KPMG')`); anything needing that kind of structured distinction is a different field/feature, not a special case bolted onto this one.
+
+## 7. Out of Scope
 
 - No managed "Owner list" / roster (add/remove UI), no per-Owner capacity or FTE modeling.
 - No changes to `workload.js`'s grouping key, "Only mine" filter semantics, or Resources view structure.

@@ -101,6 +101,23 @@
         if (raw === opt) option.selected = true;
         el.appendChild(option);
       });
+    } else if (field === 'pic') {
+      el = document.createElement('select');
+      el.className = 'cell-editor';
+      var picSet = new Set(state.project.picList || []);
+      state.project.tasks.forEach(function (t) { if (t.pic) picSet.add(t.pic); });
+      var blankOption = document.createElement('option');
+      blankOption.value = '';
+      blankOption.textContent = '(none)';
+      if (!raw) blankOption.selected = true;
+      el.appendChild(blankOption);
+      Array.from(picSet).sort().forEach(function (opt) {
+        var option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        if (raw === opt) option.selected = true;
+        el.appendChild(option);
+      });
     } else {
       el = document.createElement('input');
       el.className = 'cell-editor';

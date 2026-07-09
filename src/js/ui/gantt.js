@@ -192,7 +192,11 @@
       row.className = 'gantt-label-row';
       row.style.height = ROW_HEIGHT + 'px';
       row.style.paddingLeft = (computed.depth * 16) + 'px';
-      row.textContent = task.name;
+      row.title = task.name;
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'gantt-label-text';
+      nameSpan.textContent = task.name;
+      row.appendChild(nameSpan);
       labels.appendChild(row);
     });
   }

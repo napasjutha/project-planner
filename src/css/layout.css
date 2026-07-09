@@ -163,7 +163,11 @@
 }
 .gantt-label-row {
   display: flex; align-items: center; font-size: 13px; padding-left: 8px;
-  border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-bottom: 1px solid var(--border);
+}
+.gantt-label-text {
+  flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 #gantt-body { flex-shrink: 0; }
 

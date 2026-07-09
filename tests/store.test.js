@@ -389,14 +389,17 @@ test('Project does not re-migrate a task that already has owner, even if owner i
   assert.equal(p.tasks[0].pic, 'Somchai');
 });
 
-test('findTasksMissingOwner returns tasks with blank or whitespace-only owner, leaf and parent alike', () => {
+test('findTasksMissingOwner returns leaf tasks with blank or whitespace-only owner, exempting parent/container tasks', () => {
   const p = Project.empty('Test');
   const parent = p.addTask({ parentId: null, name: 'Phase', owner: '' });
-  const leafOk = p.addTask({ parentId: parent.id, name: 'Leaf OK', owner: 'KPMG' });
-  const leafBlank = p.addTask({ parentId: parent.id, name: 'Leaf Blank', owner: '' });
-  const leafWhitespace = p.addTask({ parentId: parent.id, name: 'Leaf Whitespace', owner: '   ' });
+  const midContainer = p.addTask({ parentId: parent.id, name: 'Mid Container', owner: '' });
+  const leafOk = p.addTask({ parentId: midContainer.id, name: 'Leaf OK', owner: 'KPMG' });
+  const leafBlank = p.addTask({ parentId: midContainer.id, name: 'Leaf Blank', owner: '' });
+  const leafWhitespace = p.addTask({ parentId: midContainer.id, name: 'Leaf Whitespace', owner: '   ' });
   const missing = findTasksMissingOwner(p);
   const missingIds = missing.map(t => t.id).sort();
-  assert.deepEqual(missingIds, [leafBlank.id, leafWhitespace.id, parent.id].sort());
+  assert.deepEqual(missingIds, [leafBlank.id, leafWhitespace.id].sort());
   assert.ok(!missingIds.includes(leafOk.id));
+  assert.ok(!missingIds.includes(parent.id));
+  assert.ok(!missingIds.includes(midContainer.id));
 });

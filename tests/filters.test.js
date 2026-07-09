@@ -42,6 +42,13 @@ test('taskMatches: onlyMine requires pic === currentUser', () => {
   assert.equal(taskMatches(t, { status: 'In Progress' }, { onlyMine: true }, 'Bob'), false);
 });
 
+test('taskMatches: onlyMilestone requires milestone flag', () => {
+  const t = { id: 't1', parentId: null, name: 'Task', owner: '', pic: 'Alice', remarks: '', jira: '', milestone: true };
+  const nonMilestone = { id: 't2', parentId: null, name: 'Task', owner: '', pic: 'Alice', remarks: '', jira: '', milestone: false };
+  assert.equal(taskMatches(t, { status: 'In Progress' }, { onlyMilestone: true }, null), true);
+  assert.equal(taskMatches(nonMilestone, { status: 'In Progress' }, { onlyMilestone: true }, null), false);
+});
+
 test('taskMatches: filters compose with AND', () => {
   const t = task('t1', null, 'Task', 'Alice');
   assert.equal(taskMatches(t, { status: 'Delayed' }, { pic: 'Alice', onlyDelayed: true }, null), true);
@@ -102,6 +109,11 @@ test('taskMatches: owner and pic filters compose with AND', () => {
 test('hasActiveFilter is true when only owner is set', () => {
   assert.equal(hasActiveFilter({ search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyMine: false }), false);
   assert.equal(hasActiveFilter({ owner: 'KPMG' }), true);
+});
+
+test('hasActiveFilter is true when only onlyMilestone is set', () => {
+  assert.equal(hasActiveFilter({ onlyMilestone: false }), false);
+  assert.equal(hasActiveFilter({ onlyMilestone: true }), true);
 });
 
 test('hasActiveFilter is false for an all-default filter object and true when any field is set', () => {

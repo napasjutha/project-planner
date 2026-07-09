@@ -21,7 +21,11 @@
   }
 
   function findTasksMissingOwner(project) {
-    return project.tasks.filter(t => !t.owner || !t.owner.trim());
+    const parentIds = new Set(project.tasks.map(t => t.parentId).filter(Boolean));
+    return project.tasks.filter(t => {
+      if (parentIds.has(t.id)) return false;
+      return !t.owner || !t.owner.trim();
+    });
   }
 
   function computeLastUpdated(project) {

@@ -137,6 +137,10 @@
       state.filters.onlyMine = e.target.checked;
       onFilterChange();
     });
+    document.getElementById('only-milestone-filter').addEventListener('change', function (e) {
+      state.filters.onlyMilestone = e.target.checked;
+      onFilterChange();
+    });
     document.getElementById('owner-filter').addEventListener('change', function (e) {
       state.filters.owner = e.target.value;
       onFilterChange();
@@ -359,7 +363,7 @@
       currentUser: localStorage.getItem('pp:currentUser'),
       dirty: false,
       calc: null,
-      filters: { search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyMine: false },
+      filters: { search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyMine: false, onlyMilestone: false },
       scurveOverlaySnapshotId: null,
       snapshotCompareA: null,
       snapshotCompareB: null,

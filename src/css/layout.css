@@ -159,7 +159,7 @@
 
 #gantt-scroll { flex: 1; overflow: auto; display: flex; }
 #gantt-labels {
-  flex-shrink: 0; width: 200px; position: sticky; left: 0; z-index: 1;
+  flex-shrink: 0; width: 320px; position: sticky; left: 0; z-index: 1;
   background: var(--surface); border-right: 1px solid var(--border);
 }
 .gantt-label-row {

@@ -19,11 +19,12 @@
     if (filters.status && computed.status !== filters.status) return false;
     if (filters.onlyDelayed && computed.status !== 'Delayed') return false;
     if (filters.onlyMine && task.pic !== currentUser) return false;
+    if (filters.onlyMilestone && !task.milestone) return false;
     return true;
   }
 
   function hasActiveFilter(filters) {
-    return !!(filters.search || filters.owner || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine);
+    return !!(filters.search || filters.owner || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine || filters.onlyMilestone);
   }
 
   function visibleIds(project, computedMap, order, filters, currentUser) {

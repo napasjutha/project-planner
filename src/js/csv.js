@@ -8,7 +8,7 @@
 })(globalThis, function () {
   'use strict';
 
-  const CSV_HEADERS = ['Row', 'Level', 'Task Name', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Milestone', 'Billing Amount', 'Billing Status', 'Predecessors'];
+  const CSV_HEADERS = ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Milestone', 'Billing Amount', 'Billing Status', 'Predecessors'];
 
   function stripBom(text) {
     return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
@@ -113,32 +113,33 @@
       }
 
       if (!c[2]) errors.push('Row ' + rowNum + ': Task Name is required');
-      if (c[4] && !DATE_RE.test(c[4])) errors.push('Row ' + rowNum + ": Planned Start '" + c[4] + "' is not a valid date (expected YYYY-MM-DD)");
-      if (c[5] && !DATE_RE.test(c[5])) errors.push('Row ' + rowNum + ": Planned Finish '" + c[5] + "' is not a valid date (expected YYYY-MM-DD)");
+      if (!c[3] || !c[3].trim()) errors.push('Row ' + rowNum + ': Owner is required');
+      if (c[5] && !DATE_RE.test(c[5])) errors.push('Row ' + rowNum + ": Planned Start '" + c[5] + "' is not a valid date (expected YYYY-MM-DD)");
+      if (c[6] && !DATE_RE.test(c[6])) errors.push('Row ' + rowNum + ": Planned Finish '" + c[6] + "' is not a valid date (expected YYYY-MM-DD)");
 
-      const milestone = MILESTONE_TRUE.indexOf(c[7].toLowerCase()) !== -1;
+      const milestone = MILESTONE_TRUE.indexOf(c[8].toLowerCase()) !== -1;
 
       let billingAmount = null;
-      if (c[8]) {
-        billingAmount = Number(c[8]);
+      if (c[9]) {
+        billingAmount = Number(c[9]);
         if (!isFinite(billingAmount)) {
-          errors.push('Row ' + rowNum + ": Billing Amount '" + c[8] + "' is not a number");
+          errors.push('Row ' + rowNum + ": Billing Amount '" + c[9] + "' is not a number");
           billingAmount = null;
         }
       }
 
       let billingStatus = null;
-      if (c[9]) {
-        if (BILLING_STATUSES.indexOf(c[9]) === -1) {
-          errors.push('Row ' + rowNum + ": Billing Status '" + c[9] + "' must be one of: " + BILLING_STATUSES.join(', '));
+      if (c[10]) {
+        if (BILLING_STATUSES.indexOf(c[10]) === -1) {
+          errors.push('Row ' + rowNum + ": Billing Status '" + c[10] + "' must be one of: " + BILLING_STATUSES.join(', '));
         } else {
-          billingStatus = c[9];
+          billingStatus = c[10];
         }
       }
 
       const predecessors = [];
-      if (c[10]) {
-        c[10].split(';').forEach(part => {
+      if (c[11]) {
+        c[11].split(';').forEach(part => {
           const p = Number(part.trim());
           if (!Number.isInteger(p) || p < 1) {
             errors.push('Row ' + rowNum + ": Predecessor '" + part.trim() + "' must be a Row number");
@@ -152,9 +153,9 @@
 
       specs.push({
         _row: rowNum, _level: Number.isInteger(level) && level >= 0 ? level : 0,
-        name: c[2], pic: c[3],
-        plannedStart: c[4] || null, plannedFinish: c[5] || null,
-        remarks: c[6], milestone,
+        name: c[2], owner: c[3], pic: c[4],
+        plannedStart: c[5] || null, plannedFinish: c[6] || null,
+        remarks: c[7], milestone,
         billingAmount, billingStatus, predecessors,
       });
     });

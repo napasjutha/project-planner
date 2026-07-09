@@ -32,14 +32,14 @@ test('parseCsvText preserves non-ASCII text', () => {
   assert.deepEqual(parseCsvText('งานออกแบบ,สมชาย'), [['งานออกแบบ', 'สมชาย']]);
 });
 
-test('csvTemplateText is the exact 11-column header row', () => {
+test('csvTemplateText is the exact 12-column header row', () => {
   assert.equal(
     csvTemplateText(),
-    'Row,Level,Task Name,PIC,Planned Start,Planned Finish,Remarks,Milestone,Billing Amount,Billing Status,Predecessors\n'
+    'Row,Level,Task Name,Owner,PIC,Planned Start,Planned Finish,Remarks,Milestone,Billing Amount,Billing Status,Predecessors\n'
   );
 });
 
-const HEADER = 'Row,Level,Task Name,PIC,Planned Start,Planned Finish,Remarks,Milestone,Billing Amount,Billing Status,Predecessors';
+const HEADER = 'Row,Level,Task Name,Owner,PIC,Planned Start,Planned Finish,Remarks,Milestone,Billing Amount,Billing Status,Predecessors';
 
 function rowsOf(text) {
   return parseCsvText(text);
@@ -48,16 +48,19 @@ function rowsOf(text) {
 test('validateCsvRows accepts a valid file and builds task specs in order', () => {
   const { errors, tasks } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,Phase A,,,,,,,,\n' +
-    '2,1,Design,Alice,2026-07-01,2026-07-10,first cut,,,,\n' +
-    '3,1,Build,Bob,2026-07-11,2026-07-20,,Y,25000,Invoiced,2\n'
+    '1,0,Phase A,KPMG,,,,,,,,\n' +
+    '2,1,Design,KPMG,Alice,2026-07-01,2026-07-10,first cut,,,,\n' +
+    '3,1,Build,Client Team,Bob,2026-07-11,2026-07-20,,Y,25000,Invoiced,2\n'
   ));
   assert.deepEqual(errors, []);
   assert.equal(tasks.length, 3);
   assert.deepEqual(tasks[0], {
-    _row: 1, _level: 0, name: 'Phase A', pic: '', plannedStart: null, plannedFinish: null,
+    _row: 1, _level: 0, name: 'Phase A', owner: 'KPMG', pic: '', plannedStart: null, plannedFinish: null,
     remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [],
   });
+  assert.equal(tasks[1].owner, 'KPMG');
+  assert.equal(tasks[1].pic, 'Alice');
+  assert.equal(tasks[2].owner, 'Client Team');
   assert.equal(tasks[2].milestone, true);
   assert.equal(tasks[2].billingAmount, 25000);
   assert.equal(tasks[2].billingStatus, 'Invoiced');
@@ -73,43 +76,55 @@ test('validateCsvRows rejects a wrong header row', () => {
 
 test('validateCsvRows rejects wrong column count with the row number', () => {
   const { errors } = validateCsvRows(rowsOf(HEADER + '\n1,0,Task A'));
-  assert.ok(errors.some(e => /Row 1:.*11 columns/.test(e)));
+  assert.ok(errors.some(e => /Row 1:.*12 columns/.test(e)));
 });
 
 test('validateCsvRows rejects duplicate and non-integer Row numbers', () => {
   const { errors } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,A,,,,,,,,\n' +
-    '1,0,B,,,,,,,,\n' +
-    'x,0,C,,,,,,,,\n'
+    '1,0,A,KPMG,,,,,,,,\n' +
+    '1,0,B,KPMG,,,,,,,,\n' +
+    'x,0,C,KPMG,,,,,,,,\n'
   ));
   assert.ok(errors.some(e => /duplicate/i.test(e)));
   assert.ok(errors.some(e => /Row number 'x'/.test(e)));
 });
 
 test('validateCsvRows rejects a Level jump greater than +1 and a first row above level 0', () => {
-  const jump = validateCsvRows(rowsOf(HEADER + '\n1,0,A,,,,,,,,\n2,2,B,,,,,,,,\n'));
+  const jump = validateCsvRows(rowsOf(HEADER + '\n1,0,A,KPMG,,,,,,,,\n2,2,B,KPMG,,,,,,,,\n'));
   assert.ok(jump.errors.some(e => /Row 2:.*Level 2/.test(e)));
-  const firstDeep = validateCsvRows(rowsOf(HEADER + '\n1,1,A,,,,,,,,\n'));
+  const firstDeep = validateCsvRows(rowsOf(HEADER + '\n1,1,A,KPMG,,,,,,,,\n'));
   assert.ok(firstDeep.errors.some(e => /Row 1:.*Level/.test(e)));
 });
 
-test('validateCsvRows rejects empty Task Name, bad dates, bad Billing values', () => {
+test('validateCsvRows rejects empty Task Name, blank Owner, bad dates, bad Billing values', () => {
   const { errors } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,,,next tuesday,2026-13-99,,maybe,lots,Sort Of,\n'
+    '1,0,,,,next tuesday,2026-13-99,,maybe,lots,Sort Of,\n'
   ));
   assert.ok(errors.some(e => /Task Name/.test(e)));
+  assert.ok(errors.some(e => /Owner is required/.test(e)));
   assert.ok(errors.some(e => /Planned Start/.test(e)));
   assert.ok(errors.some(e => /Billing Amount/.test(e)));
   assert.ok(errors.some(e => /Billing Status/.test(e)));
 });
 
+test('validateCsvRows rejects a whitespace-only Owner the same as a blank one', () => {
+  const { errors } = validateCsvRows(rowsOf(HEADER + '\n1,0,Task A,   ,,,,,,,,\n'));
+  assert.ok(errors.some(e => /Row 1:.*Owner is required/.test(e)));
+});
+
+test('validateCsvRows leaves PIC optional when Owner is present', () => {
+  const { errors, tasks } = validateCsvRows(rowsOf(HEADER + '\n1,0,Task A,KPMG,,,,,,,,\n'));
+  assert.deepEqual(errors, []);
+  assert.equal(tasks[0].pic, '');
+});
+
 test('validateCsvRows rejects predecessor references to missing rows and to self', () => {
   const { errors } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,A,,,,,,,,99\n' +
-    '2,0,B,,,,,,,,2\n'
+    '1,0,A,KPMG,,,,,,,,99\n' +
+    '2,0,B,KPMG,,,,,,,,2\n'
   ));
   assert.ok(errors.some(e => /Row 1:.*99/.test(e)));
   assert.ok(errors.some(e => /Row 2:.*itself/i.test(e)));
@@ -118,8 +133,8 @@ test('validateCsvRows rejects predecessor references to missing rows and to self
 test('validateCsvRows allows forward predecessor references', () => {
   const { errors } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,A,,,,,,,,2\n' +
-    '2,0,B,,,,,,,,\n'
+    '1,0,A,KPMG,,,,,,,,2\n' +
+    '2,0,B,KPMG,,,,,,,,\n'
   ));
   assert.deepEqual(errors, []);
 });
@@ -127,8 +142,8 @@ test('validateCsvRows allows forward predecessor references', () => {
 test('validateCsvRows returns no tasks when any error exists', () => {
   const { errors, tasks } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,Good,,,,,,,,\n' +
-    '2,0,,,,,,,,,\n'
+    '1,0,Good,KPMG,,,,,,,,\n' +
+    '2,0,,KPMG,,,,,,,,\n'
   ));
   assert.ok(errors.length > 0);
   assert.deepEqual(tasks, []);
@@ -137,9 +152,9 @@ test('validateCsvRows returns no tasks when any error exists', () => {
 test('validateCsvRows parses milestone variants case-insensitively', () => {
   const { errors, tasks } = validateCsvRows(rowsOf(
     HEADER + '\n' +
-    '1,0,A,,,,,yes,,,\n' +
-    '2,0,B,,,,,TRUE,,,\n' +
-    '3,0,C,,,,,n,,,\n'
+    '1,0,A,KPMG,,,,,yes,,,\n' +
+    '2,0,B,KPMG,,,,,TRUE,,,\n' +
+    '3,0,C,KPMG,,,,,n,,,\n'
   ));
   assert.deepEqual(errors, []);
   assert.equal(tasks[0].milestone, true);

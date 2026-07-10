@@ -97,6 +97,9 @@
       state.scurveOverlaySnapshotId = e.target.value || null;
       onOverlayChanged();
     });
+    document.getElementById('scurve-copy-image-button').addEventListener('click', function () {
+      PP.copyElementAsImage(document.getElementById('scurve-body'));
+    });
   }
 
   window.PP = window.PP || {};

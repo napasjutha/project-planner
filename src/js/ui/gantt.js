@@ -154,7 +154,7 @@
         if (!predComputed || !predComputed.plannedFinish) return;
         var predY = HEADER_HEIGHT + predIndex * ROW_HEIGHT + BAR_HEIGHT / 2;
         var predX = dateToX(predComputed.plannedFinish, range.startMs, pxPerDay) + pxPerDay;
-        var midX = predX + 8;
+        var midX = thisX > predX + 8 ? predX + 8 : predX;
         var pathD = 'M ' + predX + ' ' + predY + ' L ' + midX + ' ' + predY + ' L ' + midX + ' ' + thisY + ' L ' + thisX + ' ' + thisY;
         var isCriticalEdge = cp.criticalEdges.has(predId + '->' + id);
         svg.appendChild(svgEl('path', {

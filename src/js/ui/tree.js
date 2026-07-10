@@ -22,7 +22,7 @@
     body.innerHTML = '';
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
     var children = state.calc.children;
-    var rows = PP.computeVisibleRows(state.project, state.calc, state.filters, state.currentUser);
+    var rows = PP.computeVisibleRows(state.project, state.calc, state.filters);
 
     rows.forEach(function (id) {
       var task = byId.get(id);

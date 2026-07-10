@@ -8,7 +8,7 @@
 })(globalThis, function () {
   'use strict';
 
-  function taskMatches(task, computed, filters, currentUser) {
+  function taskMatches(task, computed, filters) {
     const search = (filters.search || '').trim().toLowerCase();
     if (search) {
       const haystack = `${task.name} ${task.remarks} ${task.jira}`.toLowerCase();
@@ -18,16 +18,15 @@
     if (filters.pic && task.pic !== filters.pic) return false;
     if (filters.status && computed.status !== filters.status) return false;
     if (filters.onlyDelayed && computed.status !== 'Delayed') return false;
-    if (filters.onlyMine && task.pic !== currentUser) return false;
     if (filters.onlyMilestone && !task.milestone) return false;
     return true;
   }
 
   function hasActiveFilter(filters) {
-    return !!(filters.search || filters.owner || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMine || filters.onlyMilestone);
+    return !!(filters.search || filters.owner || filters.pic || filters.status || filters.onlyDelayed || filters.onlyMilestone);
   }
 
-  function visibleIds(project, computedMap, order, filters, currentUser) {
+  function visibleIds(project, computedMap, order, filters) {
     if (!hasActiveFilter(filters)) return new Set(order);
 
     const byId = new Map(project.tasks.map(t => [t.id, t]));
@@ -35,7 +34,7 @@
     for (const id of order) {
       const task = byId.get(id);
       const computed = computedMap.get(id);
-      if (taskMatches(task, computed, filters, currentUser)) matched.add(id);
+      if (taskMatches(task, computed, filters)) matched.add(id);
     }
 
     const visible = new Set();
@@ -50,9 +49,9 @@
     return visible;
   }
 
-  function computeVisibleRows(project, calc, filters, currentUser) {
+  function computeVisibleRows(project, calc, filters) {
     const byId = new Map(project.tasks.map(t => [t.id, t]));
-    const visible = visibleIds(project, calc.computed, calc.order, filters, currentUser);
+    const visible = visibleIds(project, calc.computed, calc.order, filters);
     const filterActive = hasActiveFilter(filters);
     const suppressed = new Set();
     const rows = [];

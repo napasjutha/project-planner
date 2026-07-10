@@ -43,7 +43,7 @@
     var totalDays = Math.round((range.finishMs - range.startMs) / DAY_MS);
     var width = Math.max(200, totalDays * pxPerDay);
 
-    var rows = PP.computeVisibleRows(state.project, state.calc, state.filters, state.currentUser);
+    var rows = PP.computeVisibleRows(state.project, state.calc, state.filters);
     var height = Math.max(60, HEADER_HEIGHT + rows.length * ROW_HEIGHT);
 
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));

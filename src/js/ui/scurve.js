@@ -32,14 +32,24 @@
       svg.appendChild(label);
     }
 
-    function pathFor(key) {
-      return points.map(function (p, i) {
+    function pathFor(key, pts) {
+      return (pts || points).map(function (p, i) {
         return (i === 0 ? 'M ' : 'L ') + xAt(i) + ' ' + yAt(p[key]);
       }).join(' ');
     }
 
+    function actualCutoffIndex() {
+      var statusDate = state.project.meta.statusDate;
+      for (var i = 0; i < points.length; i++) {
+        if (points[i].periodDate > statusDate) return Math.max(0, i - 1);
+      }
+      return points.length - 1;
+    }
+
+    var actualPoints = points.slice(0, actualCutoffIndex() + 1);
+
     svg.appendChild(svgEl('path', { d: pathFor('plannedCum'), fill: 'none', stroke: 'var(--kpmg-blue)', 'stroke-width': 2 }));
-    svg.appendChild(svgEl('path', { d: pathFor('actualCum'), fill: 'none', stroke: 'var(--status-complete)', 'stroke-width': 2 }));
+    svg.appendChild(svgEl('path', { d: pathFor('actualCum', actualPoints), fill: 'none', stroke: 'var(--status-complete)', 'stroke-width': 2 }));
 
     var overlayId = state.scurveOverlaySnapshotId;
     if (overlayId) {
@@ -52,7 +62,7 @@
       }
     }
 
-    points.forEach(function (p, i) {
+    actualPoints.forEach(function (p, i) {
       svg.appendChild(svgEl('circle', {
         cx: xAt(i), cy: yAt(p.actualCum), r: 3, fill: 'var(--status-complete)',
         'data-index': i, class: 'scurve-dot',

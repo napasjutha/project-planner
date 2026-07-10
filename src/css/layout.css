@@ -254,12 +254,12 @@
 [data-theme="dark"] .workload-cell-over { background: rgba(255,59,48,0.2); }
 [data-theme="dark"] .workload-cell-full { background: rgba(255,204,0,0.24); }
 #workload-drilldown { margin-top: 12px; font-size: 13px; }
-.theme-btn, #new-project-button, #add-pic-button, #csv-template-button, #import-csv-button {
+.theme-btn, #new-project-button, #add-pic-button, #csv-template-button, #import-csv-button, #export-csv-button {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 7px 14px; font-size: 13px; cursor: pointer; margin-right: 6px;
   transition: background 150ms ease;
 }
-.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover, #csv-template-button:hover, #import-csv-button:hover { background: var(--surface-sunken); }
+.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover, #csv-template-button:hover, #import-csv-button:hover, #export-csv-button:hover { background: var(--surface-sunken); }
 .theme-btn.active { background: var(--kpmg-blue); color: #fff; border-color: var(--kpmg-blue); }
 .pic-editor-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .pic-remove-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }

@@ -11,6 +11,7 @@
     state.calc = PP.recalc(state.project);
     state.lastUpdated = PP.computeLastUpdated(state.project);
     renderHeader(state);
+    updateUndoRedoButtons(state);
     renderPicFilter(state);
     renderOwnerFilter(state);
     PP.renderTree(state);
@@ -58,6 +59,23 @@
     });
   }
 
+  function updateUndoRedoButtons(state) {
+    var undoBtn = document.getElementById('undo-button');
+    var redoBtn = document.getElementById('redo-button');
+    var undoStack = state.project._undoStack;
+    var redoStack = state.project._redoStack;
+
+    undoBtn.disabled = undoStack.length === 0;
+    undoBtn.title = undoStack.length
+      ? 'Undo: ' + PP.describeChange(undoStack[undoStack.length - 1], state.project.toJSON())
+      : '';
+
+    redoBtn.disabled = redoStack.length === 0;
+    redoBtn.title = redoStack.length
+      ? 'Redo: ' + PP.describeChange(state.project.toJSON(), redoStack[redoStack.length - 1])
+      : '';
+  }
+
   function renderPicFilter(state) {
     var select = document.getElementById('pic-filter');
     var current = select.value;
@@ -101,6 +119,12 @@
       state.project.meta.statusDate = e.target.value;
       refresh(state, true);
     });
+    document.getElementById('undo-button').addEventListener('click', function () {
+      if (state.project.undo()) refresh(state, true);
+    });
+    document.getElementById('redo-button').addEventListener('click', function () {
+      if (state.project.redo()) refresh(state, true);
+    });
     document.getElementById('save-button').addEventListener('click', function () {
       handleSave(state);
     });
@@ -111,6 +135,21 @@
       var file = e.target.files[0];
       if (file) handleLoadProject(state, file);
       e.target.value = '';
+    });
+  }
+
+  function wireUndoRedoKeyboard(state) {
+    document.addEventListener('keydown', function (e) {
+      var active = document.activeElement;
+      var tag = active ? active.tagName : '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 'z') return;
+      e.preventDefault();
+      if (e.shiftKey) {
+        if (state.project.redo()) refresh(state, true);
+      } else {
+        if (state.project.undo()) refresh(state, true);
+      }
     });
   }
 
@@ -305,6 +344,7 @@
     document.getElementById('app').hidden = false;
     refresh(state, false);
     wireHeader(state);
+    wireUndoRedoKeyboard(state);
     wireToolbar(state);
     wireViewTabs(state);
     wireGanttZoom(state);

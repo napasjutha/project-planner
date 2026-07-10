@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { stripBom, parseCsvText, csvTemplateText, validateCsvRows } = require('../src/js/csv.js');
+const { stripBom, parseCsvText, csvTemplateText, validateCsvRows, escapeCsvField, buildExportCsv } = require('../src/js/csv.js');
 
 test('stripBom removes a leading BOM and leaves clean text alone', () => {
   assert.equal(stripBom('﻿Row,Level'), 'Row,Level');
@@ -160,4 +160,74 @@ test('validateCsvRows parses milestone variants case-insensitively', () => {
   assert.equal(tasks[0].milestone, true);
   assert.equal(tasks[1].milestone, true);
   assert.equal(tasks[2].milestone, false);
+});
+
+test('escapeCsvField leaves plain values untouched and normalizes null/undefined to empty string', () => {
+  assert.equal(escapeCsvField('Alice'), 'Alice');
+  assert.equal(escapeCsvField(''), '');
+  assert.equal(escapeCsvField(null), '');
+  assert.equal(escapeCsvField(undefined), '');
+  assert.equal(escapeCsvField(42), '42');
+});
+
+test('escapeCsvField quotes and escapes values containing commas, quotes, or newlines', () => {
+  assert.equal(escapeCsvField('a,b'), '"a,b"');
+  assert.equal(escapeCsvField('say "hi"'), '"say ""hi"""');
+  assert.equal(escapeCsvField('line1\nline2'), '"line1\nline2"');
+});
+
+test('buildExportCsv on an empty project produces just the BOM-prefixed header row with a trailing CRLF', () => {
+  const csv = buildExportCsv({ tasks: [] }, { order: [], computed: new Map() }, new Map());
+  assert.equal(csv, '﻿WBS,Task,Owner,PIC,P-Start,P-Finish,A-Start,A-Finish,Duration,Weight,%Plan,%Actual,Status,Updated By,Updated At,Remarks,Predecessors\r\n');
+});
+
+test('buildExportCsv writes one row per task in calc.order with formatted values', () => {
+  const project = { tasks: [
+    { id: 't1', name: 'Design', owner: 'KPMG', pic: 'Alice', plannedStart: '2026-01-05', plannedFinish: '2026-01-10', actualStart: null, actualFinish: null, remarks: '', predecessors: [] },
+  ] };
+  const calc = {
+    order: ['t1'],
+    computed: new Map([['t1', { wbs: '1.1', duration: 5, weight: 0.25, plannedPctToDate: 0.6, actualPct: 0.3, status: 'In Progress' }]]),
+  };
+  const lastUpdated = new Map([['t1', { who: 'Bob', when: '2026-01-08T10:30:00.000Z' }]]);
+  const csv = buildExportCsv(project, calc, lastUpdated);
+  const lines = csv.split('\r\n');
+  assert.equal(lines[1], '1.1,Design,KPMG,Alice,2026-01-05,2026-01-10,,,5,25%,60%,30%,In Progress,Bob,2026-01-08 10:30,,');
+});
+
+test('buildExportCsv renders predecessors as comma-separated WBS references and blanks missing fields', () => {
+  const project = { tasks: [
+    { id: 'a', name: 'A', owner: 'KPMG', pic: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, remarks: '', predecessors: [] },
+    { id: 'b', name: 'B', owner: 'KPMG', pic: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, remarks: '', predecessors: ['a'] },
+  ] };
+  const calc = {
+    order: ['a', 'b'],
+    computed: new Map([
+      ['a', { wbs: '1', duration: 0, weight: 0.5, plannedPctToDate: 0, actualPct: 0, status: 'Not Start' }],
+      ['b', { wbs: '2', duration: 0, weight: 0.5, plannedPctToDate: 0, actualPct: 0, status: 'Not Start' }],
+    ]),
+  };
+  const csv = buildExportCsv(project, calc, new Map());
+  const lines = csv.split('\r\n');
+  assert.equal(lines[1], '1,A,KPMG,,,,,,0,50%,0%,0%,Not Start,,,,');
+  assert.equal(lines[2], '2,B,KPMG,,,,,,0,50%,0%,0%,Not Start,,,,1');
+});
+
+test('buildExportCsv escapes a task name containing a comma', () => {
+  const project = { tasks: [
+    { id: 't1', name: 'Design, Build & Test', owner: 'KPMG', pic: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, remarks: '', predecessors: [] },
+  ] };
+  const calc = { order: ['t1'], computed: new Map([['t1', { wbs: '1', duration: 0, weight: 1, plannedPctToDate: 0, actualPct: 0, status: 'Not Start' }]]) };
+  const csv = buildExportCsv(project, calc, new Map());
+  assert.ok(csv.includes('"Design, Build & Test"'));
+});
+
+test('buildExportCsv escapes Thai text with embedded newlines (Owner field) without corrupting it', () => {
+  const project = { tasks: [
+    { id: 't1', name: 'งานย่อยที่ 1', owner: 'KPMG/\nคณะทำงานกลาง', pic: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, remarks: '', predecessors: [] },
+  ] };
+  const calc = { order: ['t1'], computed: new Map([['t1', { wbs: '1', duration: 0, weight: 1, plannedPctToDate: 0, actualPct: 0, status: 'Not Start' }]]) };
+  const csv = buildExportCsv(project, calc, new Map());
+  assert.ok(csv.includes('"KPMG/\nคณะทำงานกลาง"'));
+  assert.ok(csv.includes('งานย่อยที่ 1'));
 });

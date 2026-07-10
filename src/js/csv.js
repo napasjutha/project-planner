@@ -172,5 +172,40 @@
     return errors.length ? { errors, tasks: [] } : { errors: [], tasks: specs };
   }
 
-  return { stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS };
+  function escapeCsvField(value) {
+    var s = value == null ? '' : String(value);
+    if (/[",\n\r]/.test(s)) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  var EXPORT_HEADERS = ['WBS', 'Task', 'Owner', 'PIC', 'P-Start', 'P-Finish', 'A-Start', 'A-Finish', 'Duration', 'Weight', '%Plan', '%Actual', 'Status', 'Updated By', 'Updated At', 'Remarks', 'Predecessors'];
+
+  function buildExportCsv(project, calc, lastUpdated) {
+    var byId = new Map(project.tasks.map(function (t) { return [t.id, t]; }));
+    var rows = [EXPORT_HEADERS.map(escapeCsvField).join(',')];
+    calc.order.forEach(function (id) {
+      var task = byId.get(id);
+      var c = calc.computed.get(id);
+      var lu = lastUpdated.get(id);
+      var predText = (task.predecessors || [])
+        .map(function (pid) { var pc = calc.computed.get(pid); return pc ? pc.wbs : null; })
+        .filter(Boolean)
+        .join(', ');
+      var fields = [
+        c.wbs, task.name, task.owner || '', task.pic || '',
+        task.plannedStart || '', task.plannedFinish || '',
+        task.actualStart || '', task.actualFinish || '',
+        c.duration, Math.round(c.weight * 100) + '%',
+        Math.round(c.plannedPctToDate * 100) + '%', Math.round(c.actualPct * 100) + '%',
+        c.status, lu ? lu.who : '', lu ? lu.when.slice(0, 16).replace('T', ' ') : '',
+        task.remarks || '', predText,
+      ];
+      rows.push(fields.map(escapeCsvField).join(','));
+    });
+    return '﻿' + rows.join('\r\n') + '\r\n';
+  }
+
+  return { stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS, escapeCsvField, buildExportCsv, EXPORT_HEADERS };
 });

@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { Project, generateId, findIncompleteTasks, findTasksMissingOwner, computeLastUpdated } = require('../src/js/store.js');
+const { Project, generateId, findIncompleteTasks, findTasksMissingOwner, describeChange, computeLastUpdated } = require('../src/js/store.js');
 
 test('generateId produces distinct string ids', () => {
   const a = generateId();
@@ -402,4 +402,62 @@ test('findTasksMissingOwner returns leaf tasks with blank or whitespace-only own
   assert.ok(!missingIds.includes(leafOk.id));
   assert.ok(!missingIds.includes(parent.id));
   assert.ok(!missingIds.includes(midContainer.id));
+});
+
+function snap(overrides) {
+  return Object.assign({ tasks: [], holidays: [], picList: [], snapshots: [], settings: {} }, overrides);
+}
+
+test('describeChange: a single added task', () => {
+  const before = snap({});
+  const after = snap({ tasks: [{ id: 't1', name: 'New Task' }] });
+  assert.equal(describeChange(before, after), "Add 'New Task'");
+});
+
+test('describeChange: multiple added tasks', () => {
+  const before = snap({});
+  const after = snap({ tasks: [{ id: 't1', name: 'A' }, { id: 't2', name: 'B' }] });
+  assert.equal(describeChange(before, after), 'Add 2 tasks');
+});
+
+test('describeChange: a single deleted task', () => {
+  const before = snap({ tasks: [{ id: 't1', name: 'Gone' }] });
+  const after = snap({});
+  assert.equal(describeChange(before, after), "Delete 'Gone'");
+});
+
+test('describeChange: multiple deleted tasks', () => {
+  const before = snap({ tasks: [{ id: 't1', name: 'A' }, { id: 't2', name: 'B' }] });
+  const after = snap({});
+  assert.equal(describeChange(before, after), 'Delete 2 tasks');
+});
+
+test('describeChange: a single field changed on one task', () => {
+  const before = snap({ tasks: [{ id: 't1', name: 'Design', plannedStart: '2026-01-01' }] });
+  const after = snap({ tasks: [{ id: 't1', name: 'Design', plannedStart: '2026-01-05' }] });
+  assert.equal(describeChange(before, after), "Change plannedStart on 'Design'");
+});
+
+test('describeChange: multiple fields changed on one task', () => {
+  const before = snap({ tasks: [{ id: 't1', name: 'Design', plannedStart: '2026-01-01', plannedFinish: '2026-01-02' }] });
+  const after = snap({ tasks: [{ id: 't1', name: 'Design', plannedStart: '2026-01-05', plannedFinish: '2026-01-06' }] });
+  assert.equal(describeChange(before, after), "Change 2 fields on 'Design'");
+});
+
+test('describeChange: fields changed on multiple tasks (e.g. a cascading successor shift)', () => {
+  const before = snap({ tasks: [{ id: 't1', name: 'A', plannedStart: '2026-01-01' }, { id: 't2', name: 'B', plannedStart: '2026-01-01' }] });
+  const after = snap({ tasks: [{ id: 't1', name: 'A', plannedStart: '2026-01-05' }, { id: 't2', name: 'B', plannedStart: '2026-01-06' }] });
+  assert.equal(describeChange(before, after), 'Change 2 tasks');
+});
+
+test('describeChange: falls through to holidays/picList/snapshots/settings when no task differs', () => {
+  const before = snap({});
+  assert.equal(describeChange(before, snap({ holidays: [{ date: '2026-01-01', label: 'New Year' }] })), 'Change holidays');
+  assert.equal(describeChange(before, snap({ picList: ['Alice'] })), 'Change PIC list');
+  assert.equal(describeChange(before, snap({ snapshots: [{ id: 's1' }] })), 'Take snapshot');
+  assert.equal(describeChange(before, snap({ settings: { theme: 'kpmg-dark' } })), 'Change settings');
+});
+
+test('describeChange: identical snapshots fall back to a generic label', () => {
+  assert.equal(describeChange(snap({}), snap({})), 'Change');
 });

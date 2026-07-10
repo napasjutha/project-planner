@@ -286,5 +286,43 @@
     }
   }
 
-  return { Project, generateId, findIncompleteTasks, findTasksMissingOwner, computeLastUpdated };
+  function describeChange(before, after) {
+    const beforeById = new Map(before.tasks.map(t => [t.id, t]));
+    const afterById = new Map(after.tasks.map(t => [t.id, t]));
+
+    const added = after.tasks.filter(t => !beforeById.has(t.id));
+    const removed = before.tasks.filter(t => !afterById.has(t.id));
+
+    if (added.length === 1 && removed.length === 0) return `Add '${added[0].name}'`;
+    if (added.length > 1 && removed.length === 0) return `Add ${added.length} tasks`;
+    if (removed.length === 1 && added.length === 0) return `Delete '${removed[0].name}'`;
+    if (removed.length > 1 && added.length === 0) return `Delete ${removed.length} tasks`;
+
+    const changedTasks = [];
+    for (const [id, afterTask] of afterById) {
+      const beforeTask = beforeById.get(id);
+      if (!beforeTask) continue;
+      const fields = Object.keys(afterTask).filter(k => JSON.stringify(afterTask[k]) !== JSON.stringify(beforeTask[k]));
+      if (fields.length) changedTasks.push({ task: afterTask, fields });
+    }
+
+    if (changedTasks.length === 1 && changedTasks[0].fields.length === 1) {
+      return `Change ${changedTasks[0].fields[0]} on '${changedTasks[0].task.name}'`;
+    }
+    if (changedTasks.length === 1) {
+      return `Change ${changedTasks[0].fields.length} fields on '${changedTasks[0].task.name}'`;
+    }
+    if (changedTasks.length > 1) {
+      return `Change ${changedTasks.length} tasks`;
+    }
+
+    if (JSON.stringify(before.holidays) !== JSON.stringify(after.holidays)) return 'Change holidays';
+    if (JSON.stringify(before.picList) !== JSON.stringify(after.picList)) return 'Change PIC list';
+    if (JSON.stringify(before.snapshots) !== JSON.stringify(after.snapshots)) return 'Take snapshot';
+    if (JSON.stringify(before.settings) !== JSON.stringify(after.settings)) return 'Change settings';
+
+    return 'Change';
+  }
+
+  return { Project, generateId, findIncompleteTasks, findTasksMissingOwner, describeChange, computeLastUpdated };
 });

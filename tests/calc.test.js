@@ -129,7 +129,7 @@ test('recalc: leaf actualPct is derived from actualStart/actualFinish dates, ign
     id: 'x-1', parentId: null, order: 0, name: 'X', pic: '',
     plannedStart: '2024-01-01', plannedFinish: '2024-01-31',
     actualStart: null, actualFinish: null, actualPct: 0.9,
-    weightOverride: null, milestone: false, statusOverride: null, predecessors: [],
+    weightOverride: null, deliverable: false, statusOverride: null, predecessors: [],
   }];
   const { computed } = recalc({ meta: { statusDate: '2024-01-15' }, tasks: customTasks, holidays: [] });
   assert.equal(computed.get('x-1').actualPct, 0);
@@ -141,14 +141,14 @@ test('recalc: a leaf only reaches Complete once actualFinish is genuinely reache
     id: 'x-1', parentId: null, order: 0, name: 'X', pic: '',
     plannedStart: '2024-01-01', plannedFinish: '2024-01-31',
     actualStart: '2024-01-01', actualFinish: null, actualPct: 1,
-    weightOverride: null, milestone: false, statusOverride: null, predecessors: [],
+    weightOverride: null, deliverable: false, statusOverride: null, predecessors: [],
   }];
   const { computed } = recalc({ meta: { statusDate: '2024-01-05' }, tasks: customTasks, holidays: [] });
   assert.ok(computed.get('x-1').actualPct < 1);
   assert.notEqual(computed.get('x-1').status, 'Complete');
 });
 
-test('recalc: KPIs count complete/delayed leaves and milestones', () => {
+test('recalc: KPIs count complete/delayed leaves and deliverables', () => {
   const { kpis } = recalc(project());
   assert.equal(kpis.totalCount, 12);
   assert.equal(kpis.completeCount, 12);
@@ -173,24 +173,24 @@ test('recalc: scurve first bucket (project start week) has near-zero actual for 
   assert.ok(first.actualCum < 1);
 });
 
-test('recalc: KPIs exclude a cancelled milestone from milestonesTotal, not just milestonesComplete', () => {
-  const twoMilestones = [
+test('recalc: KPIs exclude a cancelled deliverable from deliverablesTotal, not just deliverablesComplete', () => {
+  const twoDeliverables = [
     {
-      id: 'm-1', parentId: null, order: 0, name: 'Cancelled Milestone', milestone: true,
+      id: 'm-1', parentId: null, order: 0, name: 'Cancelled Deliverable', deliverable: true,
       plannedStart: '2024-01-01', plannedFinish: '2024-01-01',
       actualStart: null, actualFinish: null, actualPct: 0,
       weightOverride: null, statusOverride: 'Cancelled', predecessors: [],
     },
     {
-      id: 'm-2', parentId: null, order: 1, name: 'Complete Milestone', milestone: true,
+      id: 'm-2', parentId: null, order: 1, name: 'Complete Deliverable', deliverable: true,
       plannedStart: '2024-01-02', plannedFinish: '2024-01-02',
       actualStart: '2024-01-02', actualFinish: '2024-01-02', actualPct: 1,
       weightOverride: null, statusOverride: null, predecessors: [],
     },
   ];
-  const { kpis } = recalc(project({ tasks: twoMilestones, meta: { statusDate: '2024-06-01' } }));
-  assert.equal(kpis.milestonesTotal, 1);
-  assert.equal(kpis.milestonesComplete, 1);
+  const { kpis } = recalc(project({ tasks: twoDeliverables, meta: { statusDate: '2024-06-01' } }));
+  assert.equal(kpis.deliverablesTotal, 1);
+  assert.equal(kpis.deliverablesComplete, 1);
 });
 
 test('computeScurve: last point always reaches 100% even when the span is not a multiple of 7 days', () => {

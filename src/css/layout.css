@@ -82,7 +82,7 @@
 }
 .tree-row.is-parent .col-name { background: var(--surface-sunken); }
 
-.cell { cursor: text; min-height: 16px; }
+.cell { cursor: text; min-height: 16px; display: block; }
 .cell-editor { width: 100%; font-size: 13px; padding: 2px 4px; }
 
 .status-NotStart, .status-InProgress, .status-Delayed, .status-Complete, .status-Blocked, .status-Cancelled {

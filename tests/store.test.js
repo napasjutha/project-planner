@@ -668,3 +668,110 @@ test('undo reverts an addDecision and redo reapplies it', () => {
   assert.equal(p.redo(), true);
   assert.equal(p.decisions.length, 1);
 });
+
+test('Project constructor defaults activityGroups/activities to empty arrays for legacy projects without them', () => {
+  const p = new Project({
+    meta: { id: 'x', name: 'Legacy', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [], holidays: [], picList: [], snapshots: [], auditLog: [], settings: {},
+  });
+  assert.deepEqual(p.activityGroups, []);
+  assert.deepEqual(p.activities, []);
+});
+
+test('addActivityGroup creates a group with generated id, defaults color if omitted', () => {
+  const p = Project.empty('Test');
+  const g = p.addActivityGroup({ name: 'Steering Committee', color: '#0b1f6b' });
+  assert.equal(p.activityGroups.length, 1);
+  assert.equal(g.name, 'Steering Committee');
+  assert.equal(g.color, '#0b1f6b');
+  assert.match(g.id, /^t_/);
+});
+
+test('addActivityGroup undo removes the created group', () => {
+  const p = Project.empty('Test');
+  p.addActivityGroup({ name: 'A', color: '#111111' });
+  assert.equal(p.activityGroups.length, 1);
+  p.undo();
+  assert.equal(p.activityGroups.length, 0);
+});
+
+test('updateActivityGroup patches name/color', () => {
+  const p = Project.empty('Test');
+  const g = p.addActivityGroup({ name: 'A', color: '#111111' });
+  p.updateActivityGroup(g.id, { name: 'Renamed', color: '#222222' });
+  const found = p.activityGroups.find(x => x.id === g.id);
+  assert.equal(found.name, 'Renamed');
+  assert.equal(found.color, '#222222');
+});
+
+test('updateActivityGroup throws for an unknown id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.updateActivityGroup('missing', { name: 'X' }));
+});
+
+test('deleteActivityGroup removes the group and strips it from any activity groupIds', () => {
+  const p = Project.empty('Test');
+  const g1 = p.addActivityGroup({ name: 'A', color: '#111111' });
+  const g2 = p.addActivityGroup({ name: 'B', color: '#222222' });
+  const act = p.addActivity({ type: 'Meeting', name: 'Kickoff', dateStart: '2026-07-06', groupIds: [g1.id, g2.id] });
+  p.deleteActivityGroup(g1.id);
+  assert.equal(p.activityGroups.length, 1);
+  assert.deepEqual(p.activities.find(a => a.id === act.id).groupIds, [g2.id]);
+});
+
+test('deleteActivityGroup throws for an unknown id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.deleteActivityGroup('missing'));
+});
+
+test('addActivity defaults dateEnd to dateStart when omitted, and normalizes optional fields', () => {
+  const p = Project.empty('Test');
+  const a = p.addActivity({ type: 'Meeting', name: 'Internal Sync', dateStart: '2026-07-06' });
+  assert.equal(a.dateEnd, '2026-07-06');
+  assert.equal(a.timeStart, null);
+  assert.equal(a.timeEnd, null);
+  assert.deepEqual(a.groupIds, []);
+  assert.equal(a.keyDate, false);
+  assert.match(a.id, /^t_/);
+});
+
+test('addActivity keeps an explicit dateEnd for multi-day activities', () => {
+  const p = Project.empty('Test');
+  const a = p.addActivity({ type: 'Workshop', name: 'Discovery Workshop', dateStart: '2026-07-09', dateEnd: '2026-07-13' });
+  assert.equal(a.dateStart, '2026-07-09');
+  assert.equal(a.dateEnd, '2026-07-13');
+});
+
+test('updateActivity patches fields', () => {
+  const p = Project.empty('Test');
+  const a = p.addActivity({ type: 'Meeting', name: 'Sync', dateStart: '2026-07-06' });
+  p.updateActivity(a.id, { name: 'Renamed Sync', keyDate: true });
+  const found = p.activities.find(x => x.id === a.id);
+  assert.equal(found.name, 'Renamed Sync');
+  assert.equal(found.keyDate, true);
+});
+
+test('updateActivity throws for an unknown id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.updateActivity('missing', { name: 'X' }));
+});
+
+test('deleteActivity removes the activity', () => {
+  const p = Project.empty('Test');
+  const a = p.addActivity({ type: 'Meeting', name: 'Sync', dateStart: '2026-07-06' });
+  p.deleteActivity(a.id);
+  assert.equal(p.activities.length, 0);
+});
+
+test('deleteActivity throws for an unknown id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.deleteActivity('missing'));
+});
+
+test('addActivity/addActivityGroup participate in the undo stack like addTask', () => {
+  const p = Project.empty('Test');
+  const undoStackBefore = p._undoStack.length;
+  p.addActivityGroup({ name: 'A', color: '#111111' });
+  p.addActivity({ type: 'Meeting', name: 'Sync', dateStart: '2026-07-06' });
+  assert.equal(p._undoStack.length, undoStackBefore + 2);
+});

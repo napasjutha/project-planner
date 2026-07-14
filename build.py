@@ -8,6 +8,7 @@ DIST = ROOT / "dist"
 CSS_ORDER = ["theme.css", "layout.css", "print.css"]
 JS_ORDER = [
     "schedule.js",
+    "calendar.js",
     "status.js",
     "calc.js",
     "deps.js",
@@ -26,6 +27,7 @@ JS_ORDER = [
     "ui/snapshots.js",
     "ui/settings.js",
     "ui/holidays.js",
+    "ui/activities.js",
     "ui/reports.js",
     "ui/resources.js",
     "ui/billing.js",

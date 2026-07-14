@@ -254,11 +254,17 @@
     document.getElementById('activity-groups-editor').addEventListener('input', function (e) {
       var groupId = e.target.dataset.groupId;
       if (!groupId) return;
+      if (e.target.classList.contains('activity-group-color-input')) {
+        state.project.updateActivityGroup(groupId, { color: e.target.value });
+        onChanged();
+      }
+    });
+
+    document.getElementById('activity-groups-editor').addEventListener('change', function (e) {
+      var groupId = e.target.dataset.groupId;
+      if (!groupId) return;
       if (e.target.classList.contains('activity-group-name-input')) {
         state.project.updateActivityGroup(groupId, { name: e.target.value });
-        onChanged();
-      } else if (e.target.classList.contains('activity-group-color-input')) {
-        state.project.updateActivityGroup(groupId, { color: e.target.value });
         onChanged();
       }
     });

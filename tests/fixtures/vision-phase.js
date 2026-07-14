@@ -1,18 +1,18 @@
 function leaf(id, name, pic, plannedStart, plannedFinish, actualPct) {
   return {
     id, parentId: 'phase-1', order: Number(id.split('-')[1]),
-    name, pic, deliverable: '', jira: '', remarks: '',
+    name, pic, jira: '', remarks: '',
     plannedStart, plannedFinish, actualStart: plannedStart, actualFinish: plannedFinish,
-    actualPct, weightOverride: null, milestone: false, statusOverride: null,
+    actualPct, weightOverride: null, deliverable: false, statusOverride: null,
     predecessors: [], collapsed: false,
   };
 }
 
 const phase = {
   id: 'phase-1', parentId: null, order: 0,
-  name: 'Vision & Validate', pic: '', deliverable: '', jira: '', remarks: '',
+  name: 'Vision & Validate', pic: '', jira: '', remarks: '',
   plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null,
-  actualPct: 0, weightOverride: null, milestone: false, statusOverride: null,
+  actualPct: 0, weightOverride: null, deliverable: false, statusOverride: null,
   predecessors: [], collapsed: false,
 };
 

@@ -44,14 +44,14 @@
         ? '<span class="col-predecessors"></span>'
         : '<span class="cell col-predecessors" data-field="__predecessors">' + escapeHtml(predText) + '</span>';
 
-      var milestoneMarker = task.milestone ? '<span class="milestone-marker" title="Milestone">&#9670;</span>' : '';
+      var deliverableMarker = task.deliverable ? '<span class="deliverable-marker" title="Deliverable">&#9670;</span>' : '';
       var row = document.createElement('div');
       row.className = 'tree-row' + (hasChildren ? ' is-parent' : '');
       row.dataset.id = id;
       row.innerHTML =
         '<span class="col-wbs">' + computed.wbs + '</span>' +
         '<span class="cell col-name" data-field="name" style="padding-left:' + (computed.depth * 20) + 'px">' +
-          '<span class="toggle">' + toggleChar + '</span>' + milestoneMarker + escapeHtml(task.name) +
+          '<span class="toggle">' + toggleChar + '</span>' + deliverableMarker + escapeHtml(task.name) +
         '</span>' +
         '<span class="cell col-owner" data-field="owner">' + escapeHtml(task.owner || '') + '</span>' +
         '<span class="cell col-pic" data-field="pic">' + escapeHtml(task.pic || '') + '</span>' +
@@ -158,13 +158,13 @@
         var copy = state.project.addTask({ parentId: task.parentId, name: task.name + ' (copy)', owner: task.owner, pic: task.pic });
         state.project.updateTask(copy.id, {
           plannedStart: task.plannedStart, plannedFinish: task.plannedFinish,
-          deliverable: task.deliverable, remarks: task.remarks,
+          remarks: task.remarks,
         }, state.currentUser);
       }],
       ['Delete', function () { state.project.deleteTask(id, state.currentUser); }],
       ['Indent', function () { state.project.indent(id, state.currentUser); }],
       ['Outdent', function () { state.project.outdent(id, state.currentUser); }],
-      [task.milestone ? '✓ Milestone (click to unset)' : 'Mark as Milestone', function () { state.project.updateTask(id, { milestone: !task.milestone }, state.currentUser); }],
+      [task.deliverable ? '✓ Deliverable (click to unset)' : 'Mark as Deliverable', function () { state.project.updateTask(id, { deliverable: !task.deliverable }, state.currentUser); }],
     ];
 
     actions.forEach(function (a) {

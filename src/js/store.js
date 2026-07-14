@@ -55,6 +55,10 @@
           t.owner = t.pic || '';
           t.pic = '';
         }
+        if (t.milestone !== undefined) {
+          t.deliverable = !!t.milestone;
+          delete t.milestone;
+        }
       });
     }
 
@@ -168,10 +172,10 @@
       const siblings = this.tasks.filter(t => t.parentId === parentId);
       const task = {
         id: generateId(), parentId, order: siblings.length, name, owner, pic,
-        deliverable: '', jira: '', remarks: '',
+        jira: '', remarks: '',
         plannedStart: null, plannedFinish: null,
         actualStart: null, actualFinish: null,
-        actualPct: 0, weightOverride: null, milestone: false,
+        actualPct: 0, weightOverride: null, deliverable: false,
         statusOverride: null, predecessors: [], collapsed: false,
         billingAmount: null, billingStatus: null,
       };
@@ -194,10 +198,10 @@
         const task = {
           id: generateId(), parentId, order: siblings.length,
           name: spec.name, owner: spec.owner || '', pic: spec.pic || '',
-          deliverable: '', jira: '', remarks: spec.remarks || '',
+          jira: '', remarks: spec.remarks || '',
           plannedStart: spec.plannedStart || null, plannedFinish: spec.plannedFinish || null,
           actualStart: null, actualFinish: null,
-          actualPct: 0, weightOverride: null, milestone: !!spec.milestone,
+          actualPct: 0, weightOverride: null, deliverable: !!spec.deliverable,
           statusOverride: null, predecessors: spec.predecessors ? spec.predecessors.slice() : [],
           collapsed: false,
           billingAmount: spec.billingAmount != null ? spec.billingAmount : null,

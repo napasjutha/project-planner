@@ -97,7 +97,7 @@
     var kpiRow = el('div', { class: 'report-kpi-row' }, [
       ['Actual', pct(kpis.actualPct)], ['Plan', pct(kpis.plannedPct)],
       ['Delayed', String(kpis.delayedCount)], ['Complete', kpis.completeCount + '/' + kpis.totalCount],
-      ['Milestones', kpis.milestonesComplete + '/' + kpis.milestonesTotal],
+      ['Deliverables', kpis.deliverablesComplete + '/' + kpis.deliverablesTotal],
     ].map(function (pair) { return el('div', { class: 'report-kpi' }, [pair[0] + ': ' + pair[1]]); }));
     panel.appendChild(kpiRow);
 

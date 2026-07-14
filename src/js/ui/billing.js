@@ -8,10 +8,10 @@
     body.innerHTML = '';
 
     var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
-    var milestones = state.project.tasks.filter(function (t) { return t.milestone; });
+    var deliverables = state.project.tasks.filter(function (t) { return t.deliverable; });
 
-    if (!milestones.length) {
-      body.textContent = 'No milestone tasks yet — billing only applies to tasks flagged as milestones.';
+    if (!deliverables.length) {
+      body.textContent = 'No deliverable tasks yet — billing only applies to tasks flagged as deliverables.';
       return;
     }
 
@@ -25,7 +25,7 @@
     });
     table.appendChild(headerRow);
 
-    milestones.forEach(function (task) {
+    deliverables.forEach(function (task) {
       var computed = state.calc.computed.get(task.id);
       var tr = document.createElement('tr');
       tr.dataset.id = task.id;

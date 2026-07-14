@@ -308,10 +308,10 @@ test('computeLastUpdated has no entry for a task that was never updated', () => 
 test('addTasks builds hierarchy from _level and appends in order under one undo checkpoint', () => {
   const p = Project.empty('Test');
   const created = p.addTasks([
-    { _row: 1, _level: 0, name: 'Phase A', pic: '', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
-    { _row: 2, _level: 1, name: 'Design', pic: 'Alice', plannedStart: '2026-07-01', plannedFinish: '2026-07-10', remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
-    { _row: 3, _level: 1, name: 'Build', pic: 'Bob', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
-    { _row: 4, _level: 0, name: 'Phase B', pic: '', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 1, _level: 0, name: 'Phase A', pic: '', plannedStart: null, plannedFinish: null, remarks: '', deliverable: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 2, _level: 1, name: 'Design', pic: 'Alice', plannedStart: '2026-07-01', plannedFinish: '2026-07-10', remarks: '', deliverable: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 3, _level: 1, name: 'Build', pic: 'Bob', plannedStart: null, plannedFinish: null, remarks: '', deliverable: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 4, _level: 0, name: 'Phase B', pic: '', plannedStart: null, plannedFinish: null, remarks: '', deliverable: false, billingAmount: null, billingStatus: null, predecessors: [] },
   ], 'importer');
   assert.equal(created.length, 4);
   assert.equal(created[0].parentId, null);
@@ -328,7 +328,7 @@ test('addTasks appends after existing root tasks with contiguous order', () => {
   const p = Project.empty('Test');
   p.addTask({ parentId: null, name: 'Existing' });
   const created = p.addTasks([
-    { _row: 1, _level: 0, name: 'Imported', pic: '', plannedStart: null, plannedFinish: null, remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [] },
+    { _row: 1, _level: 0, name: 'Imported', pic: '', plannedStart: null, plannedFinish: null, remarks: '', deliverable: false, billingAmount: null, billingStatus: null, predecessors: [] },
   ], 'importer');
   assert.equal(created[0].order, 1);
 });
@@ -336,15 +336,14 @@ test('addTasks appends after existing root tasks with contiguous order', () => {
 test('addTasks fills the full task shape with defaults', () => {
   const p = Project.empty('Test');
   const created = p.addTasks([
-    { _row: 1, _level: 0, name: 'A', pic: '', plannedStart: null, plannedFinish: null, remarks: 'note', milestone: true, billingAmount: 500, billingStatus: 'Paid', predecessors: [] },
+    { _row: 1, _level: 0, name: 'A', pic: '', plannedStart: null, plannedFinish: null, remarks: 'note', deliverable: true, billingAmount: 500, billingStatus: 'Paid', predecessors: [] },
   ], 'importer');
   const t = created[0];
   assert.equal(t.actualPct, 0);
   assert.equal(t.weightOverride, null);
   assert.equal(t.statusOverride, null);
   assert.equal(t.collapsed, false);
-  assert.equal(t.deliverable, '');
-  assert.equal(t.milestone, true);
+  assert.equal(t.deliverable, true);
   assert.equal(t.billingAmount, 500);
   assert.equal(t.billingStatus, 'Paid');
 });
@@ -372,7 +371,7 @@ test('addTasks reads owner from specs, defaulting to empty string', () => {
 test('Project migrates a legacy task (owner undefined) by moving pic into owner and blanking pic', () => {
   const p = new Project({
     meta: { id: 'legacy', name: 'Legacy', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
-    tasks: [{ id: 't1', parentId: null, order: 0, name: 'Old Task', pic: 'KPMG/Central Team', deliverable: '', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, milestone: false, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
+    tasks: [{ id: 't1', parentId: null, order: 0, name: 'Old Task', pic: 'KPMG/Central Team', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, deliverable: false, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
     holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
   });
   assert.equal(p.tasks[0].owner, 'KPMG/Central Team');
@@ -382,11 +381,21 @@ test('Project migrates a legacy task (owner undefined) by moving pic into owner 
 test('Project does not re-migrate a task that already has owner, even if owner is blank', () => {
   const p = new Project({
     meta: { id: 'migrated', name: 'Migrated', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
-    tasks: [{ id: 't1', parentId: null, order: 0, name: 'New-Style Task', owner: '', pic: 'Somchai', deliverable: '', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, milestone: false, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
+    tasks: [{ id: 't1', parentId: null, order: 0, name: 'New-Style Task', owner: '', pic: 'Somchai', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, deliverable: false, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
     holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
   });
   assert.equal(p.tasks[0].owner, '');
   assert.equal(p.tasks[0].pic, 'Somchai');
+});
+
+test('Project migrates a legacy task with milestone:true to deliverable:true and removes the milestone key', () => {
+  const p = new Project({
+    meta: { id: 'legacy-deliverable', name: 'Legacy Deliverable', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [{ id: 't1', parentId: null, order: 0, name: 'Old Milestone Task', owner: 'KPMG', pic: '', deliverable: '', jira: '', remarks: '', plannedStart: null, plannedFinish: null, actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null, milestone: true, statusOverride: null, predecessors: [], collapsed: false, billingAmount: null, billingStatus: null }],
+    holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.equal(p.tasks[0].deliverable, true);
+  assert.equal('milestone' in p.tasks[0], false);
 });
 
 test('findTasksMissingOwner returns leaf tasks with blank or whitespace-only owner, exempting parent/container tasks', () => {

@@ -129,7 +129,7 @@
         plannedStart: t.plannedStart, plannedFinish: t.plannedFinish,
         actualStart: t.actualStart, actualFinish: t.actualFinish,
         duration, weight: 0, plannedPctToDate: 0, actualPct,
-        status: null, isMilestone: !!t.milestone,
+        status: null, isDeliverable: !!t.deliverable,
       });
     }
 
@@ -181,7 +181,7 @@
       computed.set(id, {
         id, wbs: wbs.get(id), depth: depth.get(id), isLeaf: false,
         plannedStart, plannedFinish, actualStart, actualFinish,
-        duration, weight, plannedPctToDate, actualPct, status, isMilestone: false,
+        duration, weight, plannedPctToDate, actualPct, status, isDeliverable: false,
       });
     }
 
@@ -216,8 +216,8 @@
       delayedCount: leafStatuses.filter(s => s === 'Delayed').length,
       completeCount: leafStatuses.filter(s => s === 'Complete').length,
       totalCount: leafStatuses.length,
-      milestonesTotal: leafIds.filter(id => !isCancelled(id) && byId.get(id).milestone).length,
-      milestonesComplete: leafIds.filter(id => byId.get(id).milestone && computed.get(id).status === 'Complete').length,
+      deliverablesTotal: leafIds.filter(id => !isCancelled(id) && byId.get(id).deliverable).length,
+      deliverablesComplete: leafIds.filter(id => byId.get(id).deliverable && computed.get(id).status === 'Complete').length,
       remainingWorkdays: overall.plannedFinish ? remainingWorkdays(statusDate, overall.plannedFinish, holidayDates) : 0,
     };
 

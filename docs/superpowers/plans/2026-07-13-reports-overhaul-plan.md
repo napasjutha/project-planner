@@ -163,7 +163,7 @@ test('buildProgressPageData produces 6 KPI tiles (Actual/Planned/Variance/Delaye
     { label: 'Variance', value: pct(calc.kpis.variance) },
     { label: 'Delayed', value: String(calc.kpis.delayedCount) },
     { label: 'Complete', value: calc.kpis.completeCount + '/' + calc.kpis.totalCount },
-    { label: 'Deliverables', value: calc.kpis.milestonesComplete + '/' + calc.kpis.milestonesTotal },
+    { label: 'Deliverables', value: calc.kpis.deliverablesComplete + '/' + calc.kpis.deliverablesTotal },
   ]);
 
   assert.equal(data.delayedTasks.length, 1);
@@ -289,7 +289,7 @@ Create `project-planner/src/js/reportsEngine.js`:
       { label: 'Variance', value: pct(kpis.variance) },
       { label: 'Delayed', value: String(kpis.delayedCount) },
       { label: 'Complete', value: kpis.completeCount + '/' + kpis.totalCount },
-      { label: 'Deliverables', value: kpis.milestonesComplete + '/' + kpis.milestonesTotal },
+      { label: 'Deliverables', value: kpis.deliverablesComplete + '/' + kpis.deliverablesTotal },
     ];
 
     var byId = new Map(project.tasks.map(function (t) { return [t.id, t]; }));

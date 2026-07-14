@@ -82,7 +82,7 @@
 }
 .tree-row.is-parent .col-name { background: var(--surface-sunken); }
 
-.cell { cursor: text; min-height: 16px; }
+.cell { cursor: text; min-height: 16px; display: block; }
 .cell-editor { width: 100%; font-size: 13px; padding: 2px 4px; }
 
 .status-NotStart, .status-InProgress, .status-Delayed, .status-Complete, .status-Blocked, .status-Cancelled {
@@ -229,7 +229,7 @@
 #snapshot-comparison { margin-top: 16px; font-size: 13px; }
 #snapshot-comparison ul { margin: 4px 0; padding-left: 20px; }
 
-#settings-view, #resources-view, #billing-view { flex: 1; overflow: auto; padding: 16px 24px; }
+#settings-view, #resources-view, #billing-view, #issues-view { flex: 1; overflow: auto; padding: 16px 24px; }
 .billing-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .billing-table th, .billing-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
 .billing-table th:last-child, .billing-table td:last-child,
@@ -254,12 +254,12 @@
 [data-theme="dark"] .workload-cell-over { background: rgba(255,59,48,0.2); }
 [data-theme="dark"] .workload-cell-full { background: rgba(255,204,0,0.24); }
 #workload-drilldown { margin-top: 12px; font-size: 13px; }
-.theme-btn, #new-project-button, #add-pic-button, #csv-template-button, #import-csv-button, #export-csv-button {
+.theme-btn, #new-project-button, #add-pic-button, #csv-template-button, #import-csv-button, #export-csv-button, #add-issue-button, #add-risk-button, #add-decision-button {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 7px 14px; font-size: 13px; cursor: pointer; margin-right: 6px;
   transition: background 150ms ease;
 }
-.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover, #csv-template-button:hover, #import-csv-button:hover, #export-csv-button:hover { background: var(--surface-sunken); }
+.theme-btn:hover, #new-project-button:hover, #add-pic-button:hover, #csv-template-button:hover, #import-csv-button:hover, #export-csv-button:hover, #add-issue-button:hover, #add-risk-button:hover, #add-decision-button:hover { background: var(--surface-sunken); }
 .theme-btn.active { background: var(--kpmg-blue); color: #fff; border-color: var(--kpmg-blue); }
 .pic-editor-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .pic-remove-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }
@@ -306,3 +306,7 @@
 .report-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
 .report-table th, .report-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #e5e5ea; }
 .report-list { font-size: 14px; padding-left: 20px; margin: 8px 0; }
+.dashboard-table select { font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.cell-inactive { color: var(--text-tertiary); }
+.row-delete-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }
+.row-delete-btn:hover { background: var(--surface-sunken); border-color: var(--border); }

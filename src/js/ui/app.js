@@ -24,6 +24,7 @@
     PP.renderBilling(state);
     PP.renderSettings(state);
     PP.renderHolidays(state);
+    PP.renderActivities(state);
     PP.renderReport(state);
     if (markDirty) {
       state.dirty = true;
@@ -187,7 +188,7 @@
     });
   }
 
-  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'reports-view'];
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'activities-view', 'reports-view'];
 
   function wireViewTabs(state) {
     var tabs = document.querySelectorAll('.view-tab');
@@ -276,6 +277,8 @@
       state.snapshotCompareA = null;
       state.snapshotCompareB = null;
       state.holidaysViewYear = null;
+      state.activitiesViewYear = null;
+      state.activitiesViewMonth = null;
       document.getElementById('dirty-indicator').textContent = '';
       refresh(state, false);
     };
@@ -356,6 +359,7 @@
     PP.wireResources(state, function () { refresh(state, true); });
     PP.wireBilling(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
+    PP.wireActivities(state, function () { refresh(state, true); });
     PP.wireReports(state, function () { PP.renderReport(state); });
     document.getElementById('csv-template-button').addEventListener('click', handleDownloadCsvTemplate);
     document.getElementById('export-csv-button').addEventListener('click', function () {
@@ -423,6 +427,8 @@
       snapshotCompareA: null,
       snapshotCompareB: null,
       holidaysViewYear: null,
+      activitiesViewYear: null,
+      activitiesViewMonth: null,
     };
 
     if (state.currentUser) {

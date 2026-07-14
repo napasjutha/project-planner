@@ -57,6 +57,7 @@
     <button class="view-tab" data-view="billing">Billing</button>
     <button class="view-tab" data-view="settings">Settings</button>
     <button class="view-tab" data-view="holidays">Holidays</button>
+    <button class="view-tab" data-view="activities">Activities</button>
     <button class="view-tab" data-view="reports">Reports</button>
   </div>
   <div id="plan-view">
@@ -172,6 +173,38 @@
     <div id="holidays-calendar"></div>
     <div id="holidays-table"></div>
   </div>
+  <div id="activities-view" hidden>
+    <div id="activities-toolbar">
+      <select id="new-activity-type">
+        <option value="Meeting">Meeting</option>
+        <option value="Workshop">Workshop</option>
+      </select>
+      <input id="new-activity-name" type="text" placeholder="Activity name">
+      <label>Start <input id="new-activity-date-start" type="date"></label>
+      <label>End <input id="new-activity-date-end" type="date"></label>
+      <input id="new-activity-time-start" type="text" placeholder="Time start (e.g. 9:30)">
+      <input id="new-activity-time-end" type="text" placeholder="Time end (e.g. 10:30)">
+      <div id="new-activity-groups"></div>
+      <label><input type="checkbox" id="new-activity-keydate"> Key date</label>
+      <input id="new-activity-remarks" type="text" placeholder="Remarks">
+      <button id="add-activity-button">Add Activity</button>
+    </div>
+    <div class="settings-section">
+      <h3>Participant Groups</h3>
+      <div id="activity-groups-editor"></div>
+      <input id="new-activity-group-name" type="text" placeholder="Group name">
+      <input id="new-activity-group-color" type="color" value="#0b1f6b">
+      <button id="add-activity-group-button">Add Group</button>
+    </div>
+    <div id="activities-month-nav">
+      <button id="activities-month-prev">&lsaquo; Prev Month</button>
+      <span id="activities-month-label"></span>
+      <button id="activities-month-next">Next Month &rsaquo;</button>
+    </div>
+    <div id="activities-legend"></div>
+    <div id="activities-calendar"></div>
+    <div id="activities-table"></div>
+  </div>
   <div id="reports-view" hidden>
     <div id="reports-toolbar">
       <select id="report-template-select">
@@ -191,7 +224,7 @@
 <div id="context-menu" class="context-menu" hidden></div>
 <div id="scurve-tooltip" hidden></div>
 
-<script type="application/json" id="project-data">{"meta":{"id":"seed","name":"New Project","statusDate":"2026-01-01","revision":0,"savedBy":null,"savedAt":null,"createdAt":"2026-01-01T00:00:00.000Z","schemaVersion":1},"tasks":[],"holidays":[],"picList":[],"snapshots":[],"auditLog":[],"settings":{"theme":"kpmg-light","ganttZoom":"week"}}</script>
+<script type="application/json" id="project-data">{"meta":{"id":"seed","name":"New Project","statusDate":"2026-01-01","revision":0,"savedBy":null,"savedAt":null,"createdAt":"2026-01-01T00:00:00.000Z","schemaVersion":1},"tasks":[],"holidays":[],"picList":[],"snapshots":[],"auditLog":[],"settings":{"theme":"kpmg-light","ganttZoom":"week"},"activityGroups":[],"activities":[]}</script>
 <script>
 /*__JS__*/
 </script>

@@ -261,11 +261,10 @@ test('Project.empty sets schemaVersion 1 on meta', () => {
   assert.equal(p.meta.schemaVersion, 1);
 });
 
-test('addTask defaults billingAmount and billingStatus to null', () => {
+test('addTask defaults billingMilestoneId to null', () => {
   const p = Project.empty('Test');
-  const t = p.addTask({ parentId: null, name: 'Milestone' });
-  assert.equal(t.billingAmount, null);
-  assert.equal(t.billingStatus, null);
+  const t = p.addTask({ parentId: null, name: 'Deliverable' });
+  assert.equal(t.billingMilestoneId, null);
 });
 
 test('findIncompleteTasks returns leaf tasks missing plannedStart or plannedFinish', () => {
@@ -344,8 +343,117 @@ test('addTasks fills the full task shape with defaults', () => {
   assert.equal(t.statusOverride, null);
   assert.equal(t.collapsed, false);
   assert.equal(t.deliverable, true);
-  assert.equal(t.billingAmount, 500);
-  assert.equal(t.billingStatus, 'Paid');
+  assert.equal(t.billingMilestoneId, null);
+});
+
+test('Project.empty creates a project with an empty billingMilestones array', () => {
+  const p = Project.empty('Test');
+  assert.deepEqual(p.billingMilestones, []);
+});
+
+test('addBillingMilestone creates a blank entry and pushes an undo checkpoint', () => {
+  const p = Project.empty('Test');
+  const undoStackBefore = p._undoStack.length;
+  const bm = p.addBillingMilestone();
+  assert.equal(p.billingMilestones.length, 1);
+  assert.equal(bm.name, 'New Billing Milestone');
+  assert.equal(bm.amount, null);
+  assert.equal(bm.status, 'Not Billed');
+  assert.match(bm.id, /^bm_/);
+  assert.equal(p._undoStack.length, undoStackBefore + 1);
+});
+
+test('updateBillingMilestone updates name/amount/status and records audit entries', () => {
+  const p = Project.empty('Test');
+  const bm = p.addBillingMilestone();
+  p.updateBillingMilestone(bm.id, { name: 'Phase 1 Sign-off', amount: 500000, status: 'Invoiced' }, 'Alice');
+  const updated = p.billingMilestones.find(b => b.id === bm.id);
+  assert.equal(updated.name, 'Phase 1 Sign-off');
+  assert.equal(updated.amount, 500000);
+  assert.equal(updated.status, 'Invoiced');
+  assert.equal(p.auditLog.length, 3);
+  assert.equal(p.auditLog[0].who, 'Alice');
+  assert.equal(p.auditLog[0].taskId, bm.id);
+});
+
+test('updateBillingMilestone throws for an unknown id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.updateBillingMilestone('missing', { name: 'X' }, 'Alice'));
+});
+
+test('deleteBillingMilestone removes the entry and unassigns (not deletes) its linked tasks', () => {
+  const p = Project.empty('Test');
+  const bm = p.addBillingMilestone();
+  const t1 = p.addTask({ parentId: null, name: 'Deliverable A' });
+  const t2 = p.addTask({ parentId: null, name: 'Deliverable B' });
+  p.assignDeliverablesToBillingMilestone(bm.id, [t1.id, t2.id], 'Alice');
+  p.deleteBillingMilestone(bm.id, 'Alice');
+  assert.equal(p.billingMilestones.length, 0);
+  assert.equal(p.tasks.length, 2);
+  assert.equal(p.tasks.find(t => t.id === t1.id).billingMilestoneId, null);
+  assert.equal(p.tasks.find(t => t.id === t2.id).billingMilestoneId, null);
+});
+
+test('deleteBillingMilestone throws for an unknown id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.deleteBillingMilestone('missing', 'Alice'));
+});
+
+test('assignDeliverablesToBillingMilestone links the given tasks and unlinks any previously-linked task left out of a later call to the same milestone', () => {
+  const p = Project.empty('Test');
+  const bmA = p.addBillingMilestone();
+  const t1 = p.addTask({ parentId: null, name: 'Deliverable A' });
+  const t2 = p.addTask({ parentId: null, name: 'Deliverable B' });
+  const t3 = p.addTask({ parentId: null, name: 'Deliverable C' });
+  p.assignDeliverablesToBillingMilestone(bmA.id, [t1.id, t2.id, t3.id], 'Alice');
+  assert.equal(p.tasks.find(t => t.id === t1.id).billingMilestoneId, bmA.id);
+  assert.equal(p.tasks.find(t => t.id === t2.id).billingMilestoneId, bmA.id);
+  assert.equal(p.tasks.find(t => t.id === t3.id).billingMilestoneId, bmA.id);
+
+  p.assignDeliverablesToBillingMilestone(bmA.id, [t1.id, t3.id], 'Alice');
+  assert.equal(p.tasks.find(t => t.id === t1.id).billingMilestoneId, bmA.id);
+  assert.equal(p.tasks.find(t => t.id === t2.id).billingMilestoneId, null);
+  assert.equal(p.tasks.find(t => t.id === t3.id).billingMilestoneId, bmA.id);
+});
+
+test('assignDeliverablesToBillingMilestone moves a deliverable from one milestone to another without duplicating it', () => {
+  const p = Project.empty('Test');
+  const bmA = p.addBillingMilestone();
+  const bmB = p.addBillingMilestone();
+  const t1 = p.addTask({ parentId: null, name: 'Deliverable A' });
+  p.assignDeliverablesToBillingMilestone(bmA.id, [t1.id], 'Alice');
+  assert.equal(p.tasks.find(t => t.id === t1.id).billingMilestoneId, bmA.id);
+
+  p.assignDeliverablesToBillingMilestone(bmB.id, [t1.id], 'Alice');
+  assert.equal(p.tasks.find(t => t.id === t1.id).billingMilestoneId, bmB.id);
+  const linkedToA = p.tasks.filter(t => t.billingMilestoneId === bmA.id);
+  assert.equal(linkedToA.length, 0);
+});
+
+test('assignDeliverablesToBillingMilestone applies as a single undo checkpoint', () => {
+  const p = Project.empty('Test');
+  const bm = p.addBillingMilestone();
+  const t1 = p.addTask({ parentId: null, name: 'Deliverable A' });
+  const t2 = p.addTask({ parentId: null, name: 'Deliverable B' });
+  const undoStackBefore = p._undoStack.length;
+  p.assignDeliverablesToBillingMilestone(bm.id, [t1.id, t2.id], 'Alice');
+  assert.equal(p._undoStack.length, undoStackBefore + 1);
+  p.undo();
+  assert.equal(p.tasks.find(t => t.id === t1.id).billingMilestoneId, null);
+  assert.equal(p.tasks.find(t => t.id === t2.id).billingMilestoneId, null);
+});
+
+test('undo restores a deleted billing milestone (billingMilestones survives undo/redo snapshots)', () => {
+  const p = Project.empty('Test');
+  const bm = p.addBillingMilestone();
+  p.updateBillingMilestone(bm.id, { name: 'Phase 1 Sign-off' }, 'Alice');
+  p.deleteBillingMilestone(bm.id, 'Alice');
+  assert.equal(p.billingMilestones.length, 0);
+  p.undo();
+  assert.equal(p.billingMilestones.length, 1);
+  assert.equal(p.billingMilestones[0].name, 'Phase 1 Sign-off');
+  p.redo();
+  assert.equal(p.billingMilestones.length, 0);
 });
 
 test('addTask sets owner alongside pic, both defaulting to empty string', () => {
@@ -396,6 +504,75 @@ test('Project migrates a legacy task with milestone:true to deliverable:true and
   });
   assert.equal(p.tasks[0].deliverable, true);
   assert.equal('milestone' in p.tasks[0], false);
+});
+
+test('Project migration converts a legacy task with billingAmount/billingStatus into a new billing milestone', () => {
+  const p = new Project({
+    meta: { id: 'legacy-billing', name: 'Legacy Billing', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [{
+      id: 't1', parentId: null, order: 0, name: 'Phase 1 Sign-off', owner: 'KPMG', pic: '',
+      deliverable: true, jira: '', remarks: '', plannedStart: null, plannedFinish: null,
+      actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null,
+      statusOverride: null, predecessors: [], collapsed: false,
+      billingAmount: 500000, billingStatus: 'Invoiced',
+    }],
+    holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.equal(p.billingMilestones.length, 1);
+  const bm = p.billingMilestones[0];
+  assert.equal(bm.name, 'Phase 1 Sign-off');
+  assert.equal(bm.amount, 500000);
+  assert.equal(bm.status, 'Invoiced');
+  assert.equal(p.tasks[0].billingMilestoneId, bm.id);
+  assert.equal('billingAmount' in p.tasks[0], false);
+  assert.equal('billingStatus' in p.tasks[0], false);
+});
+
+test('Project migration defaults billingMilestoneId to null for a task with no legacy billing fields', () => {
+  const p = new Project({
+    meta: { id: 'no-billing', name: 'No Billing', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [{
+      id: 't1', parentId: null, order: 0, name: 'Plain Task', owner: 'KPMG', pic: '',
+      deliverable: false, jira: '', remarks: '', plannedStart: null, plannedFinish: null,
+      actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null,
+      statusOverride: null, predecessors: [], collapsed: false,
+      billingAmount: null, billingStatus: null,
+    }],
+    holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.equal(p.billingMilestones.length, 0);
+  assert.equal(p.tasks[0].billingMilestoneId, null);
+});
+
+test('Project migration creates one billing milestone per previously-flagged task (1:1), not a shared one', () => {
+  const p = new Project({
+    meta: { id: 'two-legacy', name: 'Two Legacy', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [
+      {
+        id: 't1', parentId: null, order: 0, name: 'Deliverable A', owner: 'KPMG', pic: '',
+        deliverable: true, jira: '', remarks: '', plannedStart: null, plannedFinish: null,
+        actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null,
+        statusOverride: null, predecessors: [], collapsed: false,
+        billingAmount: 100000, billingStatus: 'Not Billed',
+      },
+      {
+        id: 't2', parentId: null, order: 1, name: 'Deliverable B', owner: 'KPMG', pic: '',
+        deliverable: true, jira: '', remarks: '', plannedStart: null, plannedFinish: null,
+        actualStart: null, actualFinish: null, actualPct: 0, weightOverride: null,
+        statusOverride: null, predecessors: [], collapsed: false,
+        billingAmount: 200000, billingStatus: 'Paid',
+      },
+    ],
+    holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.equal(p.billingMilestones.length, 2);
+  const bmForT1 = p.billingMilestones.find(b => b.id === p.tasks[0].billingMilestoneId);
+  const bmForT2 = p.billingMilestones.find(b => b.id === p.tasks[1].billingMilestoneId);
+  assert.notEqual(bmForT1.id, bmForT2.id);
+  assert.equal(bmForT1.name, 'Deliverable A');
+  assert.equal(bmForT1.amount, 100000);
+  assert.equal(bmForT2.name, 'Deliverable B');
+  assert.equal(bmForT2.amount, 200000);
 });
 
 test('findTasksMissingOwner returns leaf tasks with blank or whitespace-only owner, exempting parent/container tasks', () => {

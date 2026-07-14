@@ -12,6 +12,10 @@
     return 't_' + Math.random().toString(36).slice(2, 10);
   }
 
+  function generateBillingMilestoneId() {
+    return 'bm_' + Math.random().toString(36).slice(2, 10);
+  }
+
   function findIncompleteTasks(project) {
     const parentIds = new Set(project.tasks.map(t => t.parentId).filter(Boolean));
     return project.tasks.filter(t => {
@@ -48,6 +52,7 @@
       this.decisions = data.decisions || [];
       this.auditLog = data.auditLog;
       this.settings = data.settings;
+      this.billingMilestones = data.billingMilestones || [];
       this._undoStack = [];
       this._redoStack = [];
       this.tasks.forEach(t => {
@@ -59,6 +64,19 @@
           t.deliverable = !!t.milestone;
           delete t.milestone;
         }
+        if (t.billingAmount != null || t.billingStatus != null) {
+          const bm = {
+            id: generateBillingMilestoneId(), name: t.name,
+            amount: t.billingAmount != null ? t.billingAmount : null,
+            status: t.billingStatus || 'Not Billed',
+          };
+          this.billingMilestones.push(bm);
+          t.billingMilestoneId = bm.id;
+        } else if (t.billingMilestoneId === undefined) {
+          t.billingMilestoneId = null;
+        }
+        delete t.billingAmount;
+        delete t.billingStatus;
       });
     }
 
@@ -79,6 +97,7 @@
         decisions: [],
         auditLog: [],
         settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+        billingMilestones: [],
       });
     }
 
@@ -99,6 +118,7 @@
         decisions: this.decisions,
         auditLog: this.auditLog,
         settings: this.settings,
+        billingMilestones: this.billingMilestones,
       };
     }
 
@@ -128,6 +148,7 @@
       this.decisions = state.decisions;
       this.auditLog = state.auditLog;
       this.settings = state.settings;
+      this.billingMilestones = state.billingMilestones;
     }
 
     undo() {
@@ -177,7 +198,7 @@
         actualStart: null, actualFinish: null,
         actualPct: 0, weightOverride: null, deliverable: false,
         statusOverride: null, predecessors: [], collapsed: false,
-        billingAmount: null, billingStatus: null,
+        billingMilestoneId: null,
       };
       this.tasks.push(task);
       return task;
@@ -204,8 +225,7 @@
           actualPct: 0, weightOverride: null, deliverable: !!spec.deliverable,
           statusOverride: null, predecessors: spec.predecessors ? spec.predecessors.slice() : [],
           collapsed: false,
-          billingAmount: spec.billingAmount != null ? spec.billingAmount : null,
-          billingStatus: spec.billingStatus || null,
+          billingMilestoneId: null,
         };
         this.tasks.push(task);
         created.push(task);
@@ -299,6 +319,51 @@
       const task = this.tasks.find(t => t.id === id);
       if (!task) throw new Error(`Task not found: ${id}`);
       task.collapsed = !task.collapsed;
+    }
+
+    addBillingMilestone() {
+      this._pushUndo();
+      const bm = { id: generateBillingMilestoneId(), name: 'New Billing Milestone', amount: null, status: 'Not Billed' };
+      this.billingMilestones.push(bm);
+      return bm;
+    }
+
+    updateBillingMilestone(id, patch, who) {
+      const bm = this.billingMilestones.find(b => b.id === id);
+      if (!bm) throw new Error(`Billing milestone not found: ${id}`);
+      this._pushUndo();
+      for (const [field, value] of Object.entries(patch)) {
+        const old = bm[field];
+        bm[field] = value;
+        this._audit(who, id, field, old, value);
+      }
+      return bm;
+    }
+
+    deleteBillingMilestone(id, who) {
+      if (!this.billingMilestones.some(b => b.id === id)) throw new Error(`Billing milestone not found: ${id}`);
+      this._pushUndo();
+      this.billingMilestones = this.billingMilestones.filter(b => b.id !== id);
+      this.tasks.forEach(t => {
+        if (t.billingMilestoneId === id) t.billingMilestoneId = null;
+      });
+      this._audit(who, id, 'deleted', null, true);
+    }
+
+    assignDeliverablesToBillingMilestone(billingMilestoneId, taskIds, who) {
+      this._pushUndo();
+      const idSet = new Set(taskIds);
+      this.tasks.forEach(t => {
+        if (idSet.has(t.id)) {
+          if (t.billingMilestoneId !== billingMilestoneId) {
+            this._audit(who, t.id, 'billingMilestoneId', t.billingMilestoneId, billingMilestoneId);
+            t.billingMilestoneId = billingMilestoneId;
+          }
+        } else if (t.billingMilestoneId === billingMilestoneId) {
+          this._audit(who, t.id, 'billingMilestoneId', t.billingMilestoneId, null);
+          t.billingMilestoneId = null;
+        }
+      });
     }
 
     addIssue({ title = 'New Issue', description = '', owner = '', status = 'Open', dateRaised = null, dateResolved = null } = {}) {

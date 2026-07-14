@@ -361,7 +361,7 @@
     PP.wireBilling(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
     PP.wireActivities(state, function () { refresh(state, true); });
-    PP.wireReports(state, function () { PP.renderReport(state); });
+    PP.wireReports(state);
     PP.wireIssuesRisksDecisions(state, function () { refresh(state, true); });
     document.getElementById('csv-template-button').addEventListener('click', handleDownloadCsvTemplate);
     document.getElementById('export-csv-button').addEventListener('click', function () {

@@ -45,6 +45,8 @@
       this.snapshots = data.snapshots;
       this.auditLog = data.auditLog;
       this.settings = data.settings;
+      this.activityGroups = data.activityGroups || [];
+      this.activities = data.activities || [];
       this._undoStack = [];
       this._redoStack = [];
       this.tasks.forEach(t => {
@@ -69,6 +71,8 @@
         snapshots: [],
         auditLog: [],
         settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+        activityGroups: [],
+        activities: [],
       });
     }
 
@@ -86,6 +90,8 @@
         snapshots: this.snapshots,
         auditLog: this.auditLog,
         settings: this.settings,
+        activityGroups: this.activityGroups,
+        activities: this.activities,
       };
     }
 
@@ -112,6 +118,8 @@
       this.snapshots = state.snapshots;
       this.auditLog = state.auditLog;
       this.settings = state.settings;
+      this.activityGroups = state.activityGroups;
+      this.activities = state.activities;
     }
 
     undo() {
@@ -283,6 +291,56 @@
       const task = this.tasks.find(t => t.id === id);
       if (!task) throw new Error(`Task not found: ${id}`);
       task.collapsed = !task.collapsed;
+    }
+
+    addActivityGroup({ name = '', color = '#0b1f6b' } = {}) {
+      this._pushUndo();
+      const group = { id: generateId(), name, color };
+      this.activityGroups.push(group);
+      return group;
+    }
+
+    updateActivityGroup(id, patch) {
+      const group = this.activityGroups.find(g => g.id === id);
+      if (!group) throw new Error(`Activity group not found: ${id}`);
+      this._pushUndo();
+      Object.assign(group, patch);
+      return group;
+    }
+
+    deleteActivityGroup(id) {
+      if (!this.activityGroups.some(g => g.id === id)) throw new Error(`Activity group not found: ${id}`);
+      this._pushUndo();
+      this.activityGroups = this.activityGroups.filter(g => g.id !== id);
+      this.activities.forEach(a => {
+        a.groupIds = a.groupIds.filter(gid => gid !== id);
+      });
+    }
+
+    addActivity({ type = 'Meeting', name = '', dateStart = null, dateEnd = null, timeStart = null, timeEnd = null, groupIds = [], keyDate = false, remarks = '' } = {}) {
+      this._pushUndo();
+      const activity = {
+        id: generateId(), type, name,
+        dateStart, dateEnd: dateEnd || dateStart,
+        timeStart: timeStart || null, timeEnd: timeEnd || null,
+        groupIds: groupIds.slice(), keyDate: !!keyDate, remarks,
+      };
+      this.activities.push(activity);
+      return activity;
+    }
+
+    updateActivity(id, patch) {
+      const activity = this.activities.find(a => a.id === id);
+      if (!activity) throw new Error(`Activity not found: ${id}`);
+      this._pushUndo();
+      Object.assign(activity, patch);
+      return activity;
+    }
+
+    deleteActivity(id) {
+      if (!this.activities.some(a => a.id === id)) throw new Error(`Activity not found: ${id}`);
+      this._pushUndo();
+      this.activities = this.activities.filter(a => a.id !== id);
     }
   }
 

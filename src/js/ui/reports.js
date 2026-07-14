@@ -183,6 +183,9 @@
   }
 
   function wireReports(state) {
+    document.getElementById('export-pdf-button').addEventListener('click', function () {
+      window.print();
+    });
   }
 
   window.PP = window.PP || {};

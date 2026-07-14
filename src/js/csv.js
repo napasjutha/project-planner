@@ -8,7 +8,7 @@
 })(globalThis, function () {
   'use strict';
 
-  const CSV_HEADERS = ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Milestone', 'Billing Amount', 'Billing Status', 'Predecessors'];
+  const CSV_HEADERS = ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Deliverable', 'Billing Amount', 'Billing Status', 'Predecessors'];
 
   function stripBom(text) {
     return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
@@ -71,7 +71,7 @@
   }
 
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-  const MILESTONE_TRUE = ['y', 'yes', 'true', '1'];
+  const DELIVERABLE_TRUE = ['y', 'yes', 'true', '1'];
   const BILLING_STATUSES = ['Not Billed', 'Invoiced', 'Paid'];
 
   function validateCsvRows(rows) {
@@ -117,7 +117,7 @@
       if (c[5] && !DATE_RE.test(c[5])) errors.push('Row ' + rowNum + ": Planned Start '" + c[5] + "' is not a valid date (expected YYYY-MM-DD)");
       if (c[6] && !DATE_RE.test(c[6])) errors.push('Row ' + rowNum + ": Planned Finish '" + c[6] + "' is not a valid date (expected YYYY-MM-DD)");
 
-      const milestone = MILESTONE_TRUE.indexOf(c[8].toLowerCase()) !== -1;
+      const deliverable = DELIVERABLE_TRUE.indexOf(c[8].toLowerCase()) !== -1;
 
       let billingAmount = null;
       if (c[9]) {
@@ -155,7 +155,7 @@
         _row: rowNum, _level: Number.isInteger(level) && level >= 0 ? level : 0,
         name: c[2], owner: c[3], pic: c[4],
         plannedStart: c[5] || null, plannedFinish: c[6] || null,
-        remarks: c[7], milestone,
+        remarks: c[7], deliverable,
         billingAmount, billingStatus, predecessors,
       });
     });

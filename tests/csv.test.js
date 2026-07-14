@@ -35,11 +35,11 @@ test('parseCsvText preserves non-ASCII text', () => {
 test('csvTemplateText is the exact 12-column header row', () => {
   assert.equal(
     csvTemplateText(),
-    'Row,Level,Task Name,Owner,PIC,Planned Start,Planned Finish,Remarks,Milestone,Billing Amount,Billing Status,Predecessors\n'
+    'Row,Level,Task Name,Owner,PIC,Planned Start,Planned Finish,Remarks,Deliverable,Billing Amount,Billing Status,Predecessors\n'
   );
 });
 
-const HEADER = 'Row,Level,Task Name,Owner,PIC,Planned Start,Planned Finish,Remarks,Milestone,Billing Amount,Billing Status,Predecessors';
+const HEADER = 'Row,Level,Task Name,Owner,PIC,Planned Start,Planned Finish,Remarks,Deliverable,Billing Amount,Billing Status,Predecessors';
 
 function rowsOf(text) {
   return parseCsvText(text);
@@ -56,12 +56,12 @@ test('validateCsvRows accepts a valid file and builds task specs in order', () =
   assert.equal(tasks.length, 3);
   assert.deepEqual(tasks[0], {
     _row: 1, _level: 0, name: 'Phase A', owner: 'KPMG', pic: '', plannedStart: null, plannedFinish: null,
-    remarks: '', milestone: false, billingAmount: null, billingStatus: null, predecessors: [],
+    remarks: '', deliverable: false, billingAmount: null, billingStatus: null, predecessors: [],
   });
   assert.equal(tasks[1].owner, 'KPMG');
   assert.equal(tasks[1].pic, 'Alice');
   assert.equal(tasks[2].owner, 'Client Team');
-  assert.equal(tasks[2].milestone, true);
+  assert.equal(tasks[2].deliverable, true);
   assert.equal(tasks[2].billingAmount, 25000);
   assert.equal(tasks[2].billingStatus, 'Invoiced');
   assert.deepEqual(tasks[2].predecessors, [2]);
@@ -149,7 +149,7 @@ test('validateCsvRows returns no tasks when any error exists', () => {
   assert.deepEqual(tasks, []);
 });
 
-test('validateCsvRows parses milestone variants case-insensitively', () => {
+test('validateCsvRows parses deliverable variants case-insensitively', () => {
   const { errors, tasks } = validateCsvRows(rowsOf(
     HEADER + '\n' +
     '1,0,A,KPMG,,,,,yes,,,\n' +
@@ -157,9 +157,9 @@ test('validateCsvRows parses milestone variants case-insensitively', () => {
     '3,0,C,KPMG,,,,,n,,,\n'
   ));
   assert.deepEqual(errors, []);
-  assert.equal(tasks[0].milestone, true);
-  assert.equal(tasks[1].milestone, true);
-  assert.equal(tasks[2].milestone, false);
+  assert.equal(tasks[0].deliverable, true);
+  assert.equal(tasks[1].deliverable, true);
+  assert.equal(tasks[2].deliverable, false);
 });
 
 test('escapeCsvField leaves plain values untouched and normalizes null/undefined to empty string', () => {

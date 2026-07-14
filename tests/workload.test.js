@@ -6,7 +6,7 @@ function leaf(id, pic, plannedStart, plannedFinish) {
   return {
     id, parentId: null, order: 0, name: id, pic,
     plannedStart, plannedFinish, actualStart: null, actualFinish: null,
-    actualPct: 0, weightOverride: null, milestone: false,
+    actualPct: 0, weightOverride: null, deliverable: false,
     statusOverride: null, predecessors: [], collapsed: false,
   };
 }

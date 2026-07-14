@@ -8,7 +8,7 @@
 })(globalThis, function () {
   'use strict';
 
-  const CSV_HEADERS = ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Deliverable', 'Billing Amount', 'Billing Status', 'Predecessors'];
+  const CSV_HEADERS = ['Row', 'Level', 'Task Name', 'Owner', 'PIC', 'Planned Start', 'Planned Finish', 'Remarks', 'Deliverable', 'Predecessors'];
 
   function stripBom(text) {
     return text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
@@ -72,7 +72,6 @@
 
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   const DELIVERABLE_TRUE = ['y', 'yes', 'true', '1'];
-  const BILLING_STATUSES = ['Not Billed', 'Invoiced', 'Paid'];
 
   function validateCsvRows(rows) {
     const errors = [];
@@ -119,27 +118,9 @@
 
       const deliverable = DELIVERABLE_TRUE.indexOf(c[8].toLowerCase()) !== -1;
 
-      let billingAmount = null;
-      if (c[9]) {
-        billingAmount = Number(c[9]);
-        if (!isFinite(billingAmount)) {
-          errors.push('Row ' + rowNum + ": Billing Amount '" + c[9] + "' is not a number");
-          billingAmount = null;
-        }
-      }
-
-      let billingStatus = null;
-      if (c[10]) {
-        if (BILLING_STATUSES.indexOf(c[10]) === -1) {
-          errors.push('Row ' + rowNum + ": Billing Status '" + c[10] + "' must be one of: " + BILLING_STATUSES.join(', '));
-        } else {
-          billingStatus = c[10];
-        }
-      }
-
       const predecessors = [];
-      if (c[11]) {
-        c[11].split(';').forEach(part => {
+      if (c[9]) {
+        c[9].split(';').forEach(part => {
           const p = Number(part.trim());
           if (!Number.isInteger(p) || p < 1) {
             errors.push('Row ' + rowNum + ": Predecessor '" + part.trim() + "' must be a Row number");
@@ -155,8 +136,7 @@
         _row: rowNum, _level: Number.isInteger(level) && level >= 0 ? level : 0,
         name: c[2], owner: c[3], pic: c[4],
         plannedStart: c[5] || null, plannedFinish: c[6] || null,
-        remarks: c[7], deliverable,
-        billingAmount, billingStatus, predecessors,
+        remarks: c[7], deliverable, predecessors,
       });
     });
 

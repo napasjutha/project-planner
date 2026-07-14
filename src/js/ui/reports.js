@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  function pct(x) { return Math.round(x * 100) + '%'; }
+  var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   function el(tag, attrs, children) {
     var e = document.createElement(tag);
@@ -15,178 +15,177 @@
     return e;
   }
 
-  function buildPhaseTable(state) {
-    var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
-    var roots = state.calc.children.get(null) || [];
+  function buildTable(headers, rows, cellsFn) {
     var table = el('table', { class: 'report-table' });
-    table.appendChild(el('tr', {}, ['Phase', 'Plan %', 'Actual %', 'Status'].map(function (h) { return el('th', {}, [h]); })));
-    roots.forEach(function (id) {
-      var task = byId.get(id);
-      var c = state.calc.computed.get(id);
-      table.appendChild(el('tr', {}, [
-        el('td', {}, [task.name]),
-        el('td', {}, [pct(c.plannedPctToDate)]),
-        el('td', {}, [pct(c.actualPct)]),
-        el('td', {}, [c.status]),
-      ]));
+    table.appendChild(el('tr', {}, headers.map(function (h) { return el('th', {}, [h]); })));
+    rows.forEach(function (row) {
+      table.appendChild(el('tr', {}, cellsFn(row).map(function (v) { return el('td', {}, [v || '']); })));
     });
     return table;
   }
 
-  function buildDelayedList(state) {
-    var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
-    var ul = el('ul', { class: 'report-list' });
-    var any = false;
-    state.calc.order.forEach(function (id) {
-      if ((state.calc.children.get(id) || []).length > 0) return;
-      var c = state.calc.computed.get(id);
-      if (c.status !== 'Delayed') return;
-      any = true;
-      var task = byId.get(id);
-      ul.appendChild(el('li', {}, [task.name + ' — due ' + c.plannedFinish + (task.remarks ? ' (' + task.remarks + ')' : '')]));
-    });
-    if (!any) ul.appendChild(el('li', {}, ['None']));
-    return ul;
-  }
-
-  function latestSnapshotDelta(state) {
-    var snaps = state.project.snapshots;
-    if (!snaps.length) return null;
-    var latest = snaps[snaps.length - 1];
-    return {
-      note: latest.note,
-      takenAt: (latest.takenAt || '').slice(0, 10),
-      actualDeltaPct: Math.round((state.calc.kpis.actualPct - latest.overall.actualPct) * 100),
-    };
-  }
-
-  function renderWeeklyReport(state) {
-    var panel = el('div', { class: 'report-panel-inner' });
-    panel.appendChild(el('h1', {}, [state.project.meta.name + ' — Weekly Status Report']));
-    panel.appendChild(el('div', { class: 'report-meta' }, ['Status date: ' + state.project.meta.statusDate]));
-
-    var kpis = state.calc.kpis;
-    var kpiRow = el('div', { class: 'report-kpi-row' }, [
-      el('div', { class: 'report-kpi' }, ['Actual: ' + pct(kpis.actualPct)]),
-      el('div', { class: 'report-kpi' }, ['Plan: ' + pct(kpis.plannedPct)]),
-      el('div', { class: 'report-kpi' }, ['Variance: ' + pct(kpis.variance)]),
+  function renderTitlePage(data) {
+    return el('section', { class: 'report-page report-page-title' }, [
+      el('div', { class: 'report-title-project' }, [data.projectName]),
+      el('h1', { class: 'report-title-heading' }, [data.subtitle]),
+      el('div', { class: 'report-title-date' }, ['Status date: ' + data.statusDate]),
     ]);
-    panel.appendChild(kpiRow);
-
-    var delta = latestSnapshotDelta(state);
-    if (delta) {
-      panel.appendChild(el('div', { class: 'report-meta' }, [
-        'Since last snapshot (' + delta.takenAt + (delta.note ? ' — ' + delta.note : '') + '): ' +
-        (delta.actualDeltaPct >= 0 ? '+' : '') + delta.actualDeltaPct + 'pp actual progress',
-      ]));
-    }
-
-    panel.appendChild(el('h2', {}, ['Phase Progress']));
-    panel.appendChild(buildPhaseTable(state));
-
-    panel.appendChild(el('h2', {}, ['Delayed Items']));
-    panel.appendChild(buildDelayedList(state));
-
-    return panel;
   }
 
-  function renderExecutiveReport(state) {
-    var panel = el('div', { class: 'report-panel-inner' });
-    panel.appendChild(el('h1', {}, [state.project.meta.name + ' — Executive Dashboard']));
-    var kpis = state.calc.kpis;
-    var kpiRow = el('div', { class: 'report-kpi-row' }, [
-      ['Actual', pct(kpis.actualPct)], ['Plan', pct(kpis.plannedPct)],
-      ['Delayed', String(kpis.delayedCount)], ['Complete', kpis.completeCount + '/' + kpis.totalCount],
-      ['Deliverables', kpis.deliverablesComplete + '/' + kpis.deliverablesTotal],
-    ].map(function (pair) { return el('div', { class: 'report-kpi' }, [pair[0] + ': ' + pair[1]]); }));
-    panel.appendChild(kpiRow);
-
-    panel.appendChild(el('h2', {}, ['Phase RAG']));
-    var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
-    var roots = state.calc.children.get(null) || [];
-    var ragList = el('ul', { class: 'report-list' });
-    roots.forEach(function (id) {
-      var task = byId.get(id);
-      var c = state.calc.computed.get(id);
-      ragList.appendChild(el('li', {}, [task.name + ': ' + c.status]));
-    });
-    panel.appendChild(ragList);
-
-    panel.appendChild(el('h2', {}, ['Top Risks / Blocked']));
-    var riskList = el('ul', { class: 'report-list' });
-    var any = false;
-    state.calc.order.forEach(function (id) {
-      if ((state.calc.children.get(id) || []).length > 0) return;
-      var c = state.calc.computed.get(id);
-      if (c.status !== 'Delayed' && c.status !== 'Blocked') return;
-      any = true;
-      riskList.appendChild(el('li', {}, [byId.get(id).name + ': ' + c.status]));
-    });
-    if (!any) riskList.appendChild(el('li', {}, ['None']));
-    panel.appendChild(riskList);
-
-    return panel;
+  function renderAgendaPage(data) {
+    var list = el('ol', { class: 'report-agenda-list' }, data.items.map(function (item) {
+      return el('li', {}, [item]);
+    }));
+    return el('section', { class: 'report-page report-page-agenda' }, [
+      el('h2', { class: 'report-page-heading' }, ['Agenda']),
+      list,
+    ]);
   }
 
-  function renderSummaryReport(state) {
-    var panel = el('div', { class: 'report-panel-inner' });
-    panel.appendChild(el('h1', {}, [state.project.meta.name + ' — Management Summary']));
-    panel.appendChild(el('div', { class: 'report-meta' }, ['Status date: ' + state.project.meta.statusDate]));
-
-    var byId = new Map(state.project.tasks.map(function (t) { return [t.id, t]; }));
-    var table = el('table', { class: 'report-table' });
-    table.appendChild(el('tr', {}, ['WBS', 'Task', 'Owner', 'PIC', 'P-Start', 'P-Finish', '% Actual', 'Status'].map(function (h) { return el('th', {}, [h]); })));
-    state.calc.order.forEach(function (id) {
-      var task = byId.get(id);
-      var c = state.calc.computed.get(id);
-      table.appendChild(el('tr', {}, [
-        el('td', {}, [c.wbs]), el('td', {}, [task.name]), el('td', {}, [task.owner || '']), el('td', {}, [task.pic || '']),
-        el('td', {}, [c.plannedStart || '']), el('td', {}, [c.plannedFinish || '']),
-        el('td', {}, [pct(c.actualPct)]), el('td', {}, [c.status]),
-      ]));
-    });
-    panel.appendChild(table);
-    return panel;
+  function renderDividerPage(data) {
+    return el('section', { class: 'report-page report-page-divider' }, [
+      el('div', { class: 'report-divider-inner' }, [
+        el('h1', { class: 'report-divider-title' }, [data.title]),
+      ]),
+    ]);
   }
 
-  var TEMPLATES = { weekly: renderWeeklyReport, executive: renderExecutiveReport, summary: renderSummaryReport };
+  function renderProgressPage(data) {
+    var kpiRow = el('div', { class: 'report-kpi-row' }, data.kpis.map(function (tile) {
+      return el('div', { class: 'report-kpi-tile' }, [
+        el('div', { class: 'report-kpi-tile-label' }, [tile.label]),
+        el('div', { class: 'report-kpi-tile-value' }, [tile.value]),
+      ]);
+    }));
+    var delayedBody = data.delayedTasks.length
+      ? el('ul', { class: 'report-list' }, data.delayedTasks.map(function (t) {
+          return el('li', {}, [t.name + ' — due ' + (t.plannedFinish || '') + (t.remarks ? ' (' + t.remarks + ')' : '')]);
+        }))
+      : el('p', { class: 'report-empty-note' }, ['No delayed items.']);
+    return el('section', { class: 'report-page report-page-content' }, [
+      el('h2', { class: 'report-page-heading' }, [PP.SECTION_TITLES[0]]),
+      kpiRow,
+      el('h3', { class: 'report-subheading' }, ['Delayed Items']),
+      delayedBody,
+    ]);
+  }
+
+  function renderIssuesRisksPage(data) {
+    var issuesBody = data.issues.length
+      ? buildTable(
+          ['Title', 'Description', 'Owner', 'Status', 'Date Raised', 'Date Resolved'],
+          data.issues,
+          function (i) { return [i.title, i.description, i.owner, i.status, i.dateRaised || '', i.dateResolved || '']; }
+        )
+      : el('p', { class: 'report-empty-note' }, ['No issues logged.']);
+    var risksBody = data.risks.length
+      ? buildTable(
+          ['Title', 'Description', 'Likelihood', 'Impact', 'Mitigation', 'Owner', 'Status', 'Date Raised'],
+          data.risks,
+          function (r) { return [r.title, r.description, r.likelihood, r.impact, r.mitigation, r.owner, r.status, r.dateRaised || '']; }
+        )
+      : el('p', { class: 'report-empty-note' }, ['No risks logged.']);
+    return el('section', { class: 'report-page report-page-content' }, [
+      el('h2', { class: 'report-page-heading' }, [PP.SECTION_TITLES[1]]),
+      el('h3', { class: 'report-subheading' }, ['Issues']),
+      issuesBody,
+      el('h3', { class: 'report-subheading' }, ['Risks']),
+      risksBody,
+    ]);
+  }
+
+  function renderDecisionsPage(data) {
+    var body = data.decisions.length
+      ? buildTable(
+          ['Title', 'Description', 'Decision Needed By', 'Owner', 'Status', 'Decision Made'],
+          data.decisions,
+          function (d) { return [d.title, d.description, d.decisionNeededBy || '', d.owner, d.status, d.decisionMade || '']; }
+        )
+      : el('p', { class: 'report-empty-note' }, ['No decisions logged.']);
+    return el('section', { class: 'report-page report-page-content' }, [
+      el('h2', { class: 'report-page-heading' }, [PP.SECTION_TITLES[2]]),
+      body,
+    ]);
+  }
+
+  function renderCalendarMonth(year, month, activities) {
+    var layout = PP.computeCalendarLayout(year, month, activities);
+
+    var monthEl = el('div', { class: 'report-calendar-month' }, [
+      el('div', { class: 'report-calendar-month-label' }, [MONTH_NAMES[month] + ' ' + year]),
+    ]);
+    var dayHeader = el('div', { class: 'report-calendar-day-header' }, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(function (l) {
+      return el('span', {}, [l]);
+    }));
+    monthEl.appendChild(dayHeader);
+
+    layout.weeks.forEach(function (week, weekIndex) {
+      var weekEl = el('div', { class: 'report-calendar-week' });
+      week.days.forEach(function (day, col) {
+        var cell = el('div', { class: 'report-calendar-daynum' + (day ? '' : ' report-calendar-daynum-empty') });
+        cell.style.gridColumn = String(col + 1);
+        cell.style.gridRow = '1';
+        if (day) {
+          cell.appendChild(document.createTextNode(String(day.dayOfMonth)));
+          if (day.keyDate) {
+            cell.appendChild(el('span', { class: 'report-calendar-keydate-star' }, ['★']));
+          }
+        }
+        weekEl.appendChild(cell);
+      });
+      layout.segments.filter(function (s) { return s.weekIndex === weekIndex; }).forEach(function (seg) {
+        var chip = el('div', { class: 'report-calendar-chip report-calendar-chip-' + seg.activity.type }, [seg.activity.name]);
+        chip.style.gridColumn = (seg.startCol + 1) + ' / ' + (seg.endCol + 2);
+        chip.style.gridRow = String(seg.lane + 2);
+        weekEl.appendChild(chip);
+      });
+      monthEl.appendChild(weekEl);
+    });
+
+    return monthEl;
+  }
+
+  function renderCalendarPage(data, activities) {
+    var monthsRow = el('div', { class: 'report-calendar-months' }, data.months.map(function (m) {
+      return renderCalendarMonth(m.year, m.month, activities);
+    }));
+    return el('section', { class: 'report-page report-page-content' }, [
+      el('h2', { class: 'report-page-heading' }, [PP.SECTION_TITLES[3]]),
+      monthsRow,
+    ]);
+  }
+
+  function renderClosingPage(data) {
+    return el('section', { class: 'report-page report-page-closing' }, [
+      el('h1', { class: 'report-closing-heading' }, ['Thank You']),
+      el('div', { class: 'report-closing-project' }, [data.projectName]),
+    ]);
+  }
+
+  function renderPage(page, state) {
+    if (page.type === 'title') return renderTitlePage(page.data);
+    if (page.type === 'agenda') return renderAgendaPage(page.data);
+    if (page.type === 'divider') return renderDividerPage(page.data);
+    if (page.type === 'progress') return renderProgressPage(page.data);
+    if (page.type === 'issuesRisks') return renderIssuesRisksPage(page.data);
+    if (page.type === 'decisions') return renderDecisionsPage(page.data);
+    if (page.type === 'calendar') return renderCalendarPage(page.data, state.project.activities);
+    return renderClosingPage(page.data);
+  }
 
   function renderReport(state) {
     var panel = document.getElementById('report-panel');
     panel.innerHTML = '';
-    var templateKey = document.getElementById('report-template-select').value;
-    var renderFn = TEMPLATES[templateKey] || renderWeeklyReport;
-    panel.appendChild(renderFn(state));
-  }
-
-  function copyPanelAsImage() {
-    PP.copyElementAsImage(document.getElementById('report-panel'));
-  }
-
-  function copyPanelAsTable() {
-    var table = document.querySelector('#report-panel table');
-    if (!table) {
-      window.alert('This report template has no table to copy.');
-      return;
-    }
-    var html = table.outerHTML;
-    var text = Array.from(table.querySelectorAll('tr')).map(function (tr) {
-      return Array.from(tr.children).map(function (cell) { return cell.textContent; }).join('\t');
-    }).join('\n');
-    navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html': new Blob([html], { type: 'text/html' }),
-        'text/plain': new Blob([text], { type: 'text/plain' }),
-      }),
-    ]).catch(function (err) {
-      window.alert('Copy as Table failed: ' + err.message);
+    var pages = PP.buildReportPages(state.project, state.calc);
+    pages.forEach(function (page) {
+      panel.appendChild(renderPage(page, state));
     });
   }
 
-  function wireReports(state, onTemplateChanged) {
-    document.getElementById('report-template-select').addEventListener('change', onTemplateChanged);
-    document.getElementById('report-copy-image-button').addEventListener('click', copyPanelAsImage);
-    document.getElementById('report-copy-table-button').addEventListener('click', copyPanelAsTable);
+  function wireReports(state) {
+    document.getElementById('export-pdf-button').addEventListener('click', function () {
+      window.print();
+    });
   }
 
   window.PP = window.PP || {};

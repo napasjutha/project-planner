@@ -25,6 +25,7 @@
     PP.renderSettings(state);
     PP.renderHolidays(state);
     PP.renderReport(state);
+    PP.renderIssuesRisksDecisions(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -187,7 +188,7 @@
     });
   }
 
-  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'reports-view'];
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'reports-view', 'issues-view'];
 
   function wireViewTabs(state) {
     var tabs = document.querySelectorAll('.view-tab');
@@ -357,6 +358,7 @@
     PP.wireBilling(state, function () { refresh(state, true); });
     PP.wireHolidays(state, function () { refresh(state, true); });
     PP.wireReports(state, function () { PP.renderReport(state); });
+    PP.wireIssuesRisksDecisions(state, function () { refresh(state, true); });
     document.getElementById('csv-template-button').addEventListener('click', handleDownloadCsvTemplate);
     document.getElementById('export-csv-button').addEventListener('click', function () {
       handleExportCsv(state);

@@ -461,3 +461,201 @@ test('describeChange: falls through to holidays/picList/snapshots/settings when 
 test('describeChange: identical snapshots fall back to a generic label', () => {
   assert.equal(describeChange(snap({}), snap({})), 'Change');
 });
+
+test('Project.empty starts with empty issues, risks, and decisions collections', () => {
+  const p = Project.empty('Test');
+  assert.deepEqual(p.issues, []);
+  assert.deepEqual(p.risks, []);
+  assert.deepEqual(p.decisions, []);
+});
+
+test('Project defaults issues, risks, and decisions to empty arrays for legacy data missing those fields', () => {
+  const p = new Project({
+    meta: { id: 'legacy', name: 'Legacy', statusDate: '2026-01-01', revision: 0, savedBy: null, savedAt: null, createdAt: '2026-01-01T00:00:00.000Z', schemaVersion: 1 },
+    tasks: [], holidays: [], picList: [], snapshots: [], auditLog: [], settings: { theme: 'kpmg-light', ganttZoom: 'week' },
+  });
+  assert.deepEqual(p.issues, []);
+  assert.deepEqual(p.risks, []);
+  assert.deepEqual(p.decisions, []);
+});
+
+test('addIssue appends an issue with default fields', () => {
+  const p = Project.empty('Test');
+  const issue = p.addIssue({ title: 'Server outage', owner: 'Somchai' });
+  assert.equal(p.issues.length, 1);
+  assert.equal(issue.title, 'Server outage');
+  assert.equal(issue.owner, 'Somchai');
+  assert.equal(issue.description, '');
+  assert.equal(issue.status, 'Open');
+  assert.equal(issue.dateRaised, null);
+  assert.equal(issue.dateResolved, null);
+  assert.match(issue.id, /^t_/);
+});
+
+test('addIssue accepts custom status and dates', () => {
+  const p = Project.empty('Test');
+  const issue = p.addIssue({ title: 'Data mismatch', description: 'Numbers do not reconcile', owner: 'Alice', status: 'Resolved', dateRaised: '2026-07-01', dateResolved: '2026-07-05' });
+  assert.equal(issue.status, 'Resolved');
+  assert.equal(issue.dateRaised, '2026-07-01');
+  assert.equal(issue.dateResolved, '2026-07-05');
+});
+
+test('updateIssue changes a field and records an audit entry', () => {
+  const p = Project.empty('Test');
+  const issue = p.addIssue({ title: 'Server outage' });
+  p.updateIssue(issue.id, { status: 'Resolved', dateResolved: '2026-07-10' }, 'Alice');
+  const updated = p.issues.find(i => i.id === issue.id);
+  assert.equal(updated.status, 'Resolved');
+  assert.equal(updated.dateResolved, '2026-07-10');
+  assert.equal(p.auditLog.length, 2);
+  assert.equal(p.auditLog[0].who, 'Alice');
+  assert.equal(p.auditLog[0].taskId, issue.id);
+});
+
+test('updateIssue throws for an unknown issue id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.updateIssue('missing', { status: 'Resolved' }, 'Alice'));
+});
+
+test('deleteIssue removes the issue', () => {
+  const p = Project.empty('Test');
+  const issue = p.addIssue({ title: 'Server outage' });
+  p.deleteIssue(issue.id, 'Alice');
+  assert.equal(p.issues.length, 0);
+});
+
+test('deleteIssue throws for an unknown issue id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.deleteIssue('missing', 'Alice'));
+});
+
+test('addRisk appends a risk with default fields', () => {
+  const p = Project.empty('Test');
+  const risk = p.addRisk({ title: 'Vendor delay', owner: 'Bob' });
+  assert.equal(p.risks.length, 1);
+  assert.equal(risk.title, 'Vendor delay');
+  assert.equal(risk.owner, 'Bob');
+  assert.equal(risk.description, '');
+  assert.equal(risk.likelihood, 'Low');
+  assert.equal(risk.impact, 'Low');
+  assert.equal(risk.mitigation, '');
+  assert.equal(risk.status, 'Open');
+  assert.equal(risk.dateRaised, null);
+  assert.match(risk.id, /^t_/);
+});
+
+test('addRisk accepts custom likelihood, impact, and mitigation', () => {
+  const p = Project.empty('Test');
+  const risk = p.addRisk({ title: 'Key staff attrition', likelihood: 'High', impact: 'High', mitigation: 'Cross-train backup staff', owner: 'Somchai', dateRaised: '2026-07-01' });
+  assert.equal(risk.likelihood, 'High');
+  assert.equal(risk.impact, 'High');
+  assert.equal(risk.mitigation, 'Cross-train backup staff');
+  assert.equal(risk.dateRaised, '2026-07-01');
+});
+
+test('updateRisk changes a field and records an audit entry', () => {
+  const p = Project.empty('Test');
+  const risk = p.addRisk({ title: 'Vendor delay' });
+  p.updateRisk(risk.id, { status: 'Mitigated', mitigation: 'Added a second vendor' }, 'Alice');
+  const updated = p.risks.find(r => r.id === risk.id);
+  assert.equal(updated.status, 'Mitigated');
+  assert.equal(updated.mitigation, 'Added a second vendor');
+  assert.equal(p.auditLog.length, 2);
+  assert.equal(p.auditLog[0].taskId, risk.id);
+});
+
+test('updateRisk throws for an unknown risk id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.updateRisk('missing', { status: 'Closed' }, 'Alice'));
+});
+
+test('deleteRisk removes the risk', () => {
+  const p = Project.empty('Test');
+  const risk = p.addRisk({ title: 'Vendor delay' });
+  p.deleteRisk(risk.id, 'Alice');
+  assert.equal(p.risks.length, 0);
+});
+
+test('deleteRisk throws for an unknown risk id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.deleteRisk('missing', 'Alice'));
+});
+
+test('addDecision appends a decision with default fields', () => {
+  const p = Project.empty('Test');
+  const decision = p.addDecision({ title: 'Choose cloud provider', owner: 'Bob' });
+  assert.equal(p.decisions.length, 1);
+  assert.equal(decision.title, 'Choose cloud provider');
+  assert.equal(decision.owner, 'Bob');
+  assert.equal(decision.description, '');
+  assert.equal(decision.decisionNeededBy, null);
+  assert.equal(decision.status, 'Pending');
+  assert.equal(decision.decisionMade, '');
+  assert.equal(decision.dateDecided, null);
+  assert.match(decision.id, /^t_/);
+});
+
+test('addDecision accepts a custom decisionNeededBy date', () => {
+  const p = Project.empty('Test');
+  const decision = p.addDecision({ title: 'Approve budget increase', decisionNeededBy: '2026-08-01', owner: 'Alice' });
+  assert.equal(decision.decisionNeededBy, '2026-08-01');
+});
+
+test('updateDecision changes a field and records an audit entry', () => {
+  const p = Project.empty('Test');
+  const decision = p.addDecision({ title: 'Choose cloud provider' });
+  p.updateDecision(decision.id, { status: 'Decided', decisionMade: 'Selected Vendor A', dateDecided: '2026-07-11' }, 'Alice');
+  const updated = p.decisions.find(d => d.id === decision.id);
+  assert.equal(updated.status, 'Decided');
+  assert.equal(updated.decisionMade, 'Selected Vendor A');
+  assert.equal(updated.dateDecided, '2026-07-11');
+  assert.equal(p.auditLog.length, 3);
+  assert.equal(p.auditLog[0].taskId, decision.id);
+});
+
+test('updateDecision throws for an unknown decision id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.updateDecision('missing', { status: 'Decided' }, 'Alice'));
+});
+
+test('deleteDecision removes the decision', () => {
+  const p = Project.empty('Test');
+  const decision = p.addDecision({ title: 'Choose cloud provider' });
+  p.deleteDecision(decision.id, 'Alice');
+  assert.equal(p.decisions.length, 0);
+});
+
+test('deleteDecision throws for an unknown decision id', () => {
+  const p = Project.empty('Test');
+  assert.throws(() => p.deleteDecision('missing', 'Alice'));
+});
+
+test('undo reverts an addIssue and redo reapplies it', () => {
+  const p = Project.empty('Test');
+  p.addIssue({ title: 'Server outage' });
+  assert.equal(p.issues.length, 1);
+  assert.equal(p.undo(), true);
+  assert.equal(p.issues.length, 0);
+  assert.equal(p.redo(), true);
+  assert.equal(p.issues.length, 1);
+});
+
+test('undo reverts an addRisk and redo reapplies it', () => {
+  const p = Project.empty('Test');
+  p.addRisk({ title: 'Vendor delay' });
+  assert.equal(p.risks.length, 1);
+  assert.equal(p.undo(), true);
+  assert.equal(p.risks.length, 0);
+  assert.equal(p.redo(), true);
+  assert.equal(p.risks.length, 1);
+});
+
+test('undo reverts an addDecision and redo reapplies it', () => {
+  const p = Project.empty('Test');
+  p.addDecision({ title: 'Choose cloud provider' });
+  assert.equal(p.decisions.length, 1);
+  assert.equal(p.undo(), true);
+  assert.equal(p.decisions.length, 0);
+  assert.equal(p.redo(), true);
+  assert.equal(p.decisions.length, 1);
+});

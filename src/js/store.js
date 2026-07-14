@@ -43,6 +43,9 @@
       this.holidays = data.holidays;
       this.picList = data.picList;
       this.snapshots = data.snapshots;
+      this.issues = data.issues || [];
+      this.risks = data.risks || [];
+      this.decisions = data.decisions || [];
       this.auditLog = data.auditLog;
       this.settings = data.settings;
       this._undoStack = [];
@@ -67,6 +70,9 @@
         holidays: [],
         picList: [],
         snapshots: [],
+        issues: [],
+        risks: [],
+        decisions: [],
         auditLog: [],
         settings: { theme: 'kpmg-light', ganttZoom: 'week' },
       });
@@ -84,6 +90,9 @@
         holidays: this.holidays,
         picList: this.picList,
         snapshots: this.snapshots,
+        issues: this.issues,
+        risks: this.risks,
+        decisions: this.decisions,
         auditLog: this.auditLog,
         settings: this.settings,
       };
@@ -110,6 +119,9 @@
       this.holidays = state.holidays;
       this.picList = state.picList;
       this.snapshots = state.snapshots;
+      this.issues = state.issues;
+      this.risks = state.risks;
+      this.decisions = state.decisions;
       this.auditLog = state.auditLog;
       this.settings = state.settings;
     }
@@ -283,6 +295,84 @@
       const task = this.tasks.find(t => t.id === id);
       if (!task) throw new Error(`Task not found: ${id}`);
       task.collapsed = !task.collapsed;
+    }
+
+    addIssue({ title = 'New Issue', description = '', owner = '', status = 'Open', dateRaised = null, dateResolved = null } = {}) {
+      this._pushUndo();
+      const issue = { id: generateId(), title, description, owner, status, dateRaised, dateResolved };
+      this.issues.push(issue);
+      return issue;
+    }
+
+    updateIssue(id, patch, who) {
+      const issue = this.issues.find(i => i.id === id);
+      if (!issue) throw new Error(`Issue not found: ${id}`);
+      this._pushUndo();
+      for (const [field, value] of Object.entries(patch)) {
+        const old = issue[field];
+        issue[field] = value;
+        this._audit(who, id, field, old, value);
+      }
+      return issue;
+    }
+
+    deleteIssue(id, who) {
+      if (!this.issues.some(i => i.id === id)) throw new Error(`Issue not found: ${id}`);
+      this._pushUndo();
+      this.issues = this.issues.filter(i => i.id !== id);
+      this._audit(who, id, 'deleted', null, true);
+    }
+
+    addRisk({ title = 'New Risk', description = '', likelihood = 'Low', impact = 'Low', mitigation = '', owner = '', status = 'Open', dateRaised = null } = {}) {
+      this._pushUndo();
+      const risk = { id: generateId(), title, description, likelihood, impact, mitigation, owner, status, dateRaised };
+      this.risks.push(risk);
+      return risk;
+    }
+
+    updateRisk(id, patch, who) {
+      const risk = this.risks.find(r => r.id === id);
+      if (!risk) throw new Error(`Risk not found: ${id}`);
+      this._pushUndo();
+      for (const [field, value] of Object.entries(patch)) {
+        const old = risk[field];
+        risk[field] = value;
+        this._audit(who, id, field, old, value);
+      }
+      return risk;
+    }
+
+    deleteRisk(id, who) {
+      if (!this.risks.some(r => r.id === id)) throw new Error(`Risk not found: ${id}`);
+      this._pushUndo();
+      this.risks = this.risks.filter(r => r.id !== id);
+      this._audit(who, id, 'deleted', null, true);
+    }
+
+    addDecision({ title = 'New Decision', description = '', decisionNeededBy = null, owner = '', status = 'Pending', decisionMade = '', dateDecided = null } = {}) {
+      this._pushUndo();
+      const decision = { id: generateId(), title, description, decisionNeededBy, owner, status, decisionMade, dateDecided };
+      this.decisions.push(decision);
+      return decision;
+    }
+
+    updateDecision(id, patch, who) {
+      const decision = this.decisions.find(d => d.id === id);
+      if (!decision) throw new Error(`Decision not found: ${id}`);
+      this._pushUndo();
+      for (const [field, value] of Object.entries(patch)) {
+        const old = decision[field];
+        decision[field] = value;
+        this._audit(who, id, field, old, value);
+      }
+      return decision;
+    }
+
+    deleteDecision(id, who) {
+      if (!this.decisions.some(d => d.id === id)) throw new Error(`Decision not found: ${id}`);
+      this._pushUndo();
+      this.decisions = this.decisions.filter(d => d.id !== id);
+      this._audit(who, id, 'deleted', null, true);
     }
   }
 

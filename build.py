@@ -20,6 +20,7 @@ JS_ORDER = [
     "workload.js",
     "ui/imagecopy.js",
     "ui/predecessor-picker.js",
+    "ui/deliverable-picker.js",
     "ui/tree.js",
     "ui/gantt.js",
     "ui/scurve.js",

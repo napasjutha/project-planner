@@ -146,6 +146,24 @@
 .predecessor-picker-item { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 13px; cursor: pointer; border-radius: var(--radius-sm); }
 .predecessor-picker-item:hover { background: var(--surface-sunken); }
 
+.deliverable-picker {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  min-width: 240px;
+  max-height: 320px;
+  z-index: 1000;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.deliverable-picker input[type="text"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 8px; }
+.deliverable-picker-list { overflow-y: auto; flex: 1; }
+.deliverable-picker-item { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 13px; cursor: pointer; border-radius: var(--radius-sm); }
+.deliverable-picker-item:hover { background: var(--surface-sunken); }
+
 #view-tabs { display: flex; gap: 4px; padding: 8px 24px; border-bottom: 1px solid var(--border); }
 .view-tab {
   background: none; border: none; padding: 8px 16px; font-size: 13px; cursor: pointer;
@@ -230,12 +248,15 @@
 #snapshot-comparison ul { margin: 4px 0; padding-left: 20px; }
 
 #settings-view, #resources-view, #billing-view, #issues-view { flex: 1; overflow: auto; padding: 16px 24px; }
-.billing-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.billing-table th, .billing-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-.billing-table th:last-child, .billing-table td:last-child,
-.billing-table th:nth-last-child(2), .billing-table td:nth-last-child(2) { text-align: right; }
-.billing-table input[type="number"] { width: 100px; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: right; }
-.billing-table select { font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.billing-section { margin-bottom: 24px; }
+.billing-section h3 { margin: 0 0 12px 0; font-size: 11px; letter-spacing: 0.04em; color: var(--text-secondary); text-transform: uppercase; }
+.billing-milestone-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.billing-milestone-row input[type="text"] { flex: 1 1 200px; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.billing-milestone-row input[type="number"] { width: 100px; font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: right; }
+.billing-milestone-row select { font-size: 13px; padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.billing-milestone-row .billing-linked-list { flex-basis: 100%; list-style: none; padding: 0; margin: 4px 0 0 0; font-size: 12px; color: var(--text-secondary); }
+.billing-unassigned-list { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+.billing-unassigned-list li { padding: 6px 0; border-bottom: 1px solid var(--border); }
 .settings-section { background: var(--surface-alt); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; max-width: 500px; box-shadow: var(--shadow-sm); }
 [data-theme="dark"] .settings-section { box-shadow: none; border: 1px solid var(--border); }
 .settings-section-wide { max-width: none; }

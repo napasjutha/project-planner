@@ -122,18 +122,18 @@
     });
     container.appendChild(picSection);
 
-    var milestoneSection = document.createElement('div');
-    milestoneSection.className = 'dashboard-section';
-    var milestoneTitle = document.createElement('h3');
-    milestoneTitle.textContent = 'Upcoming Milestones (14 days)';
-    milestoneSection.appendChild(milestoneTitle);
+    var deliverableSection = document.createElement('div');
+    deliverableSection.className = 'dashboard-section';
+    var deliverableTitle = document.createElement('h3');
+    deliverableTitle.textContent = 'Upcoming Deliverables (14 days)';
+    deliverableSection.appendChild(deliverableTitle);
     var statusDate = state.project.meta.statusDate;
     var horizonISO = PP.toISO(PP.parseISO(statusDate) + 14 * 86400000);
     var upcomingList = document.createElement('ul');
     upcomingList.className = 'dashboard-list';
     calc.order.forEach(function (id) {
       var task = byId.get(id);
-      if (!task.milestone) return;
+      if (!task.deliverable) return;
       var computed = calc.computed.get(id);
       if (!computed.plannedFinish) return;
       if (computed.plannedFinish >= statusDate && computed.plannedFinish <= horizonISO) {
@@ -147,8 +147,8 @@
       none.textContent = 'None in range';
       upcomingList.appendChild(none);
     }
-    milestoneSection.appendChild(upcomingList);
-    container.appendChild(milestoneSection);
+    deliverableSection.appendChild(upcomingList);
+    container.appendChild(deliverableSection);
 
     var delayedSection = document.createElement('div');
     delayedSection.className = 'dashboard-section dashboard-section-wide';
@@ -192,7 +192,7 @@
     var billingTotals = { 'Not Billed': 0, 'Invoiced': 0, 'Paid': 0 };
     var grandTotal = 0;
     state.project.tasks.forEach(function (t) {
-      if (!t.milestone || t.billingAmount == null) return;
+      if (!t.deliverable || t.billingAmount == null) return;
       var key = t.billingStatus || 'Not Billed';
       billingTotals[key] = (billingTotals[key] || 0) + t.billingAmount;
       grandTotal += t.billingAmount;

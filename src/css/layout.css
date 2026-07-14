@@ -59,7 +59,7 @@
 .tree-row.is-parent:hover { background: var(--border); }
 
 .toggle { cursor: pointer; display: inline-block; width: 14px; color: var(--text-secondary); }
-.milestone-marker { color: var(--kpmg-blue); font-size: 10px; margin-right: 4px; }
+.deliverable-marker { color: var(--kpmg-blue); font-size: 10px; margin-right: 4px; }
 
 .col-start, .col-finish, .col-astart, .col-afinish,
 .col-duration, .col-weight, .col-plan, .col-actual {

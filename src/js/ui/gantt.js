@@ -96,7 +96,7 @@
       var x2 = dateToX(computed.plannedFinish, range.startMs, pxPerDay) + pxPerDay;
       var barWidth = Math.max(2, x2 - x1);
 
-      if (computed.isMilestone) {
+      if (computed.isDeliverable) {
         var cx = x1 + barWidth / 2;
         var cy = y + BAR_HEIGHT / 2;
         var r = BAR_HEIGHT / 2;

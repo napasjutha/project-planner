@@ -46,7 +46,7 @@
       ['Variance', pct(kpis.variance)],
       ['Delayed', String(kpis.delayedCount)],
       ['Complete', kpis.completeCount + '/' + kpis.totalCount],
-      ['Milestones', kpis.milestonesComplete + '/' + kpis.milestonesTotal],
+      ['Deliverables', kpis.deliverablesComplete + '/' + kpis.deliverablesTotal],
       ['Remaining days', String(kpis.remainingWorkdays)],
     ];
     var row = document.getElementById('kpi-row');
@@ -173,8 +173,8 @@
       state.filters.onlyDelayed = e.target.checked;
       onFilterChange();
     });
-    document.getElementById('only-milestone-filter').addEventListener('change', function (e) {
-      state.filters.onlyMilestone = e.target.checked;
+    document.getElementById('only-deliverable-filter').addEventListener('change', function (e) {
+      state.filters.onlyDeliverable = e.target.checked;
       onFilterChange();
     });
     document.getElementById('owner-filter').addEventListener('change', function (e) {
@@ -418,7 +418,7 @@
       currentUser: localStorage.getItem('pp:currentUser'),
       dirty: false,
       calc: null,
-      filters: { search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyMilestone: false },
+      filters: { search: '', owner: '', pic: '', status: '', onlyDelayed: false, onlyDeliverable: false },
       scurveOverlaySnapshotId: null,
       snapshotCompareA: null,
       snapshotCompareB: null,

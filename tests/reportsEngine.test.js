@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { recalc } = require('../src/js/calc.js');
 const {
   buildExecutiveSummaryData,
+  buildRoadmapData,
 } = require('../src/js/reportsEngine.js');
 
 function fixtureProject(overrides) {
@@ -71,4 +72,99 @@ test('buildExecutiveSummaryData: statusCounts tallies leaf tasks only, by their 
   const counts = buildExecutiveSummaryData(project, calc).statusCounts;
   assert.equal(counts['Complete'], 1); // Design Phase, actualFinish set
   assert.equal(counts['Delayed'], 1);  // Build Phase, plannedFinish before statusDate, no actualFinish
+});
+
+function roadmapFixtureProject() {
+  return {
+    meta: { name: 'RAM Modernization', statusDate: '2026-07-09' },
+    tasks: [
+      { id: 'phase1', parentId: null, order: 0, name: 'Phase 1', plannedStart: null, plannedFinish: null, owner: '', deliverable: false, statusOverride: null },
+      { id: 'phase2', parentId: null, order: 1, name: 'Phase 2', plannedStart: null, plannedFinish: null, owner: '', deliverable: false, statusOverride: null },
+      { id: 'p1-group', parentId: 'phase1', order: 0, name: 'Group', plannedStart: null, plannedFinish: null, owner: '', deliverable: false, statusOverride: null },
+      { id: 'p1-leaf-a', parentId: 'p1-group', order: 0, name: 'Kickoff Workshop', plannedStart: '2026-07-06', plannedFinish: '2026-07-08', owner: 'KPMG', deliverable: false, statusOverride: null },
+      { id: 'p1-leaf-b', parentId: 'p1-group', order: 1, name: 'Deliverable A', plannedStart: '2026-07-06', plannedFinish: '2026-07-10', owner: 'KPMG', deliverable: true, statusOverride: null },
+      { id: 'p1-leaf-c', parentId: 'p1-group', order: 2, name: 'Overlapping Task', plannedStart: '2026-07-07', plannedFinish: '2026-07-09', owner: 'RAM', deliverable: false, statusOverride: null },
+      { id: 'p2-leaf', parentId: 'phase2', order: 0, name: 'Phase 2 Task', plannedStart: '2026-07-13', plannedFinish: '2026-07-20', owner: 'KPMG', deliverable: false, statusOverride: null },
+      { id: 'cancelled-leaf', parentId: 'phase2', order: 1, name: 'Cancelled Task', plannedStart: '2026-08-01', plannedFinish: '2026-08-05', owner: 'KPMG', deliverable: false, statusOverride: 'Cancelled' },
+      { id: 'no-dates-leaf', parentId: 'phase2', order: 2, name: 'No Dates', plannedStart: null, plannedFinish: null, owner: 'KPMG', deliverable: false, statusOverride: null },
+    ],
+    holidays: [], issues: [], risks: [], decisions: [], activities: [],
+  };
+}
+
+test('buildRoadmapData: rangeStart/rangeEnd span the min/max planned dates of qualifying leaf tasks', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.equal(data.rangeStart, '2026-07-06');
+  assert.equal(data.rangeEnd, '2026-07-20');
+});
+
+test('buildRoadmapData: lanes are one per top-level task, in order, not hardcoded names', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.deepEqual(data.lanes, [{ id: 'phase1', name: 'Phase 1' }, { id: 'phase2', name: 'Phase 2' }]);
+});
+
+test('buildRoadmapData: a leaf 2 levels deep is assigned to its top-level ancestor lane', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  const item = data.items.find(i => i.taskId === 'p1-leaf-a');
+  assert.equal(item.laneId, 'phase1');
+});
+
+test('buildRoadmapData: excludes cancelled tasks and tasks missing planned dates', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.equal(data.items.some(i => i.taskId === 'cancelled-leaf'), false);
+  assert.equal(data.items.some(i => i.taskId === 'no-dates-leaf'), false);
+});
+
+test('buildRoadmapData: isMeeting true for workshop/meeting keyword in name, false otherwise', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.equal(data.items.find(i => i.taskId === 'p1-leaf-a').isMeeting, true);
+  assert.equal(data.items.find(i => i.taskId === 'p1-leaf-b').isMeeting, false);
+});
+
+test('buildRoadmapData: deliverable flag passes through from task.deliverable', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.equal(data.items.find(i => i.taskId === 'p1-leaf-b').deliverable, true);
+  assert.equal(data.items.find(i => i.taskId === 'p1-leaf-a').deliverable, false);
+});
+
+test('buildRoadmapData: overlapping items in the same lane get distinct slots, non-overlapping items can share a slot', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  // p1-leaf-a (07-06..07-08), p1-leaf-b (07-06..07-10), p1-leaf-c (07-07..07-09) all overlap pairwise -> 3 distinct slots
+  const phase1Items = data.items.filter(i => i.laneId === 'phase1');
+  const slots = new Set(phase1Items.map(i => i.slot));
+  assert.equal(slots.size, 3);
+});
+
+test('buildRoadmapData: weeks are 7-day chunks from rangeStart to rangeEnd, labeled W0, W1, ...', () => {
+  const project = roadmapFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.equal(data.weeks[0].start, '2026-07-06');
+  assert.equal(data.weeks[0].label, 'W0');
+  assert.equal(data.weeks[data.weeks.length - 1].label, 'W' + (data.weeks.length - 1));
+});
+
+test('buildRoadmapData: no qualifying tasks returns null range and empty items/weeks', () => {
+  const project = { meta: { name: 'Empty', statusDate: '2026-07-09' }, tasks: [], holidays: [], issues: [], risks: [], decisions: [], activities: [] };
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRoadmapData(project, calc);
+  assert.equal(data.rangeStart, null);
+  assert.equal(data.rangeEnd, null);
+  assert.deepEqual(data.items, []);
+  assert.deepEqual(data.weeks, []);
+  assert.deepEqual(data.lanes, []);
 });

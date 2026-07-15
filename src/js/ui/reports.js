@@ -43,9 +43,13 @@
   }
 
   function renderDividerPage(data) {
+    var m = /^(\d+)\s+(.*)$/.exec(data.title);
+    var number = m ? m[1] : '';
+    var label = m ? m[2] : data.title;
     return el('section', { class: 'report-page report-page-divider' }, [
+      el('div', { class: 'report-divider-number' }, [number]),
       el('div', { class: 'report-divider-inner' }, [
-        el('h1', { class: 'report-divider-title' }, [data.title]),
+        el('h1', { class: 'report-divider-title' }, [label]),
       ]),
     ]);
   }

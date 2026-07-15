@@ -63,11 +63,16 @@
     return toISO(t);
   }
 
+
+  function addCalendarDays(dateISO, n) {
+    return toISO(parseISO(dateISO) + n * DAY_MS);
+  }
+
   function remainingWorkdays(statusISO, finishISO, holidayDates) {
     if (!statusISO || !finishISO) return 0;
     if (parseISO(statusISO) >= parseISO(finishISO)) return 0;
     return networkdays(statusISO, finishISO, holidayDates);
   }
 
-  return { networkdays, addWorkdays, remainingWorkdays, parseISO, toISO, isWeekend };
+  return { networkdays, addWorkdays, remainingWorkdays, parseISO, toISO, isWeekend, addCalendarDays };
 });

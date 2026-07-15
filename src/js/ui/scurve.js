@@ -7,16 +7,10 @@
     return el;
   }
 
-  function renderScurve(state) {
-    var container = document.getElementById('scurve-body');
-    container.innerHTML = '';
-    var points = state.calc.scurve;
-    if (!points.length) {
-      container.textContent = 'No data yet — add tasks with planned dates.';
-      return;
-    }
-
-    var width = 800, height = 320, padding = 40;
+  function buildScurveSvg(points, statusDate, opts) {
+    opts = opts || {};
+    var width = opts.width || 800, height = opts.height || 320, padding = opts.padding != null ? opts.padding : 40;
+    var interactive = opts.interactive !== false;
     var svg = svgEl('svg', { width: width, height: height, style: 'display:block' });
     var plotW = width - padding * 2;
     var plotH = height - padding * 2;
@@ -39,7 +33,6 @@
     }
 
     function actualCutoffIndex() {
-      var statusDate = state.project.meta.statusDate;
       for (var i = 0; i < points.length; i++) {
         if (points[i].periodDate > statusDate) return Math.max(0, i - 1);
       }
@@ -51,24 +44,44 @@
     svg.appendChild(svgEl('path', { d: pathFor('plannedCum'), fill: 'none', stroke: 'var(--kpmg-blue)', 'stroke-width': 2 }));
     svg.appendChild(svgEl('path', { d: pathFor('actualCum', actualPoints), fill: 'none', stroke: 'var(--status-complete)', 'stroke-width': 2 }));
 
+    if (opts.overlayPoints && opts.overlayPoints.length) {
+      var overlayPath = opts.overlayPoints.map(function (p, i) {
+        return (i === 0 ? 'M ' : 'L ') + xAt(Math.min(i, points.length - 1)) + ' ' + yAt(p.actualCum);
+      }).join(' ');
+      svg.appendChild(svgEl('path', { d: overlayPath, fill: 'none', stroke: 'var(--text-tertiary)', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
+    }
+
+    if (interactive) {
+      actualPoints.forEach(function (p, i) {
+        svg.appendChild(svgEl('circle', {
+          cx: xAt(i), cy: yAt(p.actualCum), r: 3, fill: 'var(--status-complete)',
+          'data-index': i, class: 'scurve-dot',
+        }));
+      });
+    }
+
+    return svg;
+  }
+
+  function renderScurve(state) {
+    var container = document.getElementById('scurve-body');
+    container.innerHTML = '';
+    var points = state.calc.scurve;
+    if (!points.length) {
+      container.textContent = 'No data yet — add tasks with planned dates.';
+      return;
+    }
+
+    var overlayPoints = null;
     var overlayId = state.scurveOverlaySnapshotId;
     if (overlayId) {
       var snap = state.project.snapshots.find(function (s) { return s.id === overlayId; });
-      if (snap && snap.scurve && snap.scurve.length) {
-        var overlayPath = snap.scurve.map(function (p, i) {
-          return (i === 0 ? 'M ' : 'L ') + xAt(Math.min(i, points.length - 1)) + ' ' + yAt(p.actualCum);
-        }).join(' ');
-        svg.appendChild(svgEl('path', { d: overlayPath, fill: 'none', stroke: 'var(--text-tertiary)', 'stroke-width': 1, 'stroke-dasharray': '4,3' }));
-      }
+      if (snap && snap.scurve && snap.scurve.length) overlayPoints = snap.scurve;
     }
 
-    actualPoints.forEach(function (p, i) {
-      svg.appendChild(svgEl('circle', {
-        cx: xAt(i), cy: yAt(p.actualCum), r: 3, fill: 'var(--status-complete)',
-        'data-index': i, class: 'scurve-dot',
-      }));
+    var svg = buildScurveSvg(points, state.project.meta.statusDate, {
+      width: 800, height: 320, padding: 40, interactive: true, overlayPoints: overlayPoints,
     });
-
     container.appendChild(svg);
 
     var tooltip = document.getElementById('scurve-tooltip');
@@ -113,6 +126,7 @@
   }
 
   window.PP = window.PP || {};
+  window.PP.buildScurveSvg = buildScurveSvg;
   window.PP.renderScurve = renderScurve;
   window.PP.renderScurveOverlaySelect = renderScurveOverlaySelect;
   window.PP.wireScurve = wireScurve;

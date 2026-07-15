@@ -494,6 +494,20 @@
       return activity;
     }
 
+    addActivities(specs) {
+      this._pushUndo();
+      return specs.map(spec => {
+        const activity = {
+          id: generateId(), type: spec.type, name: spec.name,
+          dateStart: spec.dateStart, dateEnd: spec.dateEnd || spec.dateStart,
+          timeStart: spec.timeStart || null, timeEnd: spec.timeEnd || null,
+          groupIds: (spec.groupIds || []).slice(), keyDate: !!spec.keyDate, remarks: spec.remarks || '',
+        };
+        this.activities.push(activity);
+        return activity;
+      });
+    }
+
     updateActivity(id, patch) {
       const activity = this.activities.find(a => a.id === id);
       if (!activity) throw new Error(`Activity not found: ${id}`);

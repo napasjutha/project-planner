@@ -3,6 +3,26 @@
 
   var MONTH_NAMES_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+  function parseTimeToMinutes(text) {
+    if (!text) return null;
+    var m = /^(\d{1,2}):(\d{2})$/.exec(text.trim());
+    if (!m) return null;
+    var h = Number(m[1]), mins = Number(m[2]);
+    if (h > 23 || mins > 59) return null;
+    return h * 60 + mins;
+  }
+
+  function validateActivityDates(dateStart, dateEnd, timeStart, timeEnd) {
+    if (!dateStart || !dateEnd) return 'Start and end date are required.';
+    if (dateEnd < dateStart) return 'End date cannot be before start date.';
+    if (dateStart === dateEnd && timeStart && timeEnd) {
+      var ts = parseTimeToMinutes(timeStart);
+      var te = parseTimeToMinutes(timeEnd);
+      if (ts != null && te != null && te <= ts) return 'End time must be after start time.';
+    }
+    return null;
+  }
+
   function currentActivitiesYear(state) {
     return state.activitiesViewYear || Number(state.project.meta.statusDate.slice(0, 4));
   }
@@ -208,7 +228,7 @@
     var table = document.createElement('table');
     table.className = 'dashboard-table';
     var thead = document.createElement('tr');
-    ['Type', 'Name', 'Start', 'End', 'Key date', ''].forEach(function (h) {
+    ['Type', 'Name', 'Start', 'Time Start', 'End', 'Time End', 'Key date', ''].forEach(function (h) {
       var th = document.createElement('th');
       th.textContent = h;
       thead.appendChild(th);
@@ -216,11 +236,32 @@
     table.appendChild(thead);
     sorted.forEach(function (a) {
       var tr = document.createElement('tr');
-      [a.type, a.name, a.dateStart, a.dateEnd, a.keyDate ? 'Yes' : ''].forEach(function (val) {
+
+      var typeTd = document.createElement('td');
+      typeTd.textContent = a.type;
+      tr.appendChild(typeTd);
+
+      var nameTd = document.createElement('td');
+      nameTd.textContent = a.name;
+      tr.appendChild(nameTd);
+
+      [['dateStart', 'date', a.dateStart], ['timeStart', 'text', a.timeStart || ''], ['dateEnd', 'date', a.dateEnd], ['timeEnd', 'text', a.timeEnd || '']].forEach(function (spec) {
         var td = document.createElement('td');
-        td.textContent = val;
+        var input = document.createElement('input');
+        input.type = spec[1];
+        input.value = spec[2];
+        input.className = spec[1] === 'date' ? 'activity-date-input' : 'activity-time-input';
+        if (spec[1] === 'text') input.placeholder = 'e.g. 9:30';
+        input.dataset.activityId = a.id;
+        input.dataset.field = spec[0];
+        td.appendChild(input);
         tr.appendChild(td);
       });
+
+      var keyTd = document.createElement('td');
+      keyTd.textContent = a.keyDate ? 'Yes' : '';
+      tr.appendChild(keyTd);
+
       var actionTd = document.createElement('td');
       var removeBtn = document.createElement('button');
       removeBtn.textContent = 'Remove';
@@ -291,6 +332,11 @@
         window.alert('Name and start date are required.');
         return;
       }
+      var addError = validateActivityDates(dateStart, dateEnd, timeStart, timeEnd);
+      if (addError) {
+        window.alert(addError);
+        return;
+      }
       state.project.addActivity({
         type: type, name: name, dateStart: dateStart, dateEnd: dateEnd,
         timeStart: timeStart, timeEnd: timeEnd, groupIds: groupIds, keyDate: keyDate, remarks: remarks,
@@ -309,6 +355,35 @@
       var btn = e.target.closest('.activity-remove-btn');
       if (!btn) return;
       state.project.deleteActivity(btn.dataset.activityId);
+      onChanged();
+    });
+
+    document.getElementById('activities-table').addEventListener('change', function (e) {
+      var input = e.target;
+      var activityId = input.dataset.activityId;
+      var field = input.dataset.field;
+      if (!activityId || !field) return;
+      var activity = state.project.activities.find(function (a) { return a.id === activityId; });
+      if (!activity) return;
+
+      var isTimeField = field === 'timeStart' || field === 'timeEnd';
+      var newValue = isTimeField ? (input.value.trim() || null) : input.value;
+
+      var candidateDateStart = field === 'dateStart' ? newValue : activity.dateStart;
+      var candidateDateEnd = field === 'dateEnd' ? newValue : activity.dateEnd;
+      var candidateTimeStart = field === 'timeStart' ? newValue : activity.timeStart;
+      var candidateTimeEnd = field === 'timeEnd' ? newValue : activity.timeEnd;
+
+      var error = validateActivityDates(candidateDateStart, candidateDateEnd, candidateTimeStart, candidateTimeEnd);
+      if (error) {
+        window.alert(error);
+        input.value = activity[field] || '';
+        return;
+      }
+
+      var patch = {};
+      patch[field] = newValue;
+      state.project.updateActivity(activityId, patch);
       onChanged();
     });
 

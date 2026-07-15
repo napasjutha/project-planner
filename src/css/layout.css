@@ -323,6 +323,9 @@
 .activity-group-remove-btn { background: none; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 2px 8px; font-size: 12px; cursor: pointer; color: var(--status-delayed); transition: background 150ms ease, border-color 150ms ease; }
 .activity-group-remove-btn:hover { background: var(--surface-sunken); border-color: var(--border); }
 
+.activity-date-input, .activity-time-input { font-size: 12px; padding: 3px 5px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-primary); }
+.activity-time-input { width: 72px; }
+
 #activities-month-nav { display: flex; align-items: center; gap: 12px; padding: 12px 20px; }
 #activities-month-nav button { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 14px; font-size: 13px; cursor: pointer; }
 #activities-month-label { font-weight: 600; font-size: 14px; color: var(--kpmg-blue); }

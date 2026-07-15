@@ -16,6 +16,7 @@ JS_ORDER = [
     "snapshot.js",
     "filters.js",
     "csv.js",
+    "xlsExport.js",
     "criticalpath.js",
     "workload.js",
     "reportsEngine.js",

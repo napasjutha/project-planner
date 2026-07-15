@@ -323,6 +323,20 @@
     URL.revokeObjectURL(url);
   }
 
+  function handleExportExcel(state) {
+    var html = PP.buildExportXlsHtml(state.project, state.calc);
+    var blob = new Blob(['﻿' + html], { type: 'application/vnd.ms-excel' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    var dateStr = new Date().toISOString().slice(0, 10);
+    a.download = slugifyProjectName(state.project.meta.name) + '_export_' + dateStr + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   function handleImportCsv(state, file) {
     var reader = new FileReader();
     reader.onload = function () {
@@ -374,6 +388,9 @@
     document.getElementById('csv-template-button').addEventListener('click', handleDownloadCsvTemplate);
     document.getElementById('export-csv-button').addEventListener('click', function () {
       handleExportCsv(state);
+    });
+    document.getElementById('export-excel-button').addEventListener('click', function () {
+      handleExportExcel(state);
     });
     document.getElementById('import-csv-button').addEventListener('click', function () {
       document.getElementById('import-csv-input').click();

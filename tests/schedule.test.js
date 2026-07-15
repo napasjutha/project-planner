@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { networkdays, addWorkdays, remainingWorkdays } = require('../src/js/schedule.js');
+const { networkdays, addWorkdays, remainingWorkdays, addCalendarDays } = require('../src/js/schedule.js');
 const HOLIDAYS_2024 = require('./fixtures/holidays-2024.js');
 
 test('networkdays: same-week span, no holiday (workbook row 8: 2024-01-15 Mon to 2024-01-16 Tue)', () => {
@@ -54,4 +54,24 @@ test('remainingWorkdays: status date equal to finish returns 0', () => {
 
 test('remainingWorkdays: status date past finish returns 0', () => {
   assert.equal(remainingWorkdays('2024-03-05', '2024-03-04', []), 0);
+});
+
+test('addCalendarDays: positive delta advances by plain calendar days, including weekends', () => {
+  assert.equal(addCalendarDays('2026-07-15', 5), '2026-07-20');
+});
+
+test('addCalendarDays: negative delta moves backward', () => {
+  assert.equal(addCalendarDays('2026-07-15', -5), '2026-07-10');
+});
+
+test('addCalendarDays: zero delta returns the same date', () => {
+  assert.equal(addCalendarDays('2026-07-15', 0), '2026-07-15');
+});
+
+test('addCalendarDays: rolls over the month boundary', () => {
+  assert.equal(addCalendarDays('2026-07-30', 3), '2026-08-02');
+});
+
+test('addCalendarDays: rolls over the year boundary', () => {
+  assert.equal(addCalendarDays('2026-12-30', 3), '2027-01-02');
 });

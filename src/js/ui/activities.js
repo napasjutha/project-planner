@@ -439,6 +439,44 @@
       state.project.updateActivity(drag.activityId, { dateStart: newDateStart, dateEnd: newDateEnd });
       onChanged();
     });
+
+    document.getElementById('download-activities-template-button').addEventListener('click', function () {
+      var blob = new Blob([PP.activitiesCsvTemplateText()], { type: 'text/csv' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'activities-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('mass-upload-activities-button').addEventListener('click', function () {
+      document.getElementById('mass-upload-activities-input').click();
+    });
+
+    document.getElementById('mass-upload-activities-input').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        var rows = PP.parseCsvText(PP.stripBom(reader.result));
+        var result = PP.parseActivitiesCsv(rows, state.project.activityGroups);
+        if (result.errors.length) {
+          window.alert('Cannot import — ' + result.errors.length + ' error(s):\n' + result.errors.join('\n'));
+          return;
+        }
+        var created = state.project.addActivities(result.activities);
+        window.alert('Imported ' + created.length + ' activity(ies).');
+        onChanged();
+      };
+      reader.onerror = function () {
+        window.alert('Failed to read that file.');
+      };
+      reader.readAsText(file, 'UTF-8');
+      e.target.value = '';
+    });
   }
 
   window.PP = window.PP || {};

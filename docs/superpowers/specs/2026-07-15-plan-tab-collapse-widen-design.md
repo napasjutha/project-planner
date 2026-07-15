@@ -6,19 +6,19 @@
 
 ## 1. Collapse All / Expand All
 
-Every parent task already has a persisted `collapsed` boolean (visible in `Project`'s task objects, toggled today one row at a time via the ▸/▾ disclosure triangle in `tree.js`). This adds a bulk version.
+Every parent task already has a persisted `collapsed` boolean (visible in `Project`'s task objects, toggled today one row at a time via the ▸/▾ disclosure triangle in `tree.js`, backed by `Project#toggleCollapse(id)` in `store.js:326-330`). This adds a bulk version.
+
+**Existing convention this must match:** `toggleCollapse` mutates `task.collapsed` directly with **no** `_pushUndo()` and **no** `_audit()` call — collapse state is treated as view-state, not undo-tracked data, even though it happens to live on the task object. `setAllCollapsed` must follow the same convention (a first draft of this spec incorrectly assumed collapse was undo-tracked and specified an undo/audit call — that was wrong; do not add undo/audit here, since `toggleCollapse` has none and consistency matters more than symmetry with unrelated bulk methods like `addTasks`).
 
 **`store.js`:** new method on `Project`:
 ```js
-setAllCollapsed(collapsed, who) {
-  this._pushUndo();
+setAllCollapsed(collapsed) {
   this.tasks.forEach(t => { if (this.tasks.some(c => c.parentId === t.id)) t.collapsed = collapsed; });
-  this._audit(who, null, 'setAllCollapsed', null, collapsed);
 }
 ```
-Single `_pushUndo()` for the whole batch (one Undo click restores every row's prior collapsed state, not 50 individual steps) — same pattern as `assignDeliverablesToBillingMilestone`'s batch-with-one-undo shape. Only tasks that actually have children are touched (leaf tasks don't carry a meaningful `collapsed` value).
+Only tasks that actually have children are touched (leaf tasks don't carry a meaningful `collapsed` value). No undo step is created — clicking Collapse All then Expand All is how you "undo" it, exactly like the existing per-row toggle.
 
-**UI:** two buttons ("Collapse All", "Expand All") in the Plan tab's toolbar, next to the existing `+ Add Task` / search / filter controls. Click calls `state.project.setAllCollapsed(true|false, state.currentUser)` then `onChanged()`.
+**UI:** two buttons ("Collapse All", "Expand All") in the Plan tab's toolbar, next to the existing `+ Add Task` / search / filter controls. Click calls `state.project.setAllCollapsed(true|false)` then `onChanged()`.
 
 ## 2. Wider Task column
 
@@ -26,8 +26,8 @@ Single `_pushUndo()` for the whole batch (one Undo click restores every row's pr
 
 ## 3. Testing
 
-- `store.js`: Node test for `setAllCollapsed` — collapses all parents in one call, single undo restores all prior values, leaf tasks are untouched, `_audit` records one entry not N.
-- UI: no Node coverage (tree.js is a UI file, existing convention) — controller-run Playwright check: click Collapse All, confirm every parent row shows ▸ and its children are hidden; click Expand All, confirm the reverse; click Undo once after Collapse All, confirm every row's individual prior collapsed state is restored exactly (including ones that started collapsed already, ones that started expanded already, and ones that were already collapsed staying collapsed after Undo — expected since the ledger records prior-state as a whole snapshot, not a diff, so this is inherently correct).
+- `store.js`: Node test for `setAllCollapsed` — collapses all parents in one call, leaf tasks are untouched, calling with `false` after `true` expands everything back (no undo involved, matching `toggleCollapse`'s existing no-undo behavior).
+- UI: no Node coverage (tree.js is a UI file, existing convention) — controller-run Playwright check: click Collapse All, confirm every parent row shows ▸ and its children are hidden; click Expand All, confirm the reverse.
 
 ## 4. Out of Scope
 

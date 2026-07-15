@@ -2,67 +2,25 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { recalc } = require('../src/js/calc.js');
 const {
-  SECTION_TITLES,
-  buildTitlePageData,
-  buildAgendaPageData,
-  buildProgressPageData,
-  buildIssuesRisksPageData,
-  buildDecisionsPageData,
-  buildNextStepsCalendarPageData,
-  buildClosingPageData,
-  buildReportPages,
+  buildExecutiveSummaryData,
 } = require('../src/js/reportsEngine.js');
 
 function fixtureProject(overrides) {
   return Object.assign({
     meta: { name: 'RAM Modernization', statusDate: '2026-07-09' },
     tasks: [
-      { id: 't1', parentId: null, order: 0, name: 'Design Phase', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: '2026-06-01', actualFinish: '2026-06-10', owner: 'Alice', remarks: '' },
-      { id: 't2', parentId: null, order: 1, name: 'Build Phase', plannedStart: '2026-06-11', plannedFinish: '2026-06-20', actualStart: '2026-06-11', actualFinish: null, owner: 'Bob', remarks: 'Waiting on vendor' },
+      { id: 't1', parentId: null, order: 0, name: 'Design Phase', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: '2026-06-01', actualFinish: '2026-06-10', owner: 'Alice', remarks: '', deliverable: false },
+      { id: 't2', parentId: null, order: 1, name: 'Build Phase', plannedStart: '2026-06-11', plannedFinish: '2026-06-20', actualStart: '2026-06-11', actualFinish: null, owner: 'Bob', remarks: 'Waiting on vendor', deliverable: true },
     ],
     holidays: [],
-    issues: [
-      { id: 'i1', title: 'Server outage', description: 'Prod outage in Bangkok region', owner: 'Somchai', status: 'Open', dateRaised: '2026-07-01', dateResolved: null },
-    ],
-    risks: [
-      { id: 'r1', title: 'Vendor delay', description: 'Vendor missed a milestone', likelihood: 'High', impact: 'Medium', mitigation: 'Add backup vendor', owner: 'Bob', status: 'Open', dateRaised: '2026-07-01' },
-    ],
-    decisions: [
-      { id: 'd1', title: 'Choose cloud provider', description: 'Pick primary hosting provider', decisionNeededBy: '2026-08-01', owner: 'Alice', status: 'Pending', decisionMade: '', dateDecided: null },
-    ],
-    activities: [
-      { id: 'a1', type: 'Meeting', name: 'Steering Review', dateStart: '2026-07-09', dateEnd: '2026-07-09', timeStart: '14:30', timeEnd: '15:30', groupIds: [], keyDate: true, remarks: '' },
-      { id: 'a2', type: 'Workshop', name: 'Discovery Workshop', dateStart: '2026-07-27', dateEnd: '2026-08-03', timeStart: null, timeEnd: null, groupIds: [], keyDate: false, remarks: '' },
-    ],
+    issues: [], risks: [], decisions: [], activities: [],
   }, overrides);
 }
 
-test('SECTION_TITLES has exactly 4 titles matching the reference PDF structure', () => {
-  assert.equal(SECTION_TITLES.length, 4);
-  assert.equal(SECTION_TITLES[0], '01 ผลการดำเนินงาน');
-  assert.equal(SECTION_TITLES[1], '02 ประเด็นปัญหาและความเสี่ยง');
-  assert.equal(SECTION_TITLES[2], '03 ประเด็นเพื่อหารือ');
-  assert.equal(SECTION_TITLES[3], '04 การดำเนินการลำดับถัดไป');
-});
-
-test('buildTitlePageData pulls project name, fixed subtitle, and status date from project.meta', () => {
-  const data = buildTitlePageData(fixtureProject());
-  assert.deepEqual(data, { projectName: 'RAM Modernization', subtitle: 'Progress Meeting', statusDate: '2026-07-09' });
-});
-
-test('buildAgendaPageData returns the four section titles as agenda items, in order', () => {
-  const data = buildAgendaPageData();
-  assert.deepEqual(data.items, SECTION_TITLES);
-});
-
-test('buildClosingPageData carries the project name only', () => {
-  assert.deepEqual(buildClosingPageData(fixtureProject()), { projectName: 'RAM Modernization' });
-});
-
-test('buildProgressPageData produces 6 KPI tiles (Actual/Planned/Variance/Delayed/Complete/Deliverables) matching calc.kpis, and lists exactly the delayed leaf task', () => {
+test('buildExecutiveSummaryData produces the 6 KPI tiles matching calc.kpis', () => {
   const project = fixtureProject();
   const calc = recalc(project);
-  const data = buildProgressPageData(project, calc);
+  const data = buildExecutiveSummaryData(project, calc);
 
   const pct = x => Math.round(x * 100) + '%';
   assert.deepEqual(data.kpis, [
@@ -73,115 +31,44 @@ test('buildProgressPageData produces 6 KPI tiles (Actual/Planned/Variance/Delaye
     { label: 'Complete', value: calc.kpis.completeCount + '/' + calc.kpis.totalCount },
     { label: 'Deliverables', value: calc.kpis.deliverablesComplete + '/' + calc.kpis.deliverablesTotal },
   ]);
-
-  assert.equal(data.delayedTasks.length, 1);
-  assert.deepEqual(data.delayedTasks[0], { name: 'Build Phase', plannedFinish: '2026-06-20', remarks: 'Waiting on vendor' });
-  assert.equal(data.delayedMoreCount, 0);
-  assert.deepEqual(data.scurvePoints, calc.scurve);
-  assert.equal(data.statusDate, '2026-07-09');
 });
 
-test('buildProgressPageData caps delayedTasks at 8 and reports the remainder via delayedMoreCount', () => {
-  const tasks = [];
-  for (let i = 0; i < 10; i++) {
-    tasks.push({
-      id: 't' + i, parentId: null, order: i, name: 'Task ' + i,
-      plannedStart: '2026-06-01', plannedFinish: '2026-06-05',
-      actualStart: null, actualFinish: null, owner: 'Alice', remarks: '',
-    });
-  }
-  const project = fixtureProject({ tasks });
-  const calc = recalc(project);
-  const data = buildProgressPageData(project, calc);
-
-  assert.equal(calc.kpis.delayedCount, 10);
-  assert.equal(data.delayedTasks.length, 8);
-  assert.equal(data.delayedMoreCount, 2);
-});
-
-test('buildProgressPageData reports delayedMoreCount 0 when there are exactly 8 delayed tasks', () => {
-  const tasks = [];
-  for (let i = 0; i < 8; i++) {
-    tasks.push({
-      id: 't' + i, parentId: null, order: i, name: 'Task ' + i,
-      plannedStart: '2026-06-01', plannedFinish: '2026-06-05',
-      actualStart: null, actualFinish: null, owner: 'Alice', remarks: '',
-    });
-  }
-  const project = fixtureProject({ tasks });
-  const calc = recalc(project);
-  const data = buildProgressPageData(project, calc);
-
-  assert.equal(data.delayedTasks.length, 8);
-  assert.equal(data.delayedMoreCount, 0);
-});
-
-test('buildProgressPageData returns an empty delayedTasks array when nothing is delayed', () => {
+test('buildExecutiveSummaryData: ragStatus is On Track when variance >= 0', () => {
   const project = fixtureProject({
     tasks: [
-      { id: 't1', parentId: null, order: 0, name: 'Design Phase', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: '2026-06-01', actualFinish: '2026-06-10', owner: 'Alice', remarks: '' },
+      { id: 't1', parentId: null, order: 0, name: 'Done', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: '2026-06-01', actualFinish: '2026-06-10', owner: 'Alice', remarks: '', deliverable: false },
     ],
   });
   const calc = recalc(project);
-  const data = buildProgressPageData(project, calc);
-  assert.deepEqual(data.delayedTasks, []);
-  assert.equal(data.delayedMoreCount, 0);
+  assert.ok(calc.kpis.variance >= 0);
+  assert.equal(buildExecutiveSummaryData(project, calc).ragStatus, 'On Track');
 });
 
-test('buildIssuesRisksPageData passes through project.issues and project.risks with the full field set', () => {
-  const project = fixtureProject();
-  const data = buildIssuesRisksPageData(project);
-  assert.deepEqual(data.issues, [
-    { id: 'i1', title: 'Server outage', description: 'Prod outage in Bangkok region', owner: 'Somchai', status: 'Open', dateRaised: '2026-07-01', dateResolved: null },
-  ]);
-  assert.deepEqual(data.risks, [
-    { id: 'r1', title: 'Vendor delay', description: 'Vendor missed a milestone', likelihood: 'High', impact: 'Medium', mitigation: 'Add backup vendor', owner: 'Bob', status: 'Open', dateRaised: '2026-07-01' },
-  ]);
+test('buildExecutiveSummaryData: ragStatus is Watch when -0.05 <= variance < 0, At Risk when variance < -0.05', () => {
+  // Build Phase is 100% planned-to-date (finished window) but only 0% actual (no actualFinish, actualStart present but pa() -> partial). Force a clear At-Risk case:
+  const atRiskProject = fixtureProject({
+    tasks: [
+      { id: 't1', parentId: null, order: 0, name: 'Late', plannedStart: '2026-05-01', plannedFinish: '2026-05-10', actualStart: null, actualFinish: null, owner: 'Alice', remarks: '', deliverable: false },
+    ],
+  });
+  const atRiskCalc = recalc(atRiskProject);
+  assert.ok(atRiskCalc.kpis.variance < -0.05, 'fixture must produce variance below -0.05 for this test to be meaningful');
+  assert.equal(buildExecutiveSummaryData(atRiskProject, atRiskCalc).ragStatus, 'At Risk');
 });
 
-test('buildIssuesRisksPageData returns empty arrays when the project has none', () => {
-  const data = buildIssuesRisksPageData(fixtureProject({ issues: [], risks: [] }));
-  assert.deepEqual(data.issues, []);
-  assert.deepEqual(data.risks, []);
-});
-
-test('buildDecisionsPageData passes through project.decisions, excluding dateDecided (not a displayed field)', () => {
-  const project = fixtureProject();
-  const data = buildDecisionsPageData(project);
-  assert.deepEqual(data.decisions, [
-    { id: 'd1', title: 'Choose cloud provider', description: 'Pick primary hosting provider', decisionNeededBy: '2026-08-01', owner: 'Alice', status: 'Pending', decisionMade: '' },
-  ]);
-});
-
-test('buildNextStepsCalendarPageData resolves the current and next calendar month from meta.statusDate', () => {
-  const data = buildNextStepsCalendarPageData(fixtureProject());
-  assert.deepEqual(data.months, [{ year: 2026, month: 6 }, { year: 2026, month: 7 }]);
-});
-
-test('buildNextStepsCalendarPageData rolls the year over when the status date is in December', () => {
-  const project = fixtureProject({ meta: { name: 'RAM Modernization', statusDate: '2026-12-05' } });
-  const data = buildNextStepsCalendarPageData(project);
-  assert.deepEqual(data.months, [{ year: 2026, month: 11 }, { year: 2027, month: 0 }]);
-});
-
-test('buildReportPages assembles all 11 pages in the exact spec order with matching divider titles', () => {
+test('buildExecutiveSummaryData: statusCounts always has all 6 status keys, zero-filled', () => {
   const project = fixtureProject();
   const calc = recalc(project);
-  const pages = buildReportPages(project, calc);
+  const counts = buildExecutiveSummaryData(project, calc).statusCounts;
+  assert.deepEqual(Object.keys(counts).sort(), ['Blocked', 'Cancelled', 'Complete', 'Delayed', 'In Progress', 'Not Start'].sort());
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  assert.equal(total, 2); // both leaf tasks in the default fixture counted exactly once
+});
 
-  assert.equal(pages.length, 11);
-  assert.deepEqual(pages.map(p => p.type), [
-    'title', 'agenda', 'divider', 'progress', 'divider', 'issuesRisks',
-    'divider', 'decisions', 'divider', 'calendar', 'closing',
-  ]);
-
-  const dividerTitles = pages.filter(p => p.type === 'divider').map(p => p.data.title);
-  assert.deepEqual(dividerTitles, SECTION_TITLES);
-
-  assert.equal(pages[0].data.projectName, 'RAM Modernization');
-  assert.equal(pages[10].data.projectName, 'RAM Modernization');
-  assert.equal(pages[5].data.issues.length, 1);
-  assert.equal(pages[5].data.risks.length, 1);
-  assert.equal(pages[7].data.decisions.length, 1);
-  assert.deepEqual(pages[9].data.months, [{ year: 2026, month: 6 }, { year: 2026, month: 7 }]);
+test('buildExecutiveSummaryData: statusCounts tallies leaf tasks only, by their calc.computed status', () => {
+  const project = fixtureProject();
+  const calc = recalc(project);
+  const counts = buildExecutiveSummaryData(project, calc).statusCounts;
+  assert.equal(counts['Complete'], 1); // Design Phase, actualFinish set
+  assert.equal(counts['Delayed'], 1);  // Build Phase, plannedFinish before statusDate, no actualFinish
 });

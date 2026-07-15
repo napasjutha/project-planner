@@ -116,8 +116,73 @@
     return { rangeStart: toISO(rangeStartMs), rangeEnd: toISO(rangeEndMs), statusDate: project.meta.statusDate, weeks: weeks, lanes: lanes, items: items };
   }
 
+  function buildWeeklyActionsData(project, calc) {
+    var statusDate = project.meta.statusDate;
+    var priorMs = parseISO(statusDate) - 7 * DAY_MS;
+    var nextMs = parseISO(statusDate) + 14 * DAY_MS;
+    var byId = new Map(project.tasks.map(function (t) { return [t.id, t]; }));
+
+    var completed = [];
+    var upcoming = [];
+    calc.order.forEach(function (id) {
+      if ((calc.children.get(id) || []).length > 0) return;
+      var task = byId.get(id);
+      if (task.actualFinish && parseISO(task.actualFinish) >= priorMs && parseISO(task.actualFinish) <= parseISO(statusDate)) {
+        completed.push({ name: task.name, actualFinish: task.actualFinish });
+      }
+      if (task.plannedStart && parseISO(task.plannedStart) >= parseISO(statusDate) && parseISO(task.plannedStart) <= nextMs) {
+        upcoming.push({ name: task.name, plannedStart: task.plannedStart });
+      }
+    });
+
+    completed.sort(function (a, b) { return a.actualFinish < b.actualFinish ? -1 : 1; });
+    upcoming.sort(function (a, b) { return a.plannedStart < b.plannedStart ? -1 : 1; });
+
+    return { completedPrior7Days: completed, next14Days: upcoming };
+  }
+
+  function buildRisksDetailData(project, calc) {
+    var statusDate = project.meta.statusDate;
+    var nearMs = parseISO(statusDate) + 45 * DAY_MS;
+    var byId = new Map(project.tasks.map(function (t) { return [t.id, t]; }));
+
+    var delayedBlocked = [];
+    var nearTermDetail = [];
+    calc.order.forEach(function (id) {
+      if ((calc.children.get(id) || []).length > 0) return;
+      var task = byId.get(id);
+      var c = calc.computed.get(id);
+      if (c.status === 'Delayed' || c.status === 'Blocked') {
+        delayedBlocked.push({ name: task.name, status: c.status, plannedFinish: c.plannedFinish });
+      }
+      if (task.plannedStart && parseISO(task.plannedStart) >= parseISO(statusDate) && parseISO(task.plannedStart) <= nearMs) {
+        nearTermDetail.push({ name: task.name, owner: task.owner || '', plannedStart: task.plannedStart, plannedFinish: c.plannedFinish, status: c.status });
+      }
+    });
+
+    nearTermDetail.sort(function (a, b) { return a.plannedStart < b.plannedStart ? -1 : 1; });
+
+    var decisions = project.decisions.map(function (d) {
+      return { id: d.id, title: d.title, description: d.description, decisionNeededBy: d.decisionNeededBy, owner: d.owner, status: d.status, decisionMade: d.decisionMade };
+    });
+
+    return { delayedBlocked: delayedBlocked, decisions: decisions, nearTermDetail: nearTermDetail };
+  }
+
+  function buildReportSections(project, calc) {
+    return [
+      { type: 'summary', data: buildExecutiveSummaryData(project, calc) },
+      { type: 'roadmap', data: buildRoadmapData(project, calc) },
+      { type: 'weekly', data: buildWeeklyActionsData(project, calc) },
+      { type: 'risks', data: buildRisksDetailData(project, calc) },
+    ];
+  }
+
   return {
     buildExecutiveSummaryData: buildExecutiveSummaryData,
     buildRoadmapData: buildRoadmapData,
+    buildWeeklyActionsData: buildWeeklyActionsData,
+    buildRisksDetailData: buildRisksDetailData,
+    buildReportSections: buildReportSections,
   };
 });

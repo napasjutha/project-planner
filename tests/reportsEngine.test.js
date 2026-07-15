@@ -4,6 +4,9 @@ const { recalc } = require('../src/js/calc.js');
 const {
   buildExecutiveSummaryData,
   buildRoadmapData,
+  buildWeeklyActionsData,
+  buildRisksDetailData,
+  buildReportSections,
 } = require('../src/js/reportsEngine.js');
 
 function fixtureProject(overrides) {
@@ -167,4 +170,70 @@ test('buildRoadmapData: no qualifying tasks returns null range and empty items/w
   assert.deepEqual(data.items, []);
   assert.deepEqual(data.weeks, []);
   assert.deepEqual(data.lanes, []);
+});
+
+function weeklyFixtureProject() {
+  return {
+    meta: { name: 'RAM Modernization', statusDate: '2026-07-09' },
+    tasks: [
+      { id: 'done-in-window', parentId: null, order: 0, name: 'Finished recently', plannedStart: '2026-06-25', plannedFinish: '2026-07-03', actualStart: '2026-06-25', actualFinish: '2026-07-05', owner: 'A', deliverable: false, statusOverride: null },
+      { id: 'done-too-early', parentId: null, order: 1, name: 'Finished too long ago', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: '2026-06-01', actualFinish: '2026-06-10', owner: 'A', deliverable: false, statusOverride: null },
+      { id: 'upcoming-in-window', parentId: null, order: 2, name: 'Starting soon', plannedStart: '2026-07-15', plannedFinish: '2026-07-20', actualStart: null, actualFinish: null, owner: 'A', deliverable: false, statusOverride: null },
+      { id: 'upcoming-too-late', parentId: null, order: 3, name: 'Starting far out', plannedStart: '2026-09-01', plannedFinish: '2026-09-05', actualStart: null, actualFinish: null, owner: 'A', deliverable: false, statusOverride: null },
+      { id: 'blocked-task', parentId: null, order: 4, name: 'Blocked one', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: null, actualFinish: null, owner: 'A', deliverable: false, statusOverride: 'Blocked' },
+      { id: 'delayed-task', parentId: null, order: 5, name: 'Delayed one', plannedStart: '2026-06-01', plannedFinish: '2026-06-10', actualStart: null, actualFinish: null, owner: 'A', deliverable: false, statusOverride: null },
+    ],
+    holidays: [], issues: [], risks: [],
+    decisions: [{ id: 'd1', title: 'Pick a vendor', description: 'desc', decisionNeededBy: '2026-08-01', owner: 'Alice', status: 'Pending', decisionMade: '' }],
+    activities: [],
+  };
+}
+
+test('buildWeeklyActionsData: completedPrior7Days includes actualFinish within [statusDate-7d, statusDate], excludes older', () => {
+  const project = weeklyFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildWeeklyActionsData(project, calc);
+  assert.deepEqual(data.completedPrior7Days.map(t => t.name), ['Finished recently']);
+});
+
+test('buildWeeklyActionsData: next14Days includes plannedStart within [statusDate, statusDate+14d], excludes later', () => {
+  const project = weeklyFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildWeeklyActionsData(project, calc);
+  assert.deepEqual(data.next14Days.map(t => t.name), ['Starting soon']);
+});
+
+test('buildRisksDetailData: delayedBlocked includes both Delayed and Blocked statuses', () => {
+  const project = weeklyFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRisksDetailData(project, calc);
+  const names = data.delayedBlocked.map(t => t.name).sort();
+  assert.deepEqual(names, ['Blocked one', 'Delayed one']);
+});
+
+test('buildRisksDetailData: decisions passes through project.decisions with the full field set', () => {
+  const project = weeklyFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRisksDetailData(project, calc);
+  assert.deepEqual(data.decisions, [{ id: 'd1', title: 'Pick a vendor', description: 'desc', decisionNeededBy: '2026-08-01', owner: 'Alice', status: 'Pending', decisionMade: '' }]);
+});
+
+test('buildRisksDetailData: nearTermDetail includes tasks with plannedStart within 45 days of statusDate, sorted ascending', () => {
+  const project = weeklyFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const data = buildRisksDetailData(project, calc);
+  assert.ok(data.nearTermDetail.some(t => t.name === 'Starting soon'));
+  assert.equal(data.nearTermDetail.some(t => t.name === 'Starting far out'), false);
+});
+
+test('buildReportSections assembles exactly 4 sections in order: summary, roadmap, weekly, risks', () => {
+  const project = weeklyFixtureProject();
+  const calc = require('../src/js/calc.js').recalc(project);
+  const sections = buildReportSections(project, calc);
+  assert.equal(sections.length, 4);
+  assert.deepEqual(sections.map(s => s.type), ['summary', 'roadmap', 'weekly', 'risks']);
+  assert.ok(sections[0].data.kpis);
+  assert.ok(sections[1].data.lanes);
+  assert.ok(sections[2].data.completedPrior7Days);
+  assert.ok(sections[3].data.decisions);
 });

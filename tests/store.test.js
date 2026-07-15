@@ -952,3 +952,20 @@ test('addActivity/addActivityGroup participate in the undo stack like addTask', 
   p.addActivity({ type: 'Meeting', name: 'Sync', dateStart: '2026-07-06' });
   assert.equal(p._undoStack.length, undoStackBefore + 2);
 });
+
+test('addActivities creates every spec in one call with a single undo checkpoint', () => {
+  const p = Project.empty('Test');
+  const undoStackBefore = p._undoStack.length;
+  const created = p.addActivities([
+    { type: 'Meeting', name: 'A', dateStart: '2026-07-20', dateEnd: '2026-07-20', timeStart: '9:30', timeEnd: '10:30', groupIds: [], keyDate: true, remarks: '' },
+    { type: 'Workshop', name: 'B', dateStart: '2026-07-21', dateEnd: '2026-07-23', timeStart: null, timeEnd: null, groupIds: ['g1'], keyDate: false, remarks: 'note' },
+  ]);
+  assert.equal(created.length, 2);
+  assert.equal(p.activities.length, 2);
+  assert.equal(created[0].name, 'A');
+  assert.equal(created[1].groupIds[0], 'g1');
+  assert.equal(p._undoStack.length, undoStackBefore + 1);
+
+  p.undo();
+  assert.equal(p.activities.length, 0);
+});

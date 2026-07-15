@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { stripBom, parseCsvText, csvTemplateText, validateCsvRows, escapeCsvField, buildExportCsv } = require('../src/js/csv.js');
+const { stripBom, parseCsvText, csvTemplateText, validateCsvRows, escapeCsvField, buildExportCsv, parseActivitiesCsv, activitiesCsvTemplateText } = require('../src/js/csv.js');
 
 test('stripBom removes a leading BOM and leaves clean text alone', () => {
   assert.equal(stripBom('﻿Row,Level'), 'Row,Level');
@@ -226,4 +226,94 @@ test('buildExportCsv escapes Thai text with embedded newlines (Owner field) with
   const csv = buildExportCsv(project, calc, new Map());
   assert.ok(csv.includes('"KPMG/\nคณะทำงานกลาง"'));
   assert.ok(csv.includes('งานย่อยที่ 1'));
+});
+
+const ACTIVITIES_HEADER = ['type', 'name', 'dateStart', 'dateEnd', 'timeStart', 'timeEnd', 'groupIds', 'keyDate', 'remarks'];
+const SAMPLE_GROUPS = [{ id: 'g1', name: 'Steering Committee', color: '#0b1f6b' }, { id: 'g2', name: 'Working Team', color: '#7c4dff' }];
+
+test('parseActivitiesCsv: valid multi-row parse resolves group names to ids', () => {
+  const rows = [
+    ACTIVITIES_HEADER,
+    ['Meeting', 'Kickoff', '2026-07-20', '2026-07-20', '9:30', '10:30', 'Steering Committee', 'true', 'Opening session'],
+    ['Workshop', 'Discovery', '2026-07-21', '2026-07-23', '', '', 'Steering Committee;Working Team', 'false', ''],
+  ];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.activities.length, 2);
+  assert.deepEqual(result.activities[0], {
+    type: 'Meeting', name: 'Kickoff', dateStart: '2026-07-20', dateEnd: '2026-07-20',
+    timeStart: '9:30', timeEnd: '10:30', groupIds: ['g1'], keyDate: true, remarks: 'Opening session',
+  });
+  assert.deepEqual(result.activities[1].groupIds, ['g1', 'g2']);
+});
+
+test('parseActivitiesCsv: blank dateEnd defaults to dateStart, blank keyDate defaults false, blank groupIds defaults empty array', () => {
+  const rows = [ACTIVITIES_HEADER, ['Meeting', 'Solo', '2026-07-20', '', '', '', '', '', '']];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.activities[0].dateEnd, '2026-07-20');
+  assert.equal(result.activities[0].keyDate, false);
+  assert.deepEqual(result.activities[0].groupIds, []);
+});
+
+test('parseActivitiesCsv: keyDate accepts true/false/yes/no/1/0 case-insensitively', () => {
+  ['true', 'TRUE', 'yes', 'Yes', '1'].forEach(v => {
+    const rows = [ACTIVITIES_HEADER, ['Meeting', 'X', '2026-07-20', '2026-07-20', '', '', '', v, '']];
+    assert.equal(parseActivitiesCsv(rows, SAMPLE_GROUPS).activities[0].keyDate, true, 'expected true for ' + v);
+  });
+  ['false', 'FALSE', 'no', 'No', '0', ''].forEach(v => {
+    const rows = [ACTIVITIES_HEADER, ['Meeting', 'X', '2026-07-20', '2026-07-20', '', '', '', v, '']];
+    assert.equal(parseActivitiesCsv(rows, SAMPLE_GROUPS).activities[0].keyDate, false, 'expected false for ' + v);
+  });
+});
+
+test('parseActivitiesCsv: missing name is an error', () => {
+  const rows = [ACTIVITIES_HEADER, ['Meeting', '', '2026-07-20', '2026-07-20', '', '', '', '', '']];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.equal(result.activities.length, 0);
+  assert.ok(result.errors.some(e => /name/i.test(e)));
+});
+
+test('parseActivitiesCsv: missing or malformed dateStart is an error', () => {
+  const missing = parseActivitiesCsv([ACTIVITIES_HEADER, ['Meeting', 'X', '', '', '', '', '', '', '']], SAMPLE_GROUPS);
+  assert.ok(missing.errors.some(e => /dateStart|date start/i.test(e)));
+  const malformed = parseActivitiesCsv([ACTIVITIES_HEADER, ['Meeting', 'X', '20-07-2026', '', '', '', '', '', '']], SAMPLE_GROUPS);
+  assert.ok(malformed.errors.some(e => /dateStart|date start/i.test(e)));
+});
+
+test('parseActivitiesCsv: dateEnd before dateStart is an error', () => {
+  const rows = [ACTIVITIES_HEADER, ['Meeting', 'X', '2026-07-20', '2026-07-18', '', '', '', '', '']];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.ok(result.errors.some(e => /end date/i.test(e)));
+});
+
+test('parseActivitiesCsv: invalid type is an error', () => {
+  const rows = [ACTIVITIES_HEADER, ['Standup', 'X', '2026-07-20', '2026-07-20', '', '', '', '', '']];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.ok(result.errors.some(e => /type/i.test(e)));
+});
+
+test('parseActivitiesCsv: type is case-insensitive on input, normalized to canonical casing', () => {
+  const rows = [ACTIVITIES_HEADER, ['meeting', 'X', '2026-07-20', '2026-07-20', '', '', '', '', ''], ['WORKSHOP', 'Y', '2026-07-20', '2026-07-20', '', '', '', '', '']];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.deepEqual(result.errors, []);
+  assert.equal(result.activities[0].type, 'Meeting');
+  assert.equal(result.activities[1].type, 'Workshop');
+});
+
+test('parseActivitiesCsv: unknown group name is an error, reported by name', () => {
+  const rows = [ACTIVITIES_HEADER, ['Meeting', 'X', '2026-07-20', '2026-07-20', '', '', 'Nonexistent Group', '', '']];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.ok(result.errors.some(e => e.includes('Nonexistent Group')));
+});
+
+test('parseActivitiesCsv: multiple bad rows all get reported, not just the first', () => {
+  const rows = [
+    ACTIVITIES_HEADER,
+    ['Meeting', '', '2026-07-20', '2026-07-20', '', '', '', '', ''],
+    ['Standup', 'Y', '2026-07-20', '2026-07-20', '', '', '', '', ''],
+  ];
+  const result = parseActivitiesCsv(rows, SAMPLE_GROUPS);
+  assert.equal(result.errors.length, 2);
+  assert.equal(result.activities.length, 0);
 });

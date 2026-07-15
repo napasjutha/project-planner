@@ -187,5 +187,68 @@
     return '﻿' + rows.join('\r\n') + '\r\n';
   }
 
-  return { stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS, escapeCsvField, buildExportCsv, EXPORT_HEADERS };
+  const ACTIVITIES_CSV_HEADERS = ['type', 'name', 'dateStart', 'dateEnd', 'timeStart', 'timeEnd', 'groupIds', 'keyDate', 'remarks'];
+  const KEYDATE_TRUE = ['true', 'yes', '1'];
+  const KEYDATE_FALSE = ['false', 'no', '0', ''];
+  const ACTIVITY_TYPES = ['Meeting', 'Workshop'];
+
+  function activitiesCsvTemplateText() {
+    return ACTIVITIES_CSV_HEADERS.join(',') + '\n' +
+      'Meeting,Steering Review,2026-08-03,2026-08-03,9:30,10:30,,true,Example meeting row\n' +
+      'Workshop,Discovery Workshop,2026-08-10,2026-08-12,,,,, Example workshop row\n';
+  }
+
+  function parseActivitiesCsv(rows, activityGroups) {
+    const errors = [];
+    if (!rows.length || rows[0].map(c => c.trim()).join(',') !== ACTIVITIES_CSV_HEADERS.join(',')) {
+      errors.push('Header row must be exactly: ' + ACTIVITIES_CSV_HEADERS.join(','));
+      return { errors, activities: [] };
+    }
+    const groupByName = new Map(activityGroups.map(g => [g.name, g.id]));
+    const dataRows = rows.slice(1);
+    const activities = [];
+
+    dataRows.forEach((cells, idx) => {
+      const label = 'Row ' + (idx + 2); // +2: 1-indexed and header row already consumed
+      if (cells.length !== ACTIVITIES_CSV_HEADERS.length) {
+        errors.push(label + ': expected ' + ACTIVITIES_CSV_HEADERS.length + ' columns, found ' + cells.length);
+        return;
+      }
+      const c = cells.map(v => v.trim());
+      const [typeRaw, name, dateStart, dateEndRaw, timeStart, timeEnd, groupIdsRaw, keyDateRaw, remarks] = c;
+
+      const typeNormalized = ACTIVITY_TYPES.find(t => t.toLowerCase() === typeRaw.toLowerCase());
+      if (!typeNormalized) {
+        errors.push(label + ": type '" + typeRaw + "' must be Meeting or Workshop");
+      }
+      if (!name) errors.push(label + ': name is required');
+      if (!DATE_RE.test(dateStart)) errors.push(label + ": dateStart '" + dateStart + "' is not a valid date (expected YYYY-MM-DD)");
+      const dateEnd = dateEndRaw || dateStart;
+      if (dateEndRaw && !DATE_RE.test(dateEndRaw)) errors.push(label + ": dateEnd '" + dateEndRaw + "' is not a valid date (expected YYYY-MM-DD)");
+      else if (DATE_RE.test(dateStart) && DATE_RE.test(dateEnd) && dateEnd < dateStart) errors.push(label + ': end date cannot be before start date');
+
+      const groupIds = [];
+      if (groupIdsRaw) {
+        groupIdsRaw.split(';').map(s => s.trim()).filter(Boolean).forEach(gname => {
+          if (groupByName.has(gname)) groupIds.push(groupByName.get(gname));
+          else errors.push(label + ": unknown participant group '" + gname + "'");
+        });
+      }
+
+      const keyDateLower = keyDateRaw.toLowerCase();
+      let keyDate = false;
+      if (KEYDATE_TRUE.indexOf(keyDateLower) !== -1) keyDate = true;
+      else if (KEYDATE_FALSE.indexOf(keyDateLower) === -1) errors.push(label + ": keyDate '" + keyDateRaw + "' must be true/false/yes/no/1/0");
+
+      activities.push({
+        type: typeNormalized || typeRaw, name, dateStart, dateEnd,
+        timeStart: timeStart || null, timeEnd: timeEnd || null,
+        groupIds, keyDate, remarks,
+      });
+    });
+
+    return errors.length ? { errors, activities: [] } : { errors: [], activities };
+  }
+
+  return { stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS, escapeCsvField, buildExportCsv, EXPORT_HEADERS, parseActivitiesCsv, activitiesCsvTemplateText };
 });

@@ -50,7 +50,16 @@
       delayedTasks.push({ name: task.name, plannedFinish: c.plannedFinish, remarks: task.remarks || '' });
     });
 
-    return { kpis: tiles, delayedTasks: delayedTasks };
+    var MAX_DELAYED_SHOWN = 8;
+    var delayedMoreCount = delayedTasks.length > MAX_DELAYED_SHOWN ? delayedTasks.length - MAX_DELAYED_SHOWN : 0;
+
+    return {
+      kpis: tiles,
+      delayedTasks: delayedTasks.slice(0, MAX_DELAYED_SHOWN),
+      delayedMoreCount: delayedMoreCount,
+      scurvePoints: calc.scurve,
+      statusDate: project.meta.statusDate,
+    };
   }
 
   function buildIssuesRisksPageData(project) {

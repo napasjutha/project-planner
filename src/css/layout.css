@@ -358,8 +358,6 @@
   padding: 7px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; cursor: pointer;
   transition: background 150ms ease;
 }
-#export-pdf-button { background: var(--kpmg-blue); color: #fff; border: none; }
-#export-pdf-button:hover { background: var(--kpmg-blue-mid); }
 #report-panel-wrap { overflow: auto; background: var(--surface-sunken); padding: 24px; border-radius: var(--radius-lg); }
 #report-panel { display: flex; flex-direction: column; gap: 24px; }
 

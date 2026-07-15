@@ -160,6 +160,14 @@
       state.project.addTask({ parentId: null, name: 'New Task' });
       refresh(state, true);
     });
+    document.getElementById('collapse-all-button').addEventListener('click', function () {
+      state.project.setAllCollapsed(true);
+      refresh(state, true);
+    });
+    document.getElementById('expand-all-button').addEventListener('click', function () {
+      state.project.setAllCollapsed(false);
+      refresh(state, true);
+    });
     function onFilterChange() {
       PP.renderTree(state);
     }

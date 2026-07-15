@@ -45,7 +45,7 @@
 
 #tree-header, .tree-row {
   display: grid;
-  grid-template-columns: 40px 220px 90px 90px 95px 95px 95px 95px 70px 65px 65px 65px 90px 100px 140px 160px 140px;
+  grid-template-columns: 40px 360px 90px 90px 95px 95px 95px 95px 70px 65px 65px 65px 90px 100px 140px 160px 140px;
   min-width: 1715px;
   align-items: center;
   padding: 8px 20px;

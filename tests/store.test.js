@@ -256,6 +256,31 @@ test('toggleCollapse throws for an unknown task id', () => {
   assert.throws(() => p.toggleCollapse('missing'));
 });
 
+test('setAllCollapsed(true) collapses every task that has children, leaves leaf tasks untouched', () => {
+  const p = Project.empty('Test');
+  const parent = p.addTask({ parentId: null, name: 'Parent' });
+  const leaf = p.addTask({ parentId: parent.id, name: 'Leaf' });
+  const undoStackBefore = p._undoStack.length;
+  const auditLengthBefore = p.auditLog.length;
+
+  p.setAllCollapsed(true);
+  assert.equal(p.tasks.find(t => t.id === parent.id).collapsed, true);
+  assert.equal(p.tasks.find(t => t.id === leaf.id).collapsed, false); // leaf never has children, so it's untouched
+  assert.equal(p._undoStack.length, undoStackBefore);
+  assert.equal(p.auditLog.length, auditLengthBefore);
+});
+
+test('setAllCollapsed(false) after setAllCollapsed(true) expands every parent back', () => {
+  const p = Project.empty('Test');
+  const parent = p.addTask({ parentId: null, name: 'Parent' });
+  p.addTask({ parentId: parent.id, name: 'Leaf' });
+
+  p.setAllCollapsed(true);
+  assert.equal(p.tasks.find(t => t.id === parent.id).collapsed, true);
+  p.setAllCollapsed(false);
+  assert.equal(p.tasks.find(t => t.id === parent.id).collapsed, false);
+});
+
 test('Project.empty sets schemaVersion 1 on meta', () => {
   const p = Project.empty('Test');
   assert.equal(p.meta.schemaVersion, 1);

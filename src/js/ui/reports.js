@@ -177,15 +177,28 @@
     ]);
   }
 
+  function renderFooter(project) {
+    return el('div', { class: 'report-page-footer' }, [
+      el('span', { class: 'report-footer-logo' }, ['KPMG']),
+      el('span', {}, [project.meta.name + ' — Private & Confidential']),
+    ]);
+  }
+
   function renderPage(page, state) {
-    if (page.type === 'title') return renderTitlePage(page.data);
-    if (page.type === 'agenda') return renderAgendaPage(page.data);
-    if (page.type === 'divider') return renderDividerPage(page.data);
-    if (page.type === 'progress') return renderProgressPage(page.data);
-    if (page.type === 'issuesRisks') return renderIssuesRisksPage(page.data);
-    if (page.type === 'decisions') return renderDecisionsPage(page.data);
-    if (page.type === 'calendar') return renderCalendarPage(page.data, state.project.activities);
-    return renderClosingPage(page.data);
+    var section;
+    if (page.type === 'title') section = renderTitlePage(page.data);
+    else if (page.type === 'agenda') section = renderAgendaPage(page.data);
+    else if (page.type === 'divider') section = renderDividerPage(page.data);
+    else if (page.type === 'progress') section = renderProgressPage(page.data);
+    else if (page.type === 'issuesRisks') section = renderIssuesRisksPage(page.data);
+    else if (page.type === 'decisions') section = renderDecisionsPage(page.data);
+    else if (page.type === 'calendar') section = renderCalendarPage(page.data, state.project.activities);
+    else section = renderClosingPage(page.data);
+
+    if (section.classList.contains('report-page-content')) {
+      section.appendChild(renderFooter(state.project));
+    }
+    return section;
   }
 
   function renderReport(state) {

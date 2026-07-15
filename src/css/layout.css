@@ -411,6 +411,9 @@
 .report-kpi-tile-value { font-size: 20px; font-weight: 600; color: #00338D; }
 .report-list-more { color: #6e6e73; font-style: italic; }
 
+.report-page-footer { position: absolute; left: 64px; right: 64px; bottom: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #98989d; }
+.report-footer-logo { font-weight: 700; letter-spacing: 0.03em; color: #00338D; font-size: 12px; }
+
 .report-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
 .report-table th, .report-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #e5e5ea; }
 .report-table th { background: #f7f7f8; color: #00338D; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }

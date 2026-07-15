@@ -130,6 +130,7 @@
         cell.style.gridColumn = String(col + 1);
         cell.style.gridRow = '1';
         if (day) {
+          cell.dataset.date = day.date;
           cell.textContent = String(day.dayOfMonth);
           if (day.keyDate) {
             var star = document.createElement('span');
@@ -326,6 +327,42 @@
       state.activitiesViewYear = year;
       state.activitiesViewMonth = month;
       renderActivitiesCalendar(state);
+    });
+
+    var calDrag = null;
+
+    document.getElementById('activities-calendar').addEventListener('mousedown', function (e) {
+      var chip = e.target.closest('.calendar-chip');
+      if (!chip) return;
+      var activity = state.project.activities.find(function (a) { return a.id === chip.dataset.activityId; });
+      if (!activity) return;
+      calDrag = { activityId: activity.id, origDateStart: activity.dateStart, origDateEnd: activity.dateEnd, targetCell: null };
+      chip.classList.add('is-dragging');
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      if (!calDrag) return;
+      if (calDrag.targetCell) calDrag.targetCell.classList.remove('calendar-daynum-drop-target');
+      var hitEl = document.elementFromPoint(e.clientX, e.clientY);
+      var cell = hitEl && hitEl.closest('.calendar-daynum[data-date]');
+      calDrag.targetCell = cell || null;
+      if (cell) cell.classList.add('calendar-daynum-drop-target');
+    });
+
+    document.addEventListener('mouseup', function () {
+      if (!calDrag) return;
+      var drag = calDrag;
+      calDrag = null;
+      document.querySelectorAll('.calendar-chip.is-dragging').forEach(function (c) { c.classList.remove('is-dragging'); });
+      if (drag.targetCell) drag.targetCell.classList.remove('calendar-daynum-drop-target');
+      if (!drag.targetCell) return;
+      var targetDate = drag.targetCell.dataset.date;
+      if (targetDate === drag.origDateStart) return;
+      var deltaDays = Math.round((PP.parseISO(targetDate) - PP.parseISO(drag.origDateStart)) / 86400000);
+      var newDateStart = PP.addCalendarDays(drag.origDateStart, deltaDays);
+      var newDateEnd = PP.addCalendarDays(drag.origDateEnd, deltaDays);
+      state.project.updateActivity(drag.activityId, { dateStart: newDateStart, dateEnd: newDateEnd });
+      onChanged();
     });
   }
 

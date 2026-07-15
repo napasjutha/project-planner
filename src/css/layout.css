@@ -341,11 +341,13 @@
 .calendar-daynum-empty { visibility: hidden; }
 .calendar-keydate-star { color: #d4af37; margin-left: 3px; font-size: 10px; }
 
-.calendar-chip { border-radius: var(--radius-sm); padding: 2px 6px; font-size: 11px; overflow: hidden; cursor: default; display: flex; align-items: center; gap: 4px; }
+.calendar-chip { border-radius: var(--radius-sm); padding: 2px 6px; font-size: 11px; overflow: hidden; cursor: grab; display: flex; align-items: center; gap: 4px; }
 .calendar-chip-Meeting { background: rgba(0, 145, 218, 0.18); border: 1px solid var(--kpmg-blue-light); }
 .calendar-chip-Workshop { background: rgba(124, 77, 255, 0.18); border: 1px solid #7c4dff; }
 .calendar-chip-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .calendar-chip-time { color: var(--text-secondary); flex-shrink: 0; }
+.calendar-chip.is-dragging { opacity: 0.5; }
+.calendar-daynum-drop-target { background: rgba(0,145,218,0.25); outline: 2px dashed var(--kpmg-blue-light); outline-offset: -2px; }
 
 #reports-view { flex: 1; overflow: auto; padding: 12px 20px; }
 #reports-toolbar { display: flex; gap: 8px; margin-bottom: 16px; }

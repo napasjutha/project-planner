@@ -43,30 +43,45 @@
   }
 
   function renderDividerPage(data) {
+    var m = /^(\d+)\s+(.*)$/.exec(data.title);
+    var number = m ? m[1] : '';
+    var label = m ? m[2] : data.title;
     return el('section', { class: 'report-page report-page-divider' }, [
+      el('div', { class: 'report-divider-number' }, [number]),
       el('div', { class: 'report-divider-inner' }, [
-        el('h1', { class: 'report-divider-title' }, [data.title]),
+        el('h1', { class: 'report-divider-title' }, [label]),
       ]),
     ]);
   }
 
   function renderProgressPage(data) {
+    var chart = PP.buildScurveSvg(data.scurvePoints, data.statusDate, { width: 760, height: 480, padding: 36, interactive: false });
+    var chartCol = el('div', { class: 'report-progress-chart' }, [chart]);
+
     var kpiRow = el('div', { class: 'report-kpi-row' }, data.kpis.map(function (tile) {
       return el('div', { class: 'report-kpi-tile' }, [
         el('div', { class: 'report-kpi-tile-label' }, [tile.label]),
         el('div', { class: 'report-kpi-tile-value' }, [tile.value]),
       ]);
     }));
+    var delayedItems = data.delayedTasks.map(function (t) {
+      return el('li', {}, [t.name + ' — due ' + (t.plannedFinish || '') + (t.remarks ? ' (' + t.remarks + ')' : '')]);
+    });
+    if (data.delayedMoreCount > 0) {
+      delayedItems.push(el('li', { class: 'report-list-more' }, ['+' + data.delayedMoreCount + ' more']));
+    }
     var delayedBody = data.delayedTasks.length
-      ? el('ul', { class: 'report-list' }, data.delayedTasks.map(function (t) {
-          return el('li', {}, [t.name + ' — due ' + (t.plannedFinish || '') + (t.remarks ? ' (' + t.remarks + ')' : '')]);
-        }))
+      ? el('ul', { class: 'report-list' }, delayedItems)
       : el('p', { class: 'report-empty-note' }, ['No delayed items.']);
-    return el('section', { class: 'report-page report-page-content' }, [
-      el('h2', { class: 'report-page-heading' }, [PP.SECTION_TITLES[0]]),
+    var sidebar = el('div', { class: 'report-progress-sidebar' }, [
       kpiRow,
       el('h3', { class: 'report-subheading' }, ['Delayed Items']),
       delayedBody,
+    ]);
+
+    return el('section', { class: 'report-page report-page-content' }, [
+      el('h2', { class: 'report-page-heading' }, [PP.SECTION_TITLES[0]]),
+      el('div', { class: 'report-progress-body' }, [chartCol, sidebar]),
     ]);
   }
 

@@ -76,6 +76,44 @@ test('buildProgressPageData produces 6 KPI tiles (Actual/Planned/Variance/Delaye
 
   assert.equal(data.delayedTasks.length, 1);
   assert.deepEqual(data.delayedTasks[0], { name: 'Build Phase', plannedFinish: '2026-06-20', remarks: 'Waiting on vendor' });
+  assert.equal(data.delayedMoreCount, 0);
+  assert.deepEqual(data.scurvePoints, calc.scurve);
+  assert.equal(data.statusDate, '2026-07-09');
+});
+
+test('buildProgressPageData caps delayedTasks at 8 and reports the remainder via delayedMoreCount', () => {
+  const tasks = [];
+  for (let i = 0; i < 10; i++) {
+    tasks.push({
+      id: 't' + i, parentId: null, order: i, name: 'Task ' + i,
+      plannedStart: '2026-06-01', plannedFinish: '2026-06-05',
+      actualStart: null, actualFinish: null, owner: 'Alice', remarks: '',
+    });
+  }
+  const project = fixtureProject({ tasks });
+  const calc = recalc(project);
+  const data = buildProgressPageData(project, calc);
+
+  assert.equal(calc.kpis.delayedCount, 10);
+  assert.equal(data.delayedTasks.length, 8);
+  assert.equal(data.delayedMoreCount, 2);
+});
+
+test('buildProgressPageData reports delayedMoreCount 0 when there are exactly 8 delayed tasks', () => {
+  const tasks = [];
+  for (let i = 0; i < 8; i++) {
+    tasks.push({
+      id: 't' + i, parentId: null, order: i, name: 'Task ' + i,
+      plannedStart: '2026-06-01', plannedFinish: '2026-06-05',
+      actualStart: null, actualFinish: null, owner: 'Alice', remarks: '',
+    });
+  }
+  const project = fixtureProject({ tasks });
+  const calc = recalc(project);
+  const data = buildProgressPageData(project, calc);
+
+  assert.equal(data.delayedTasks.length, 8);
+  assert.equal(data.delayedMoreCount, 0);
 });
 
 test('buildProgressPageData returns an empty delayedTasks array when nothing is delayed', () => {
@@ -87,6 +125,7 @@ test('buildProgressPageData returns an empty delayedTasks array when nothing is 
   const calc = recalc(project);
   const data = buildProgressPageData(project, calc);
   assert.deepEqual(data.delayedTasks, []);
+  assert.equal(data.delayedMoreCount, 0);
 });
 
 test('buildIssuesRisksPageData passes through project.issues and project.risks with the full field set', () => {

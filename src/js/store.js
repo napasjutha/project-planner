@@ -329,6 +329,12 @@
       task.collapsed = !task.collapsed;
     }
 
+    setAllCollapsed(collapsed) {
+      this.tasks.forEach(t => {
+        if (this.tasks.some(c => c.parentId === t.id)) t.collapsed = collapsed;
+      });
+    }
+
     addBillingMilestone() {
       this._pushUndo();
       const bm = { id: generateBillingMilestoneId(), name: 'New Billing Milestone', amount: null, status: 'Not Billed' };

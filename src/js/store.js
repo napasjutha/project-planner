@@ -55,6 +55,40 @@
       this.activityGroups = data.activityGroups || [];
       this.activities = data.activities || [];
       this.billingMilestones = data.billingMilestones || [];
+      this.estimator = data.estimator || {
+        mode: 'detailed',
+        params: {
+          contingencyPct: 0.1,
+          confidencePct: 0.8,
+          changeManagementPct: 0.2,
+          projectManagementPct: 0.2,
+          testingPct: 0.15,
+          documentationPct: 0.1,
+          uatPct: 0.05,
+          deploymentPct: 0.05,
+          integrationsCount: 0,
+          migrationsCount: 0
+        },
+        requirements: [],
+        highlevel: {
+          Sales: { low: 0, medium: 0, high: 0 },
+          Service: { low: 0, medium: 0, high: 0 },
+          Marketing: { low: 0, medium: 0, high: 0 },
+          Community: { low: 0, medium: 0, high: 0 },
+          Experience: { low: 0, medium: 0, high: 0 },
+          CPQ: { low: 0, medium: 0, high: 0 },
+          Integration: { low: 0, medium: 0, high: 0 },
+          Migration: { low: 0, medium: 0, high: 0 }
+        },
+        summary: {
+          totalDays: 0,
+          byCloud: {},
+          byStage: {},
+          byRole: {},
+          byComponent: {},
+          byActivity: {}
+        }
+      };
       this._undoStack = [];
       this._redoStack = [];
       this.tasks.forEach(t => {
@@ -102,6 +136,40 @@
         activityGroups: [],
         activities: [],
         billingMilestones: [],
+        estimator: {
+          mode: 'detailed',
+          params: {
+            contingencyPct: 0.1,
+            confidencePct: 0.8,
+            changeManagementPct: 0.2,
+            projectManagementPct: 0.2,
+            testingPct: 0.15,
+            documentationPct: 0.1,
+            uatPct: 0.05,
+            deploymentPct: 0.05,
+            integrationsCount: 0,
+            migrationsCount: 0
+          },
+          requirements: [],
+          highlevel: {
+            Sales: { low: 0, medium: 0, high: 0 },
+            Service: { low: 0, medium: 0, high: 0 },
+            Marketing: { low: 0, medium: 0, high: 0 },
+            Community: { low: 0, medium: 0, high: 0 },
+            Experience: { low: 0, medium: 0, high: 0 },
+            CPQ: { low: 0, medium: 0, high: 0 },
+            Integration: { low: 0, medium: 0, high: 0 },
+            Migration: { low: 0, medium: 0, high: 0 }
+          },
+          summary: {
+            totalDays: 0,
+            byCloud: {},
+            byStage: {},
+            byRole: {},
+            byComponent: {},
+            byActivity: {}
+          }
+        },
       });
     }
 
@@ -125,6 +193,7 @@
         activityGroups: this.activityGroups,
         activities: this.activities,
         billingMilestones: this.billingMilestones,
+        estimator: this.estimator,
       };
     }
 
@@ -157,6 +226,7 @@
       this.activityGroups = state.activityGroups;
       this.activities = state.activities;
       this.billingMilestones = state.billingMilestones;
+      this.estimator = state.estimator;
     }
 
     undo() {

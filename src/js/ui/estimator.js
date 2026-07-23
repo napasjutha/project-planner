@@ -298,11 +298,51 @@
   function renderSummary(state) {
     var container = document.getElementById('estimator-summary');
 
-    // Placeholder for Task 9
-    container.innerHTML = '<div class="settings-section settings-section-wide">' +
-      '<h3>Summary</h3>' +
-      '<p>Summary display will be implemented in Task 9</p>' +
+    // Recalculate summary
+    state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+    var summary = state.project.estimator.summary;
+
+    function renderBreakdownTable(title, data) {
+      if (Object.keys(data).length === 0) {
+        return '<div class="summary-card"><h4>' + title + '</h4><p>No data</p></div>';
+      }
+
+      var html = '<div class="summary-card">' +
+        '<h4>' + title + '</h4>' +
+        '<table class="summary-table">' +
+          '<thead><tr><th>Item</th><th>Days</th><th>%</th></tr></thead>' +
+          '<tbody>';
+
+      var total = summary.totalDays;
+      for (var key in data) {
+        if (data.hasOwnProperty(key)) {
+          var days = data[key];
+          var pct = total > 0 ? ((days / total) * 100).toFixed(1) : 0;
+          html += '<tr><td>' + escapeHtml(key) + '</td><td>' + days.toFixed(2) + '</td><td>' + pct + '%</td></tr>';
+        }
+      }
+
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    var html = '<div class="settings-section settings-section-wide">' +
+      '<h3>Estimation Summary</h3>' +
+      '<div class="summary-grid">' +
+        '<div class="summary-card total-card">' +
+          '<h4>Total Effort</h4>' +
+          '<div class="total-value">' + summary.totalDays.toFixed(2) + ' days</div>' +
+          '<div class="total-hours">(' + (summary.totalDays * 8).toFixed(0) + ' hours)</div>' +
+        '</div>' +
+        renderBreakdownTable('By Cloud', summary.byCloud) +
+        renderBreakdownTable('By Powered Stage', summary.byStage) +
+        renderBreakdownTable('By Role', summary.byRole) +
+        renderBreakdownTable('By Component Type', summary.byComponent) +
+        renderBreakdownTable('By Activity', summary.byActivity) +
+      '</div>' +
     '</div>';
+
+    container.innerHTML = html;
   }
 
   function renderPushActions(state) {

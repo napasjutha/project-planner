@@ -27,6 +27,7 @@
     PP.renderActivities(state);
     PP.renderReport(state);
     PP.renderIssuesRisksDecisions(state);
+    PP.renderEstimator(state);
     if (markDirty) {
       state.dirty = true;
       document.getElementById('dirty-indicator').textContent = '● unsaved changes';
@@ -197,7 +198,7 @@
     });
   }
 
-  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'activities-view', 'issues-view', 'reports-view'];
+  var VIEW_IDS = ['plan-view', 'gantt-view', 'scurve-view', 'dashboard-view', 'snapshots-view', 'resources-view', 'billing-view', 'settings-view', 'holidays-view', 'activities-view', 'issues-view', 'reports-view', 'estimator-view'];
 
   function wireViewTabs(state) {
     var tabs = document.querySelectorAll('.view-tab');

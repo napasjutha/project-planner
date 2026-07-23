@@ -87,11 +87,160 @@
       return;
     }
 
-    // Placeholder for Task 7
-    container.innerHTML = '<div class="settings-section settings-section-wide">' +
+    var requirements = state.project.estimator.requirements;
+
+    var html = '<div class="settings-section settings-section-wide">' +
       '<h3>Requirements</h3>' +
-      '<p>Detailed requirements grid will be implemented in Task 7</p>' +
-    '</div>';
+      '<button id="add-requirement-btn">+ Add Requirement</button>' +
+      '<table class="estimator-table">' +
+        '<thead><tr>' +
+          '<th>#</th>' +
+          '<th>Requirement</th>' +
+          '<th>Cloud</th>' +
+          '<th>Feature</th>' +
+          '<th>Solution Type</th>' +
+          '<th>Complexity</th>' +
+          '<th>MoSCoW</th>' +
+          '<th>Release Phase</th>' +
+          '<th>Effort (days)</th>' +
+          '<th>Actions</th>' +
+        '</tr></thead>' +
+        '<tbody id="requirements-tbody">';
+
+    requirements.forEach(function (req, index) {
+      var calc = PP.calculateRequirement(req);
+      html += '<tr data-req-id="' + req.id + '">' +
+        '<td>' + (index + 1) + '</td>' +
+        '<td><input type="text" class="req-name" value="' + escapeHtml(req.name || '') + '" placeholder="Requirement name"></td>' +
+        '<td><select class="req-cloud">' +
+          '<option value="">-</option>' +
+          '<option value="Sales"' + (req.cloud === 'Sales' ? ' selected' : '') + '>Sales</option>' +
+          '<option value="Service"' + (req.cloud === 'Service' ? ' selected' : '') + '>Service</option>' +
+          '<option value="Marketing"' + (req.cloud === 'Marketing' ? ' selected' : '') + '>Marketing</option>' +
+          '<option value="Community"' + (req.cloud === 'Community' ? ' selected' : '') + '>Community</option>' +
+          '<option value="Experience"' + (req.cloud === 'Experience' ? ' selected' : '') + '>Experience</option>' +
+          '<option value="CPQ"' + (req.cloud === 'CPQ' ? ' selected' : '') + '>CPQ</option>' +
+        '</select></td>' +
+        '<td><input type="text" class="req-feature" value="' + escapeHtml(req.feature || '') + '" placeholder="Feature"></td>' +
+        '<td><select class="req-solutionType">' +
+          '<option value="">-</option>' +
+          '<option value="OOTB"' + (req.solutionType === 'OOTB' ? ' selected' : '') + '>OOTB</option>' +
+          '<option value="Configuration"' + (req.solutionType === 'Configuration' ? ' selected' : '') + '>Configuration</option>' +
+          '<option value="Customization"' + (req.solutionType === 'Customization' ? ' selected' : '') + '>Customization</option>' +
+          '<option value="Integration"' + (req.solutionType === 'Integration' ? ' selected' : '') + '>Integration</option>' +
+          '<option value="Migration"' + (req.solutionType === 'Migration' ? ' selected' : '') + '>Migration</option>' +
+        '</select></td>' +
+        '<td><select class="req-complexity">' +
+          '<option value="">-</option>' +
+          '<option value="Low"' + (req.complexity === 'Low' ? ' selected' : '') + '>Low</option>' +
+          '<option value="Medium"' + (req.complexity === 'Medium' ? ' selected' : '') + '>Medium</option>' +
+          '<option value="High"' + (req.complexity === 'High' ? ' selected' : '') + '>High</option>' +
+        '</select></td>' +
+        '<td><select class="req-moscow">' +
+          '<option value="">-</option>' +
+          '<option value="Must"' + (req.moscow === 'Must' ? ' selected' : '') + '>Must</option>' +
+          '<option value="Should"' + (req.moscow === 'Should' ? ' selected' : '') + '>Should</option>' +
+          '<option value="Could"' + (req.moscow === 'Could' ? ' selected' : '') + '>Could</option>' +
+          '<option value="Wont"' + (req.moscow === 'Wont' ? ' selected' : '') + '>Won\'t</option>' +
+        '</select></td>' +
+        '<td><select class="req-phase">' +
+          '<option value="">-</option>' +
+          '<option value="Phase-1"' + (req.releasePhase === 'Phase-1' ? ' selected' : '') + '>Phase-1</option>' +
+          '<option value="Phase-2"' + (req.releasePhase === 'Phase-2' ? ' selected' : '') + '>Phase-2</option>' +
+          '<option value="Phase-3"' + (req.releasePhase === 'Phase-3' ? ' selected' : '') + '>Phase-3</option>' +
+          '<option value="Phase-4"' + (req.releasePhase === 'Phase-4' ? ' selected' : '') + '>Phase-4</option>' +
+          '<option value="Deferred"' + (req.releasePhase === 'Deferred' ? ' selected' : '') + '>Deferred</option>' +
+        '</select></td>' +
+        '<td>' + calc.totalDays.toFixed(2) + '</td>' +
+        '<td><button class="delete-req-btn" data-req-id="' + req.id + '">Delete</button></td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+
+    // Wire up Add Requirement button
+    document.getElementById('add-requirement-btn').addEventListener('click', function () {
+      state.project._pushUndo();
+      var newReq = {
+        id: PP.generateRequirementId(),
+        name: '',
+        cloud: '',
+        feature: '',
+        solutionType: '',
+        complexity: '',
+        moscow: '',
+        releasePhase: ''
+      };
+      state.project.estimator.requirements.push(newReq);
+      PP.refresh(state, true);
+    });
+
+    // Wire up delete buttons
+    var deleteButtons = container.querySelectorAll('.delete-req-btn');
+    deleteButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var reqId = btn.dataset.reqId;
+        state.project._pushUndo();
+        state.project.estimator.requirements = state.project.estimator.requirements.filter(function (r) {
+          return r.id !== reqId;
+        });
+        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        PP.refresh(state, true);
+      });
+    });
+
+    // Wire up input changes
+    var tbody = document.getElementById('requirements-tbody');
+    var rows = tbody.querySelectorAll('tr');
+    rows.forEach(function (row, index) {
+      var req = requirements[index];
+
+      row.querySelector('.req-name').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.name = e.target.value;
+        PP.refresh(state, true);
+      });
+
+      row.querySelector('.req-cloud').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.cloud = e.target.value;
+        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        PP.refresh(state, true);
+      });
+
+      row.querySelector('.req-feature').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.feature = e.target.value;
+        PP.refresh(state, true);
+      });
+
+      row.querySelector('.req-solutionType').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.solutionType = e.target.value;
+        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        PP.refresh(state, true);
+      });
+
+      row.querySelector('.req-complexity').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.complexity = e.target.value;
+        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        PP.refresh(state, true);
+      });
+
+      row.querySelector('.req-moscow').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.moscow = e.target.value;
+        PP.refresh(state, true);
+      });
+
+      row.querySelector('.req-phase').addEventListener('change', function (e) {
+        state.project._pushUndo();
+        req.releasePhase = e.target.value;
+        PP.refresh(state, true);
+      });
+    });
   }
 
   function renderHighLevelGrid(state) {

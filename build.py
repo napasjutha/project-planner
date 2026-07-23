@@ -20,6 +20,7 @@ JS_ORDER = [
     "criticalpath.js",
     "workload.js",
     "reportsEngine.js",
+    "estimatorEngine.js",
     "ui/imagecopy.js",
     "ui/predecessor-picker.js",
     "ui/deliverable-picker.js",
@@ -35,6 +36,7 @@ JS_ORDER = [
     "ui/resources.js",
     "ui/billing.js",
     "ui/issues.js",
+    "ui/estimator.js",
     "ui/app.js",
 ]
 

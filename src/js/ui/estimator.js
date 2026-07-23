@@ -348,10 +348,118 @@
   function renderPushActions(state) {
     var container = document.getElementById('estimator-push-actions');
 
-    // Placeholder for Task 10
-    container.innerHTML = '<div class="settings-section">' +
-      '<p>Push to Plan functionality will be implemented in Task 10</p>' +
-    '</div>';
+    var estimator = state.project.estimator;
+    var hasData = estimator.mode === 'detailed'
+      ? estimator.requirements.length > 0
+      : Object.values(estimator.highlevel).some(function (cloud) {
+          return cloud.low > 0 || cloud.medium > 0 || cloud.high > 0;
+        });
+
+    var html = '<div class="settings-section">' +
+      '<h3>Push Estimates to Plan</h3>' +
+      '<p>Convert your estimates into tasks in the Plan view. This will create tasks based on your requirements or component counts.</p>';
+
+    if (hasData) {
+      html += '<button id="push-to-plan-btn" class="primary-button">Push to Plan</button>';
+    } else {
+      html += '<p><em>Add requirements or component counts first.</em></p>';
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+
+    if (hasData) {
+      document.getElementById('push-to-plan-btn').addEventListener('click', function () {
+        pushToPlan(state);
+      });
+    }
+  }
+
+  function pushToPlan(state) {
+    var estimator = state.project.estimator;
+
+    // Solution type to owner mapping
+    var OWNER_MAP = {
+      'OOTB': 'Solution Architect',
+      'Configuration': 'Solution Architect',
+      'Customization': 'Developer',
+      'Integration': 'Integration Specialist',
+      'Migration': 'Data Migration Specialist'
+    };
+
+    var tasksToCreate = [];
+
+    if (estimator.mode === 'detailed') {
+      // Detailed mode: one task per requirement
+      estimator.requirements.forEach(function (req) {
+        if (!req.name || !req.solutionType || !req.complexity) return;
+
+        var calc = PP.calculateRequirement(req);
+        var owner = OWNER_MAP[req.solutionType] || 'TBD';
+
+        tasksToCreate.push({
+          _level: 0,
+          name: req.name,
+          owner: owner,
+          remarks: 'Cloud: ' + (req.cloud || 'N/A') +
+                   ' | Feature: ' + (req.feature || 'N/A') +
+                   ' | Type: ' + req.solutionType +
+                   ' | Complexity: ' + req.complexity +
+                   (req.moscow ? ' | MoSCoW: ' + req.moscow : '') +
+                   (req.releasePhase ? ' | Phase: ' + req.releasePhase : '') +
+                   ' | Estimated: ' + calc.totalDays.toFixed(2) + ' days',
+          plannedStart: null,
+          plannedFinish: null,
+          deliverable: false,
+          predecessors: []
+        });
+      });
+    } else {
+      // High-level mode: tasks by cloud and complexity
+      var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
+      var complexities = ['Low', 'Medium', 'High'];
+
+      clouds.forEach(function (cloud) {
+        var cloudData = estimator.highlevel[cloud];
+        complexities.forEach(function (complexity) {
+          var count = cloudData[complexity.toLowerCase()];
+          if (count === 0) return;
+
+          var calc = PP.calculateRequirement({ solutionType: 'Configuration', complexity: complexity });
+          var totalDays = calc.totalDays * count;
+          var owner = 'Solution Architect';
+
+          tasksToCreate.push({
+            _level: 0,
+            name: cloud + ' - ' + complexity + ' Complexity (' + count + ' components)',
+            owner: owner,
+            remarks: 'High-level estimate | ' + count + ' components | ' + totalDays.toFixed(2) + ' days total',
+            plannedStart: null,
+            plannedFinish: null,
+            deliverable: false,
+            predecessors: []
+          });
+        });
+      });
+    }
+
+    if (tasksToCreate.length === 0) {
+      alert('No tasks to create. Add requirements or component counts first.');
+      return;
+    }
+
+    // Confirm before creating tasks
+    var confirmed = confirm('This will create ' + tasksToCreate.length + ' task(s) in the Plan view. Continue?');
+    if (!confirmed) return;
+
+    // Create tasks
+    state.project.addTasks(tasksToCreate, 'Estimator');
+
+    // Switch to Plan view
+    var planTab = document.querySelector('.view-tab[data-view="plan"]');
+    if (planTab) planTab.click();
+
+    alert('Successfully created ' + tasksToCreate.length + ' task(s) in the Plan view!');
   }
 
   function renderEstimator(state) {

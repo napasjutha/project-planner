@@ -1,7 +1,11 @@
 (function () {
   'use strict';
 
-  var escapeHtml = PP.escapeHtml;
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   function renderModeToggle(state) {
     var container = document.getElementById('estimator-mode-toggle');

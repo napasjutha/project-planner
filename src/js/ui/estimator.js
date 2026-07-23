@@ -250,11 +250,49 @@
       return;
     }
 
-    // Placeholder for Task 8
-    container.innerHTML = '<div class="settings-section settings-section-wide">' +
-      '<h3>Component Counts</h3>' +
-      '<p>High-level component grid will be implemented in Task 8</p>' +
-    '</div>';
+    var highlevel = state.project.estimator.highlevel;
+    var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
+
+    var html = '<div class="settings-section settings-section-wide">' +
+      '<h3>Component Counts by Cloud and Complexity</h3>' +
+      '<table class="estimator-table highlevel-table">' +
+        '<thead><tr>' +
+          '<th>Cloud</th>' +
+          '<th>Low</th>' +
+          '<th>Medium</th>' +
+          '<th>High</th>' +
+          '<th>Total Effort (days)</th>' +
+        '</tr></thead>' +
+        '<tbody>';
+
+    clouds.forEach(function (cloud) {
+      var calc = PP.calculateHighLevelCloud(highlevel, cloud);
+      html += '<tr>' +
+        '<td><strong>' + cloud + '</strong></td>' +
+        '<td><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="low" min="0" step="1" value="' + highlevel[cloud].low + '"></td>' +
+        '<td><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="medium" min="0" step="1" value="' + highlevel[cloud].medium + '"></td>' +
+        '<td><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="high" min="0" step="1" value="' + highlevel[cloud].high + '"></td>' +
+        '<td>' + calc.totalDays.toFixed(2) + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+
+    // Wire up change handlers
+    var inputs = container.querySelectorAll('.hl-count');
+    inputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        var cloud = input.dataset.cloud;
+        var complexity = input.dataset.complexity;
+        var value = parseInt(input.value, 10) || 0;
+
+        state.project._pushUndo();
+        highlevel[cloud][complexity] = value;
+        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        PP.refresh(state, true);
+      });
+    });
   }
 
   function renderSummary(state) {

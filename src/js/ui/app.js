@@ -459,6 +459,10 @@
       activitiesViewMonth: null,
     };
 
+    // Expose state and refresh globally for estimator UI
+    PP.state = state;
+    PP.refresh = function (markDirty) { refresh(state, markDirty); };
+
     if (state.currentUser) {
       showApp(state);
     } else {

@@ -22,14 +22,14 @@
       if (estimator.mode === 'detailed') return;
       state.project._pushUndo();
       estimator.mode = 'detailed';
-      PP.refresh(state, true);
+      PP.refresh(true);
     });
 
     highlevelBtn.addEventListener('click', function () {
       if (estimator.mode === 'highlevel') return;
       state.project._pushUndo();
       estimator.mode = 'highlevel';
-      PP.refresh(state, true);
+      PP.refresh(true);
     });
   }
 
@@ -75,7 +75,7 @@
 
         // Recalculate summary
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
     });
   }
@@ -186,7 +186,7 @@
           return r.id !== reqId;
         });
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
     });
 
@@ -199,46 +199,46 @@
       row.querySelector('.req-name').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.name = e.target.value;
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
 
       row.querySelector('.req-cloud').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.cloud = e.target.value;
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
 
       row.querySelector('.req-feature').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.feature = e.target.value;
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
 
       row.querySelector('.req-solutionType').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.solutionType = e.target.value;
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
 
       row.querySelector('.req-complexity').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.complexity = e.target.value;
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
 
       row.querySelector('.req-moscow').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.moscow = e.target.value;
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
 
       row.querySelector('.req-phase').addEventListener('change', function (e) {
         state.project._pushUndo();
         req.releasePhase = e.target.value;
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
     });
   }
@@ -290,7 +290,7 @@
         state.project._pushUndo();
         highlevel[cloud][complexity] = value;
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(state, true);
+        PP.refresh(true);
       });
     });
   }

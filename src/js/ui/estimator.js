@@ -439,6 +439,7 @@
     if (!confirmed) return;
 
     state.project.addTasks(tasksToCreate, 'Estimator');
+    PP.refresh(true);
 
     var planTab = document.querySelector('.view-tab[data-view="plan"]');
     if (planTab) planTab.click();

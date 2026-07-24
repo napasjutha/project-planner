@@ -543,115 +543,6 @@
     });
   }
 
-  function renderPushActions(state) {
-    var estimator = state.project.estimator;
-    var hasData = estimator.mode === 'detailed'
-      ? estimator.requirements.length > 0
-      : Object.values(estimator.highlevel).some(function (cloud) {
-          return cloud.low > 0 || cloud.medium > 0 || cloud.high > 0;
-        });
-
-    if (!hasData) return '';
-
-    var html = '<div style="margin-top:24px;padding:20px;background:var(--surface-alt);border-radius:var(--radius-lg);border:1px solid var(--border)">' +
-      '<p style="margin:0 0 12px 0;font-size:13px;color:var(--text-secondary)">Convert your estimates into tasks in the Plan view.</p>' +
-      '<button id="push-to-plan-btn" class="primary-button">Push to Plan</button>' +
-    '</div>';
-
-    return html;
-  }
-
-  function wirePushActions(state) {
-    var btn = document.getElementById('push-to-plan-btn');
-    if (btn) {
-      btn.addEventListener('click', function () {
-        pushToPlan(state);
-      });
-    }
-  }
-
-  function pushToPlan(state) {
-    var estimator = state.project.estimator;
-
-    var OWNER_MAP = {
-      'OOTB': 'Solution Architect',
-      'Configuration': 'Solution Architect',
-      'Customization': 'Developer',
-      'Integration': 'Integration Specialist',
-      'Migration': 'Data Migration Specialist'
-    };
-
-    var tasksToCreate = [];
-
-    if (estimator.mode === 'detailed') {
-      estimator.requirements.forEach(function (req) {
-        if (!req.name || !req.solutionType || !req.complexity) return;
-
-        var calc = PP.calculateRequirement(req);
-        var owner = OWNER_MAP[req.solutionType] || 'TBD';
-
-        tasksToCreate.push({
-          _level: 0,
-          name: req.name,
-          owner: owner,
-          remarks: 'Cloud: ' + (req.cloud || 'N/A') +
-                   ' | Feature: ' + (req.feature || 'N/A') +
-                   ' | Type: ' + req.solutionType +
-                   ' | Complexity: ' + req.complexity +
-                   (req.moscow ? ' | MoSCoW: ' + req.moscow : '') +
-                   (req.releasePhase ? ' | Phase: ' + req.releasePhase : '') +
-                   ' | Estimated: ' + calc.totalDays.toFixed(2) + ' days',
-          plannedStart: null,
-          plannedFinish: null,
-          deliverable: false,
-          predecessors: []
-        });
-      });
-    } else {
-      var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
-      var complexities = ['Low', 'Medium', 'High'];
-
-      clouds.forEach(function (cloud) {
-        var cloudData = estimator.highlevel[cloud];
-        complexities.forEach(function (complexity) {
-          var count = cloudData[complexity.toLowerCase()];
-          if (count === 0) return;
-
-          var calc = PP.calculateRequirement({ solutionType: 'Configuration', complexity: complexity });
-          var totalDays = calc.totalDays * count;
-          var owner = 'Solution Architect';
-
-          tasksToCreate.push({
-            _level: 0,
-            name: cloud + ' - ' + complexity + ' Complexity (' + count + ' components)',
-            owner: owner,
-            remarks: 'High-level estimate | ' + count + ' components | ' + totalDays.toFixed(2) + ' days total',
-            plannedStart: null,
-            plannedFinish: null,
-            deliverable: false,
-            predecessors: []
-          });
-        });
-      });
-    }
-
-    if (tasksToCreate.length === 0) {
-      alert('No tasks to create. Add requirements or component counts first.');
-      return;
-    }
-
-    var confirmed = confirm('This will create ' + tasksToCreate.length + ' task(s) in the Plan view. Continue?');
-    if (!confirmed) return;
-
-    state.project.addTasks(tasksToCreate, 'Estimator');
-    PP.refresh(true);
-
-    var planTab = document.querySelector('.view-tab[data-view="plan"]');
-    if (planTab) planTab.click();
-
-    alert('Successfully created ' + tasksToCreate.length + ' task(s) in the Plan view!');
-  }
-
   function renderEstimator(state) {
     var container = document.getElementById('estimator-view');
 
@@ -662,7 +553,6 @@
       '<div class="estimator-body">' +
         renderSummary(state) +
         (state.project.estimator.mode === 'detailed' ? renderDetailedGrid(state) : renderHighLevelGrid(state)) +
-        renderPushActions(state) +
       '</div>' +
     '</div>';
 
@@ -675,7 +565,6 @@
     } else {
       wireHighLevelGrid(state);
     }
-    wirePushActions(state);
   }
 
   PP.renderEstimator = renderEstimator;

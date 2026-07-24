@@ -256,19 +256,56 @@
   const VALID_COMPLEXITIES = ['Low', 'Medium', 'High'];
   const VALID_MOSCOW = ['Must Have', 'Should Have', 'Could Have', 'Won\'t Have'];
 
-  function estimatorCsvTemplateText() {
-    return ESTIMATOR_CSV_HEADERS.join(',') + '\n' +
+  function estimatorCsvTemplateText(params) {
+    var paramsLine = '';
+    if (params) {
+      paramsLine = '# PARAMS: ' +
+        'contingency=' + (params.contingencyPct * 100) + ',' +
+        'confidence=' + (params.confidencePct * 100) + ',' +
+        'changeManagement=' + (params.changeManagementPct * 100) + ',' +
+        'projectManagement=' + (params.projectManagementPct * 100) + ',' +
+        'testing=' + (params.testingPct * 100) + ',' +
+        'documentation=' + (params.documentationPct * 100) + ',' +
+        'uat=' + (params.uatPct * 100) + ',' +
+        'deployment=' + (params.deploymentPct * 100) + ',' +
+        'integrations=' + params.integrationsCount + ',' +
+        'migrations=' + params.migrationsCount + '\n';
+    }
+    return paramsLine +
+      ESTIMATOR_CSV_HEADERS.join(',') + '\n' +
       'Account Management,Sales,Objects,Configuration,Medium,Must Have,Phase 1\n' +
       'Case Assignment Rules,Service,Business Logic,Configuration,Low,Must Have,Phase 1\n';
   }
 
   function parseEstimatorCsv(rows) {
     const errors = [];
-    if (!rows.length || rows[0].map(c => c.trim()).join(',') !== ESTIMATOR_CSV_HEADERS.join(',')) {
-      errors.push('Header row must be exactly: ' + ESTIMATOR_CSV_HEADERS.join(','));
-      return { errors, requirements: [] };
+    let params = null;
+    let headerRowIndex = 0;
+
+    // Check for params line
+    if (rows.length > 0 && rows[0][0] && rows[0][0].startsWith('# PARAMS:')) {
+      const paramsStr = rows[0][0].substring(9).trim();
+      params = {};
+      paramsStr.split(',').forEach(function (pair) {
+        const parts = pair.split('=');
+        if (parts.length === 2) {
+          const key = parts[0].trim();
+          const value = parseFloat(parts[1].trim());
+          if (key === 'integrations' || key === 'migrations') {
+            params[key + 'Count'] = value;
+          } else {
+            params[key + 'Pct'] = value / 100;
+          }
+        }
+      });
+      headerRowIndex = 1;
     }
-    const dataRows = rows.slice(1);
+
+    if (rows.length <= headerRowIndex || rows[headerRowIndex].map(c => c.trim()).join(',') !== ESTIMATOR_CSV_HEADERS.join(',')) {
+      errors.push('Header row must be exactly: ' + ESTIMATOR_CSV_HEADERS.join(','));
+      return { errors, requirements: [], params: null };
+    }
+    const dataRows = rows.slice(headerRowIndex + 1);
     const requirements = [];
 
     dataRows.forEach((cells, idx) => {
@@ -309,7 +346,7 @@
       });
     });
 
-    return errors.length ? { errors, requirements: [] } : { errors: [], requirements };
+    return errors.length ? { errors, requirements: [], params: null } : { errors: [], requirements, params };
   }
 
   return {

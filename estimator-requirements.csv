@@ -1,3 +1,4 @@
+"# PARAMS: contingency=10,confidence=100,changeManagement=20,projectManagement=20,testing=15,documentation=10,uat=5,deployment=5,integrations=0,migrations=0"
 Requirement,Cloud,Feature,Solution Type,Complexity,MoSCoW,Release Phase
 Set up territory,Service,Field Service,Configuration,Medium,,
 Set up workforce / skill & Work types,Service,Field Service,Configuration,Medium,,

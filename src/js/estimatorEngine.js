@@ -296,12 +296,10 @@
       summary.byComponent.Migration = (summary.byComponent.Migration || 0) + migrationDays;
     }
 
-    // Apply overhead percentages
-    var contingency = summary.totalDays * estimator.params.contingencyPct;
-    var changeManagement = summary.totalDays * estimator.params.changeManagementPct;
-    var projectManagement = summary.totalDays * estimator.params.projectManagementPct;
-
-    summary.totalDays += contingency + changeManagement + projectManagement;
+    // Apply overhead percentages multiplicatively (sequential) to match Excel calculation
+    summary.totalDays = summary.totalDays * (1 + estimator.params.contingencyPct);
+    summary.totalDays = summary.totalDays * (1 + estimator.params.projectManagementPct);
+    summary.totalDays = summary.totalDays * (1 + estimator.params.changeManagementPct);
 
     return summary;
   }

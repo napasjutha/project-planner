@@ -119,6 +119,11 @@
 
       state.project._pushUndo();
 
+      // Apply imported parameters if present
+      if (result.params) {
+        Object.assign(state.project.estimator.params, result.params);
+      }
+
       result.requirements.forEach(function (req) {
         var requirement = {
           id: PP.generateRequirementId(),
@@ -134,7 +139,11 @@
       });
 
       state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-      alert('Imported ' + result.requirements.length + ' requirement(s).');
+      var msg = 'Imported ' + result.requirements.length + ' requirement(s).';
+      if (result.params) {
+        msg += '\nParameters updated.';
+      }
+      alert(msg);
       PP.refresh(true);
     };
     reader.onerror = function () {

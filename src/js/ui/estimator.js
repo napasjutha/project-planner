@@ -454,13 +454,9 @@
         renderHeader(state) +
       '</div>' +
       '<div class="estimator-body">' +
-        '<div class="estimator-main">' +
-          (state.project.estimator.mode === 'detailed' ? renderDetailedGrid(state) : renderHighLevelGrid(state)) +
-        '</div>' +
-        '<div class="estimator-sidebar">' +
-          renderSummary(state) +
-          renderPushActions(state) +
-        '</div>' +
+        renderSummary(state) +
+        (state.project.estimator.mode === 'detailed' ? renderDetailedGrid(state) : renderHighLevelGrid(state)) +
+        renderPushActions(state) +
       '</div>' +
     '</div>';
 

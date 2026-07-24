@@ -20,8 +20,7 @@
         '<button id="mode-detailed-btn" class="' + (estimator.mode === 'detailed' ? 'active' : '') + '">Detailed Estimate</button>' +
         '<button id="mode-highlevel-btn" class="' + (estimator.mode === 'highlevel' ? 'active' : '') + '">High Level Estimate</button>' +
       '</div>' +
-      '<div style="display:flex;gap:8px">' +
-        '<button id="estimator-download-template-btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-md);cursor:pointer">Download CSV Template</button>' +
+      '<div>' +
         '<button id="estimator-import-csv-btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-md);cursor:pointer">Import CSV</button>' +
         '<input type="file" id="estimator-import-csv-input" accept=".csv" style="display:none">' +
       '</div>' +
@@ -86,18 +85,6 @@
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
         PP.refresh(true);
       });
-    });
-
-    document.getElementById('estimator-download-template-btn').addEventListener('click', function () {
-      var blob = new Blob([PP.estimatorCsvTemplateText()], { type: 'text/csv' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'estimator-requirements-template.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     });
 
     document.getElementById('estimator-import-csv-btn').addEventListener('click', function () {

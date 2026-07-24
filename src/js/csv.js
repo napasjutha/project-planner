@@ -250,5 +250,72 @@
     return errors.length ? { errors, activities: [] } : { errors: [], activities };
   }
 
-  return { stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS, escapeCsvField, buildExportCsv, EXPORT_HEADERS, parseActivitiesCsv, activitiesCsvTemplateText };
+  const ESTIMATOR_CSV_HEADERS = ['Requirement', 'Cloud', 'Feature', 'Solution Type', 'Complexity', 'MoSCoW', 'Release Phase'];
+  const VALID_CLOUDS = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
+  const VALID_SOLUTION_TYPES = ['OOTB', 'Configuration', 'Customization', 'Integration', 'Migration'];
+  const VALID_COMPLEXITIES = ['Low', 'Medium', 'High'];
+  const VALID_MOSCOW = ['Must Have', 'Should Have', 'Could Have', 'Won\'t Have'];
+
+  function estimatorCsvTemplateText() {
+    return ESTIMATOR_CSV_HEADERS.join(',') + '\n' +
+      'Account Management,Sales,Objects,Configuration,Medium,Must Have,Phase 1\n' +
+      'Case Assignment Rules,Service,Business Logic,Configuration,Low,Must Have,Phase 1\n';
+  }
+
+  function parseEstimatorCsv(rows) {
+    const errors = [];
+    if (!rows.length || rows[0].map(c => c.trim()).join(',') !== ESTIMATOR_CSV_HEADERS.join(',')) {
+      errors.push('Header row must be exactly: ' + ESTIMATOR_CSV_HEADERS.join(','));
+      return { errors, requirements: [] };
+    }
+    const dataRows = rows.slice(1);
+    const requirements = [];
+
+    dataRows.forEach((cells, idx) => {
+      const label = 'Row ' + (idx + 2);
+      if (cells.length !== ESTIMATOR_CSV_HEADERS.length) {
+        errors.push(label + ': expected ' + ESTIMATOR_CSV_HEADERS.length + ' columns, found ' + cells.length);
+        return;
+      }
+      const c = cells.map(v => v.trim());
+      const [name, cloud, feature, solutionType, complexity, moscow, releasePhase] = c;
+
+      if (!name) errors.push(label + ': Requirement is required');
+
+      if (cloud && VALID_CLOUDS.indexOf(cloud) === -1) {
+        errors.push(label + ": Cloud '" + cloud + "' must be one of: " + VALID_CLOUDS.join(', '));
+      }
+
+      if (solutionType && VALID_SOLUTION_TYPES.indexOf(solutionType) === -1) {
+        errors.push(label + ": Solution Type '" + solutionType + "' must be one of: " + VALID_SOLUTION_TYPES.join(', '));
+      }
+
+      if (complexity && VALID_COMPLEXITIES.indexOf(complexity) === -1) {
+        errors.push(label + ": Complexity '" + complexity + "' must be one of: " + VALID_COMPLEXITIES.join(', '));
+      }
+
+      if (moscow && VALID_MOSCOW.indexOf(moscow) === -1) {
+        errors.push(label + ": MoSCoW '" + moscow + "' must be one of: " + VALID_MOSCOW.join(', '));
+      }
+
+      requirements.push({
+        name: name,
+        cloud: cloud || '',
+        feature: feature || '',
+        solutionType: solutionType || '',
+        complexity: complexity || '',
+        moscow: moscow || '',
+        releasePhase: releasePhase || ''
+      });
+    });
+
+    return errors.length ? { errors, requirements: [] } : { errors: [], requirements };
+  }
+
+  return {
+    stripBom, parseCsvText, csvTemplateText, validateCsvRows, CSV_HEADERS,
+    escapeCsvField, buildExportCsv, EXPORT_HEADERS,
+    parseActivitiesCsv, activitiesCsvTemplateText,
+    estimatorCsvTemplateText, parseEstimatorCsv, ESTIMATOR_CSV_HEADERS
+  };
 });

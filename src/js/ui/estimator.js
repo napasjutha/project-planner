@@ -15,9 +15,16 @@
     var estimator = state.project.estimator;
     var params = estimator.params;
 
-    var html = '<div class="estimator-mode-toggle">' +
-      '<button id="mode-detailed-btn" class="' + (estimator.mode === 'detailed' ? 'active' : '') + '">Detailed Estimate</button>' +
-      '<button id="mode-highlevel-btn" class="' + (estimator.mode === 'highlevel' ? 'active' : '') + '">High Level Estimate</button>' +
+    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div class="estimator-mode-toggle">' +
+        '<button id="mode-detailed-btn" class="' + (estimator.mode === 'detailed' ? 'active' : '') + '">Detailed Estimate</button>' +
+        '<button id="mode-highlevel-btn" class="' + (estimator.mode === 'highlevel' ? 'active' : '') + '">High Level Estimate</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button id="estimator-download-template-btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-md);cursor:pointer">Download CSV Template</button>' +
+        '<button id="estimator-import-csv-btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-md);cursor:pointer">Import CSV</button>' +
+        '<input type="file" id="estimator-import-csv-input" accept=".csv" style="display:none">' +
+      '</div>' +
     '</div>' +
     '<div class="estimator-params-toggle" id="params-toggle">' +
       '<span>' + (paramsExpanded ? '▼' : '▶') + '</span> Estimation Parameters' +
@@ -80,6 +87,73 @@
         PP.refresh(true);
       });
     });
+
+    document.getElementById('estimator-download-template-btn').addEventListener('click', function () {
+      var blob = new Blob([PP.estimatorCsvTemplateText()], { type: 'text/csv' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'estimator-requirements-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('estimator-import-csv-btn').addEventListener('click', function () {
+      document.getElementById('estimator-import-csv-input').click();
+    });
+
+    document.getElementById('estimator-import-csv-input').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (file) handleEstimatorImportCsv(state, file);
+      e.target.value = '';
+    });
+  }
+
+  function handleEstimatorImportCsv(state, file) {
+    if (state.project.estimator.mode !== 'detailed') {
+      alert('Switch to Detailed Estimate mode to import requirements.');
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      var rows = PP.parseCsvText(PP.stripBom(reader.result));
+      if (rows.length < 2) {
+        alert('CSV has no data rows.');
+        return;
+      }
+      var result = PP.parseEstimatorCsv(rows);
+      if (result.errors.length) {
+        alert('Cannot import — ' + result.errors.length + ' error(s):\n' + result.errors.join('\n'));
+        return;
+      }
+
+      state.project._pushUndo();
+
+      result.requirements.forEach(function (req) {
+        var requirement = {
+          id: PP.generateRequirementId(),
+          name: req.name,
+          cloud: req.cloud,
+          feature: req.feature,
+          solutionType: req.solutionType,
+          complexity: req.complexity,
+          moscow: req.moscow,
+          releasePhase: req.releasePhase
+        };
+        state.project.estimator.requirements.push(requirement);
+      });
+
+      state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+      alert('Imported ' + result.requirements.length + ' requirement(s).');
+      PP.refresh(true);
+    };
+    reader.onerror = function () {
+      alert('Failed to read that file.');
+    };
+    reader.readAsText(file, 'UTF-8');
   }
 
   function renderDetailedGrid(state) {

@@ -33,10 +33,6 @@
       '<label>Confidence %<input type="number" id="param-confidence" min="0" max="100" step="1" value="' + (params.confidencePct * 100) + '"></label>' +
       '<label>Change Mgmt %<input type="number" id="param-changeManagement" min="0" max="100" step="1" value="' + (params.changeManagementPct * 100) + '"></label>' +
       '<label>Project Mgmt %<input type="number" id="param-projectManagement" min="0" max="100" step="1" value="' + (params.projectManagementPct * 100) + '"></label>' +
-      '<label>Testing %<input type="number" id="param-testing" min="0" max="100" step="1" value="' + (params.testingPct * 100) + '"></label>' +
-      '<label>Documentation %<input type="number" id="param-documentation" min="0" max="100" step="1" value="' + (params.documentationPct * 100) + '"></label>' +
-      '<label>UAT %<input type="number" id="param-uat" min="0" max="100" step="1" value="' + (params.uatPct * 100) + '"></label>' +
-      '<label>Deployment %<input type="number" id="param-deployment" min="0" max="100" step="1" value="' + (params.deploymentPct * 100) + '"></label>' +
       '<label>Integrations Count<input type="number" id="param-integrations" min="0" step="1" value="' + params.integrationsCount + '"></label>' +
       '<label>Migrations Count<input type="number" id="param-migrations" min="0" step="1" value="' + params.migrationsCount + '"></label>' +
     '</div>';
@@ -65,7 +61,7 @@
     });
 
     var paramIds = ['contingency', 'confidence', 'changeManagement', 'projectManagement',
-                    'testing', 'documentation', 'uat', 'deployment', 'integrations', 'migrations'];
+                    'integrations', 'migrations'];
 
     paramIds.forEach(function (id) {
       var input = document.getElementById('param-' + id);

@@ -59,13 +59,9 @@
         mode: 'detailed',
         params: {
           contingencyPct: 0.1,
-          confidencePct: 0.8,
+          confidencePct: 1.0,
           changeManagementPct: 0.2,
           projectManagementPct: 0.2,
-          testingPct: 0.15,
-          documentationPct: 0.1,
-          uatPct: 0.05,
-          deploymentPct: 0.05,
           integrationsCount: 0,
           migrationsCount: 0
         },
@@ -140,13 +136,9 @@
           mode: 'detailed',
           params: {
             contingencyPct: 0.1,
-            confidencePct: 0.8,
+            confidencePct: 1.0,
             changeManagementPct: 0.2,
             projectManagementPct: 0.2,
-            testingPct: 0.15,
-            documentationPct: 0.1,
-            uatPct: 0.05,
-            deploymentPct: 0.05,
             integrationsCount: 0,
             migrationsCount: 0
           },

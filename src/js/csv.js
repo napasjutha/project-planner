@@ -264,10 +264,6 @@
         'confidence=' + (params.confidencePct * 100) + ',' +
         'changeManagement=' + (params.changeManagementPct * 100) + ',' +
         'projectManagement=' + (params.projectManagementPct * 100) + ',' +
-        'testing=' + (params.testingPct * 100) + ',' +
-        'documentation=' + (params.documentationPct * 100) + ',' +
-        'uat=' + (params.uatPct * 100) + ',' +
-        'deployment=' + (params.deploymentPct * 100) + ',' +
         'integrations=' + params.integrationsCount + ',' +
         'migrations=' + params.migrationsCount + '\n';
     }

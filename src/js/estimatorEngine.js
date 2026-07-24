@@ -15,33 +15,33 @@
     High: 1.375
   };
 
-  // Base hours by Solution Type and Complexity
+  // Base hours by Solution Type and Complexity (from Excel Base Calculations sheet)
   // Activities: Discovery, Requirements, Design, Development, Testing, UAT, Deployment, Documentation
   var BASE_HOURS = {
     OOTB: {
-      Low: { Discovery: 2, Requirements: 4, Design: 4, Development: 0, Testing: 2, UAT: 2, Deployment: 2, Documentation: 1 },
-      Medium: { Discovery: 4, Requirements: 8, Design: 8, Development: 0, Testing: 4, UAT: 4, Deployment: 4, Documentation: 2 },
-      High: { Discovery: 8, Requirements: 16, Design: 16, Development: 0, Testing: 8, UAT: 8, Deployment: 8, Documentation: 4 }
+      Low: { Discovery: 2, Requirements: 1, Design: 1, Development: 2, Testing: 1, UAT: 1, Deployment: 2, Documentation: 1 },
+      Medium: { Discovery: 5, Requirements: 4, Design: 6, Development: 8, Testing: 2, UAT: 4, Deployment: 4, Documentation: 1 },
+      High: { Discovery: 8, Requirements: 8, Design: 16, Development: 16, Testing: 8, UAT: 8, Deployment: 8, Documentation: 2 }
     },
     Configuration: {
-      Low: { Discovery: 3, Requirements: 6, Design: 6, Development: 6, Testing: 2, UAT: 2, Deployment: 2, Documentation: 1.5 },
+      Low: { Discovery: 4, Requirements: 4, Design: 4, Development: 6, Testing: 2, UAT: 2, Deployment: 4, Documentation: 1 },
       Medium: { Discovery: 6, Requirements: 12, Design: 12, Development: 12, Testing: 4, UAT: 4, Deployment: 4, Documentation: 3 },
-      High: { Discovery: 12, Requirements: 24, Design: 24, Development: 24, Testing: 8, UAT: 8, Deployment: 8, Documentation: 6 }
+      High: { Discovery: 12, Requirements: 24, Design: 24, Development: 32, Testing: 16, UAT: 16, Deployment: 8, Documentation: 4 }
     },
     Customization: {
-      Low: { Discovery: 4, Requirements: 8, Design: 8, Development: 16, Testing: 4, UAT: 4, Deployment: 4, Documentation: 2 },
-      Medium: { Discovery: 8, Requirements: 16, Design: 16, Development: 32, Testing: 8, UAT: 8, Deployment: 8, Documentation: 4 },
-      High: { Discovery: 16, Requirements: 32, Design: 32, Development: 64, Testing: 16, UAT: 16, Deployment: 16, Documentation: 8 }
+      Low: { Discovery: 5, Requirements: 10, Design: 4, Development: 8, Testing: 4, UAT: 4, Deployment: 4, Documentation: 1 },
+      Medium: { Discovery: 8, Requirements: 16, Design: 24, Development: 32, Testing: 10, UAT: 10, Deployment: 8, Documentation: 4 },
+      High: { Discovery: 24, Requirements: 40, Design: 32, Development: 56, Testing: 20, UAT: 20, Deployment: 8, Documentation: 4 }
     },
     Integration: {
-      Low: { Discovery: 4, Requirements: 8, Design: 12, Development: 16, Testing: 6, UAT: 4, Deployment: 4, Documentation: 2 },
-      Medium: { Discovery: 8, Requirements: 16, Design: 24, Development: 32, Testing: 12, UAT: 8, Deployment: 8, Documentation: 4 },
-      High: { Discovery: 16, Requirements: 32, Design: 48, Development: 64, Testing: 24, UAT: 16, Deployment: 16, Documentation: 8 }
+      Low: { Discovery: 8, Requirements: 10, Design: 24, Development: 24, Testing: 8, UAT: 8, Deployment: 4, Documentation: 5 },
+      Medium: { Discovery: 24, Requirements: 24, Design: 32, Development: 40, Testing: 32, UAT: 32, Deployment: 8, Documentation: 8 },
+      High: { Discovery: 32, Requirements: 40, Design: 60, Development: 80, Testing: 40, UAT: 40, Deployment: 16, Documentation: 12 }
     },
     Migration: {
-      Low: { Discovery: 6, Requirements: 8, Design: 8, Development: 16, Testing: 8, UAT: 4, Deployment: 6, Documentation: 2 },
-      Medium: { Discovery: 12, Requirements: 16, Design: 16, Development: 32, Testing: 16, UAT: 8, Deployment: 12, Documentation: 4 },
-      High: { Discovery: 24, Requirements: 32, Design: 32, Development: 64, Testing: 32, UAT: 16, Deployment: 24, Documentation: 8 }
+      Low: { Discovery: 16, Requirements: 16, Design: 24, Development: 18, Testing: 8, UAT: 8, Deployment: 8, Documentation: 10 },
+      Medium: { Discovery: 32, Requirements: 24, Design: 32, Development: 80, Testing: 32, UAT: 32, Deployment: 16, Documentation: 17 },
+      High: { Discovery: 40, Requirements: 40, Design: 60, Development: 120, Testing: 40, UAT: 32, Deployment: 24, Documentation: 28 }
     }
   };
 

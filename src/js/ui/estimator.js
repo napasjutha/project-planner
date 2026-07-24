@@ -10,6 +10,7 @@
   var paramsExpanded = false;
   var summaryView = 'table'; // 'table' or 'chart'
   var chartCategory = 'byCloud'; // 'byCloud', 'byStage', 'byRole', 'byComponent', 'byActivity'
+  var summaryValueMode = 'days'; // 'days' or 'hours'
 
   function renderHeader(state) {
     var estimator = state.project.estimator;
@@ -371,15 +372,24 @@
       var html = '<div class="estimator-card">' +
         '<h3>' + title + '</h3>' +
         '<div class="summary-breakdown"><table>' +
-          '<thead><tr><th>Item</th><th>Days</th><th>%</th></tr></thead>' +
+          '<thead><tr>' +
+            '<th>Item</th>' +
+            '<th>' +
+              '<select class="summary-value-mode-select" style="border:1px solid var(--border);background:var(--surface);padding:2px 4px;border-radius:var(--radius-sm);font-size:12px;cursor:pointer">' +
+                '<option value="days"' + (summaryValueMode === 'days' ? ' selected' : '') + '>Days</option>' +
+                '<option value="hours"' + (summaryValueMode === 'hours' ? ' selected' : '') + '>Hours</option>' +
+              '</select>' +
+            '</th>' +
+          '</tr></thead>' +
           '<tbody>';
 
       var total = summary.totalDays;
       for (var key in data) {
         if (data.hasOwnProperty(key)) {
           var days = data[key];
-          var pct = total > 0 ? ((days / total) * 100).toFixed(1) : 0;
-          html += '<tr><td>' + escapeHtml(key) + '</td><td>' + days.toFixed(2) + '</td><td>' + pct + '%</td></tr>';
+          var hours = (days * 8).toFixed(1);
+          var value = summaryValueMode === 'days' ? days.toFixed(2) : hours;
+          html += '<tr><td>' + escapeHtml(key) + '</td><td>' + value + '</td></tr>';
         }
       }
 
@@ -393,7 +403,7 @@
           '<button class="legend-btn ' + (chartCategory === 'byCloud' ? 'active' : '') + '" data-category="byCloud">Cloud</button>' +
           '<button class="legend-btn ' + (chartCategory === 'byStage' ? 'active' : '') + '" data-category="byStage">Powered Stage</button>' +
           '<button class="legend-btn ' + (chartCategory === 'byRole' ? 'active' : '') + '" data-category="byRole">Role</button>' +
-          '<button class="legend-btn ' + (chartCategory === 'byComponent' ? 'active' : '') + '" data-category="byComponent">Component Type</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'byComponent' ? 'active' : '') + '" data-category="byComponent">Solution Type</button>' +
           '<button class="legend-btn ' + (chartCategory === 'byActivity' ? 'active' : '') + '" data-category="byActivity">Activity</button>' +
         '</div>' +
         '<div class="chart-container">' +
@@ -421,7 +431,7 @@
           ? renderBreakdownTable('By Cloud', summary.byCloud) +
             renderBreakdownTable('By Powered Stage', summary.byStage) +
             renderBreakdownTable('By Role', summary.byRole) +
-            renderBreakdownTable('By Component Type', summary.byComponent) +
+            renderBreakdownTable('By Solution Type', summary.byComponent) +
             renderBreakdownTable('By Activity', summary.byActivity)
           : renderChartView()
         ) +
@@ -448,6 +458,15 @@
         PP.refresh(true);
       });
     }
+
+    // Wire up value mode dropdowns
+    var valueModeSelects = document.querySelectorAll('.summary-value-mode-select');
+    valueModeSelects.forEach(function (select) {
+      select.addEventListener('change', function () {
+        summaryValueMode = select.value;
+        PP.refresh(true);
+      });
+    });
 
     if (summaryView === 'chart') {
       var legendBtns = document.querySelectorAll('.legend-btn');

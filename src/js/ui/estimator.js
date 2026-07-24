@@ -8,6 +8,8 @@
   }
 
   var paramsExpanded = false;
+  var summaryView = 'table'; // 'table' or 'chart'
+  var chartCategory = 'byCloud'; // 'byCloud', 'byStage', 'byRole', 'byComponent', 'byActivity'
 
   function renderHeader(state) {
     var estimator = state.project.estimator;
@@ -319,23 +321,141 @@
       return html;
     }
 
+    function renderChartView() {
+      var html = '<div class="estimator-card" style="grid-column: 1 / -1">' +
+        '<div class="chart-legend">' +
+          '<button class="legend-btn ' + (chartCategory === 'byCloud' ? 'active' : '') + '" data-category="byCloud">Cloud</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'byStage' ? 'active' : '') + '" data-category="byStage">Powered Stage</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'byRole' ? 'active' : '') + '" data-category="byRole">Role</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'byComponent' ? 'active' : '') + '" data-category="byComponent">Component Type</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'byActivity' ? 'active' : '') + '" data-category="byActivity">Activity</button>' +
+        '</div>' +
+        '<div class="chart-container">' +
+          '<canvas id="summary-chart" width="800" height="400"></canvas>' +
+        '</div>' +
+      '</div>';
+      return html;
+    }
+
     var html = '<div class="estimator-summary-section">' +
-      '<h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600">Estimation Summary</h3>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<h3 style="margin:0;font-size:16px;font-weight:600">Estimation Summary</h3>' +
+        '<div class="summary-view-toggle">' +
+          '<button id="summary-table-btn" class="' + (summaryView === 'table' ? 'active' : '') + '">Table</button>' +
+          '<button id="summary-chart-btn" class="' + (summaryView === 'chart' ? 'active' : '') + '">Chart</button>' +
+        '</div>' +
+      '</div>' +
       '<div class="estimator-summary-grid">' +
         '<div class="summary-total">' +
           '<div class="summary-total-label">Total Effort</div>' +
           '<div class="summary-total-value">' + summary.totalDays.toFixed(1) + '</div>' +
           '<div class="summary-total-label">' + (summary.totalDays * 8).toFixed(0) + ' hours</div>' +
         '</div>' +
-        renderBreakdownTable('By Cloud', summary.byCloud) +
-        renderBreakdownTable('By Powered Stage', summary.byStage) +
-        renderBreakdownTable('By Role', summary.byRole) +
-        renderBreakdownTable('By Component Type', summary.byComponent) +
-        renderBreakdownTable('By Activity', summary.byActivity) +
+        (summaryView === 'table'
+          ? renderBreakdownTable('By Cloud', summary.byCloud) +
+            renderBreakdownTable('By Powered Stage', summary.byStage) +
+            renderBreakdownTable('By Role', summary.byRole) +
+            renderBreakdownTable('By Component Type', summary.byComponent) +
+            renderBreakdownTable('By Activity', summary.byActivity)
+          : renderChartView()
+        ) +
       '</div>' +
     '</div>';
 
     return html;
+  }
+
+  function wireSummary(state) {
+    var tableBtn = document.getElementById('summary-table-btn');
+    var chartBtn = document.getElementById('summary-chart-btn');
+
+    if (tableBtn) {
+      tableBtn.addEventListener('click', function () {
+        summaryView = 'table';
+        PP.refresh(true);
+      });
+    }
+
+    if (chartBtn) {
+      chartBtn.addEventListener('click', function () {
+        summaryView = 'chart';
+        PP.refresh(true);
+      });
+    }
+
+    if (summaryView === 'chart') {
+      var legendBtns = document.querySelectorAll('.legend-btn');
+      legendBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          chartCategory = btn.getAttribute('data-category');
+          PP.refresh(true);
+        });
+      });
+
+      drawChart(state);
+    }
+  }
+
+  function drawChart(state) {
+    var canvas = document.getElementById('summary-chart');
+    if (!canvas) return;
+
+    var summary = state.project.estimator.summary;
+    var data = summary[chartCategory];
+    if (!data || Object.keys(data).length === 0) return;
+
+    var ctx = canvas.getContext('2d');
+    var width = canvas.width;
+    var height = canvas.height;
+
+    // Get computed colors
+    var computedStyle = getComputedStyle(document.documentElement);
+    var kpmgBlue = computedStyle.getPropertyValue('--kpmg-blue').trim() || '#00338d';
+    var textColor = computedStyle.getPropertyValue('--text').trim() || '#000';
+
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // Prepare data
+    var items = [];
+    for (var key in data) {
+      if (data.hasOwnProperty(key)) {
+        items.push({ label: key, value: data[key] });
+      }
+    }
+
+    if (items.length === 0) return;
+
+    // Sort by value descending
+    items.sort(function (a, b) { return b.value - a.value; });
+
+    var maxValue = Math.max.apply(null, items.map(function (item) { return item.value; }));
+    var barHeight = 30;
+    var barSpacing = 10;
+    var leftMargin = 150;
+    var rightMargin = 80;
+    var topMargin = 20;
+    var chartWidth = width - leftMargin - rightMargin;
+
+    // Draw bars
+    items.forEach(function (item, i) {
+      var barWidth = (item.value / maxValue) * chartWidth;
+      var y = topMargin + i * (barHeight + barSpacing);
+
+      // Bar
+      ctx.fillStyle = kpmgBlue;
+      ctx.fillRect(leftMargin, y, barWidth, barHeight);
+
+      // Label
+      ctx.fillStyle = textColor;
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(item.label, leftMargin - 10, y + barHeight / 2 + 4);
+
+      // Value
+      ctx.textAlign = 'left';
+      ctx.fillText(item.value.toFixed(1) + ' days', leftMargin + barWidth + 10, y + barHeight / 2 + 4);
+    });
   }
 
   function renderPushActions(state) {
@@ -464,6 +584,7 @@
     container.innerHTML = html;
 
     wireHeader(state);
+    wireSummary(state);
     if (state.project.estimator.mode === 'detailed') {
       wireDetailedGrid(state);
     } else {

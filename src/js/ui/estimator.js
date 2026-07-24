@@ -7,59 +7,55 @@
     });
   }
 
-  function renderModeToggle(state) {
-    var container = document.getElementById('estimator-mode-toggle');
-    var estimator = state.project.estimator;
+  var paramsExpanded = false;
 
-    container.innerHTML = '<div class="estimator-mode-selector">' +
-      '<h2>Salesforce Field Service Estimator</h2>' +
-      '<div class="button-group">' +
-        '<button id="mode-detailed-btn" class="' + (estimator.mode === 'detailed' ? 'active' : '') + '">Detailed Estimate</button>' +
-        '<button id="mode-highlevel-btn" class="' + (estimator.mode === 'highlevel' ? 'active' : '') + '">High Level Estimate</button>' +
-      '</div>' +
+  function renderHeader(state) {
+    var estimator = state.project.estimator;
+    var params = estimator.params;
+
+    var html = '<div class="estimator-mode-toggle">' +
+      '<button id="mode-detailed-btn" class="' + (estimator.mode === 'detailed' ? 'active' : '') + '">Detailed Estimate</button>' +
+      '<button id="mode-highlevel-btn" class="' + (estimator.mode === 'highlevel' ? 'active' : '') + '">High Level Estimate</button>' +
+    '</div>' +
+    '<div class="estimator-params-toggle" id="params-toggle">' +
+      '<span>' + (paramsExpanded ? '▼' : '▶') + '</span> Estimation Parameters' +
+    '</div>' +
+    '<div class="estimator-params-content" id="params-content" ' + (paramsExpanded ? '' : 'style="display:none"') + '>' +
+      '<label>Contingency %<input type="number" id="param-contingency" min="0" max="100" step="1" value="' + (params.contingencyPct * 100) + '"></label>' +
+      '<label>Confidence %<input type="number" id="param-confidence" min="0" max="100" step="1" value="' + (params.confidencePct * 100) + '"></label>' +
+      '<label>Change Mgmt %<input type="number" id="param-changeManagement" min="0" max="100" step="1" value="' + (params.changeManagementPct * 100) + '"></label>' +
+      '<label>Project Mgmt %<input type="number" id="param-projectManagement" min="0" max="100" step="1" value="' + (params.projectManagementPct * 100) + '"></label>' +
+      '<label>Testing %<input type="number" id="param-testing" min="0" max="100" step="1" value="' + (params.testingPct * 100) + '"></label>' +
+      '<label>Documentation %<input type="number" id="param-documentation" min="0" max="100" step="1" value="' + (params.documentationPct * 100) + '"></label>' +
+      '<label>UAT %<input type="number" id="param-uat" min="0" max="100" step="1" value="' + (params.uatPct * 100) + '"></label>' +
+      '<label>Deployment %<input type="number" id="param-deployment" min="0" max="100" step="1" value="' + (params.deploymentPct * 100) + '"></label>' +
+      '<label>Integrations Count<input type="number" id="param-integrations" min="0" step="1" value="' + params.integrationsCount + '"></label>' +
+      '<label>Migrations Count<input type="number" id="param-migrations" min="0" step="1" value="' + params.migrationsCount + '"></label>' +
     '</div>';
 
-    var detailedBtn = document.getElementById('mode-detailed-btn');
-    var highlevelBtn = document.getElementById('mode-highlevel-btn');
-
-    detailedBtn.addEventListener('click', function () {
-      if (estimator.mode === 'detailed') return;
-      state.project._pushUndo();
-      estimator.mode = 'detailed';
-      PP.refresh(true);
-    });
-
-    highlevelBtn.addEventListener('click', function () {
-      if (estimator.mode === 'highlevel') return;
-      state.project._pushUndo();
-      estimator.mode = 'highlevel';
-      PP.refresh(true);
-    });
+    return html;
   }
 
-  function renderParams(state) {
-    var container = document.getElementById('estimator-params');
-    var params = state.project.estimator.params;
+  function wireHeader(state) {
+    document.getElementById('mode-detailed-btn').addEventListener('click', function () {
+      if (state.project.estimator.mode === 'detailed') return;
+      state.project._pushUndo();
+      state.project.estimator.mode = 'detailed';
+      PP.refresh(true);
+    });
 
-    var html = '<div class="settings-section">' +
-      '<h3>Estimation Parameters</h3>' +
-      '<div class="param-grid">' +
-        '<label>Contingency %: <input type="number" id="param-contingency" min="0" max="100" step="1" value="' + (params.contingencyPct * 100) + '"></label>' +
-        '<label>Confidence %: <input type="number" id="param-confidence" min="0" max="100" step="1" value="' + (params.confidencePct * 100) + '"></label>' +
-        '<label>Change Management %: <input type="number" id="param-changeManagement" min="0" max="100" step="1" value="' + (params.changeManagementPct * 100) + '"></label>' +
-        '<label>Project Management %: <input type="number" id="param-projectManagement" min="0" max="100" step="1" value="' + (params.projectManagementPct * 100) + '"></label>' +
-        '<label>Testing %: <input type="number" id="param-testing" min="0" max="100" step="1" value="' + (params.testingPct * 100) + '"></label>' +
-        '<label>Documentation %: <input type="number" id="param-documentation" min="0" max="100" step="1" value="' + (params.documentationPct * 100) + '"></label>' +
-        '<label>UAT %: <input type="number" id="param-uat" min="0" max="100" step="1" value="' + (params.uatPct * 100) + '"></label>' +
-        '<label>Deployment %: <input type="number" id="param-deployment" min="0" max="100" step="1" value="' + (params.deploymentPct * 100) + '"></label>' +
-        '<label>Integrations Count: <input type="number" id="param-integrations" min="0" step="1" value="' + params.integrationsCount + '"></label>' +
-        '<label>Migrations Count: <input type="number" id="param-migrations" min="0" step="1" value="' + params.migrationsCount + '"></label>' +
-      '</div>' +
-    '</div>';
+    document.getElementById('mode-highlevel-btn').addEventListener('click', function () {
+      if (state.project.estimator.mode === 'highlevel') return;
+      state.project._pushUndo();
+      state.project.estimator.mode = 'highlevel';
+      PP.refresh(true);
+    });
 
-    container.innerHTML = html;
+    document.getElementById('params-toggle').addEventListener('click', function () {
+      paramsExpanded = !paramsExpanded;
+      PP.refresh(true);
+    });
 
-    // Wire up change handlers
     var paramIds = ['contingency', 'confidence', 'changeManagement', 'projectManagement',
                     'testing', 'documentation', 'uat', 'deployment', 'integrations', 'migrations'];
 
@@ -68,6 +64,7 @@
       input.addEventListener('change', function () {
         state.project._pushUndo();
         var value = parseFloat(input.value);
+        var params = state.project.estimator.params;
 
         if (id === 'integrations') {
           params.integrationsCount = value;
@@ -77,7 +74,6 @@
           params[id + 'Pct'] = value / 100;
         }
 
-        // Recalculate summary
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
         PP.refresh(true);
       });
@@ -85,29 +81,25 @@
   }
 
   function renderDetailedGrid(state) {
-    var container = document.getElementById('estimator-detailed-grid');
-    if (state.project.estimator.mode !== 'detailed') {
-      container.innerHTML = '';
-      return;
-    }
+    if (state.project.estimator.mode !== 'detailed') return '';
 
     var requirements = state.project.estimator.requirements;
 
-    var html = '<div class="settings-section settings-section-wide">' +
+    var html = '<div class="estimator-card">' +
       '<h3>Requirements</h3>' +
       '<button id="add-requirement-btn">+ Add Requirement</button>' +
       '<table class="estimator-table">' +
         '<thead><tr>' +
-          '<th>#</th>' +
+          '<th style="width:40px">#</th>' +
           '<th>Requirement</th>' +
-          '<th>Cloud</th>' +
+          '<th style="width:120px">Cloud</th>' +
           '<th>Feature</th>' +
-          '<th>Solution Type</th>' +
-          '<th>Complexity</th>' +
-          '<th>MoSCoW</th>' +
-          '<th>Release Phase</th>' +
-          '<th>Effort (days)</th>' +
-          '<th>Actions</th>' +
+          '<th style="width:140px">Solution Type</th>' +
+          '<th style="width:120px">Complexity</th>' +
+          '<th style="width:100px">MoSCoW</th>' +
+          '<th style="width:120px">Release Phase</th>' +
+          '<th style="width:90px">Effort (days)</th>' +
+          '<th style="width:80px">Actions</th>' +
         '</tr></thead>' +
         '<tbody id="requirements-tbody">';
 
@@ -155,33 +147,35 @@
           '<option value="Phase-4"' + (req.releasePhase === 'Phase-4' ? ' selected' : '') + '>Phase-4</option>' +
           '<option value="Deferred"' + (req.releasePhase === 'Deferred' ? ' selected' : '') + '>Deferred</option>' +
         '</select></td>' +
-        '<td>' + calc.totalDays.toFixed(2) + '</td>' +
+        '<td style="text-align:right">' + calc.totalDays.toFixed(2) + '</td>' +
         '<td><button class="delete-req-btn" data-req-id="' + req.id + '">Delete</button></td>' +
       '</tr>';
     });
 
     html += '</tbody></table></div>';
-    container.innerHTML = html;
+    return html;
+  }
 
-    // Wire up Add Requirement button
-    document.getElementById('add-requirement-btn').addEventListener('click', function () {
-      state.project._pushUndo();
-      var newReq = {
-        id: PP.generateRequirementId(),
-        name: '',
-        cloud: '',
-        feature: '',
-        solutionType: '',
-        complexity: '',
-        moscow: '',
-        releasePhase: ''
-      };
-      state.project.estimator.requirements.push(newReq);
-      PP.refresh(state, true);
-    });
+  function wireDetailedGrid(state) {
+    var addBtn = document.getElementById('add-requirement-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        state.project._pushUndo();
+        state.project.estimator.requirements.push({
+          id: PP.generateRequirementId(),
+          name: '',
+          cloud: '',
+          feature: '',
+          solutionType: '',
+          complexity: '',
+          moscow: '',
+          releasePhase: ''
+        });
+        PP.refresh(true);
+      });
+    }
 
-    // Wire up delete buttons
-    var deleteButtons = container.querySelectorAll('.delete-req-btn');
+    var deleteButtons = document.querySelectorAll('.delete-req-btn');
     deleteButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {
         var reqId = btn.dataset.reqId;
@@ -194,11 +188,12 @@
       });
     });
 
-    // Wire up input changes
     var tbody = document.getElementById('requirements-tbody');
+    if (!tbody) return;
+
     var rows = tbody.querySelectorAll('tr');
     rows.forEach(function (row, index) {
-      var req = requirements[index];
+      var req = state.project.estimator.requirements[index];
 
       row.querySelector('.req-name').addEventListener('change', function (e) {
         state.project._pushUndo();
@@ -248,43 +243,40 @@
   }
 
   function renderHighLevelGrid(state) {
-    var container = document.getElementById('estimator-highlevel-grid');
-    if (state.project.estimator.mode !== 'highlevel') {
-      container.innerHTML = '';
-      return;
-    }
+    if (state.project.estimator.mode !== 'highlevel') return '';
 
     var highlevel = state.project.estimator.highlevel;
     var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
 
-    var html = '<div class="settings-section settings-section-wide">' +
+    var html = '<div class="estimator-card">' +
       '<h3>Component Counts by Cloud and Complexity</h3>' +
       '<table class="estimator-table highlevel-table">' +
         '<thead><tr>' +
           '<th>Cloud</th>' +
-          '<th>Low</th>' +
-          '<th>Medium</th>' +
-          '<th>High</th>' +
-          '<th>Total Effort (days)</th>' +
+          '<th style="text-align:center">Low</th>' +
+          '<th style="text-align:center">Medium</th>' +
+          '<th style="text-align:center">High</th>' +
+          '<th style="text-align:right">Total Effort (days)</th>' +
         '</tr></thead>' +
         '<tbody>';
 
     clouds.forEach(function (cloud) {
       var calc = PP.calculateHighLevelCloud(highlevel, cloud);
       html += '<tr>' +
-        '<td><strong>' + cloud + '</strong></td>' +
-        '<td><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="low" min="0" step="1" value="' + highlevel[cloud].low + '"></td>' +
-        '<td><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="medium" min="0" step="1" value="' + highlevel[cloud].medium + '"></td>' +
-        '<td><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="high" min="0" step="1" value="' + highlevel[cloud].high + '"></td>' +
-        '<td>' + calc.totalDays.toFixed(2) + '</td>' +
+        '<td>' + cloud + '</td>' +
+        '<td style="text-align:center"><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="low" min="0" step="1" value="' + highlevel[cloud].low + '"></td>' +
+        '<td style="text-align:center"><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="medium" min="0" step="1" value="' + highlevel[cloud].medium + '"></td>' +
+        '<td style="text-align:center"><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="high" min="0" step="1" value="' + highlevel[cloud].high + '"></td>' +
+        '<td style="text-align:right">' + calc.totalDays.toFixed(2) + '</td>' +
       '</tr>';
     });
 
     html += '</tbody></table></div>';
-    container.innerHTML = html;
+    return html;
+  }
 
-    // Wire up change handlers
-    var inputs = container.querySelectorAll('.hl-count');
+  function wireHighLevelGrid(state) {
+    var inputs = document.querySelectorAll('.hl-count');
     inputs.forEach(function (input) {
       input.addEventListener('change', function () {
         var cloud = input.dataset.cloud;
@@ -292,7 +284,7 @@
         var value = parseInt(input.value, 10) || 0;
 
         state.project._pushUndo();
-        highlevel[cloud][complexity] = value;
+        state.project.estimator.highlevel[cloud][complexity] = value;
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
         PP.refresh(true);
       });
@@ -300,20 +292,17 @@
   }
 
   function renderSummary(state) {
-    var container = document.getElementById('estimator-summary');
-
-    // Recalculate summary
     state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
     var summary = state.project.estimator.summary;
 
     function renderBreakdownTable(title, data) {
       if (Object.keys(data).length === 0) {
-        return '<div class="summary-card"><h4>' + title + '</h4><p>No data</p></div>';
+        return '<div class="estimator-card"><h3>' + title + '</h3><p style="color:var(--text-secondary);font-size:12px">No data</p></div>';
       }
 
-      var html = '<div class="summary-card">' +
-        '<h4>' + title + '</h4>' +
-        '<table class="summary-table">' +
+      var html = '<div class="estimator-card">' +
+        '<h3>' + title + '</h3>' +
+        '<div class="summary-breakdown"><table>' +
           '<thead><tr><th>Item</th><th>Days</th><th>%</th></tr></thead>' +
           '<tbody>';
 
@@ -326,32 +315,25 @@
         }
       }
 
-      html += '</tbody></table></div>';
+      html += '</tbody></table></div></div>';
       return html;
     }
 
-    var html = '<div class="settings-section settings-section-wide">' +
-      '<h3>Estimation Summary</h3>' +
-      '<div class="summary-grid">' +
-        '<div class="summary-card total-card">' +
-          '<h4>Total Effort</h4>' +
-          '<div class="total-value">' + summary.totalDays.toFixed(2) + ' days</div>' +
-          '<div class="total-hours">(' + (summary.totalDays * 8).toFixed(0) + ' hours)</div>' +
-        '</div>' +
-        renderBreakdownTable('By Cloud', summary.byCloud) +
-        renderBreakdownTable('By Powered Stage', summary.byStage) +
-        renderBreakdownTable('By Role', summary.byRole) +
-        renderBreakdownTable('By Component Type', summary.byComponent) +
-        renderBreakdownTable('By Activity', summary.byActivity) +
-      '</div>' +
-    '</div>';
+    var html = '<div class="summary-total">' +
+      '<div class="summary-total-label">Total Effort</div>' +
+      '<div class="summary-total-value">' + summary.totalDays.toFixed(1) + '</div>' +
+      '<div class="summary-total-label">' + (summary.totalDays * 8).toFixed(0) + ' hours</div>' +
+    '</div>' +
+    renderBreakdownTable('By Cloud', summary.byCloud) +
+    renderBreakdownTable('By Powered Stage', summary.byStage) +
+    renderBreakdownTable('By Role', summary.byRole) +
+    renderBreakdownTable('By Component Type', summary.byComponent) +
+    renderBreakdownTable('By Activity', summary.byActivity);
 
-    container.innerHTML = html;
+    return html;
   }
 
   function renderPushActions(state) {
-    var container = document.getElementById('estimator-push-actions');
-
     var estimator = state.project.estimator;
     var hasData = estimator.mode === 'detailed'
       ? estimator.requirements.length > 0
@@ -359,21 +341,23 @@
           return cloud.low > 0 || cloud.medium > 0 || cloud.high > 0;
         });
 
-    var html = '<div class="settings-section">' +
-      '<h3>Push Estimates to Plan</h3>' +
-      '<p>Convert your estimates into tasks in the Plan view. This will create tasks based on your requirements or component counts.</p>';
+    var html = '<div class="push-section">';
 
     if (hasData) {
-      html += '<button id="push-to-plan-btn" class="primary-button">Push to Plan</button>';
+      html += '<p>Convert your estimates into tasks in the Plan view.</p>' +
+        '<button id="push-to-plan-btn" class="primary-button">Push to Plan</button>';
     } else {
-      html += '<p><em>Add requirements or component counts first.</em></p>';
+      html += '<p style="font-style:italic">Add requirements or component counts first.</p>';
     }
 
     html += '</div>';
-    container.innerHTML = html;
+    return html;
+  }
 
-    if (hasData) {
-      document.getElementById('push-to-plan-btn').addEventListener('click', function () {
+  function wirePushActions(state) {
+    var btn = document.getElementById('push-to-plan-btn');
+    if (btn) {
+      btn.addEventListener('click', function () {
         pushToPlan(state);
       });
     }
@@ -382,7 +366,6 @@
   function pushToPlan(state) {
     var estimator = state.project.estimator;
 
-    // Solution type to owner mapping
     var OWNER_MAP = {
       'OOTB': 'Solution Architect',
       'Configuration': 'Solution Architect',
@@ -394,7 +377,6 @@
     var tasksToCreate = [];
 
     if (estimator.mode === 'detailed') {
-      // Detailed mode: one task per requirement
       estimator.requirements.forEach(function (req) {
         if (!req.name || !req.solutionType || !req.complexity) return;
 
@@ -419,7 +401,6 @@
         });
       });
     } else {
-      // High-level mode: tasks by cloud and complexity
       var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
       var complexities = ['Low', 'Medium', 'High'];
 
@@ -452,14 +433,11 @@
       return;
     }
 
-    // Confirm before creating tasks
     var confirmed = confirm('This will create ' + tasksToCreate.length + ' task(s) in the Plan view. Continue?');
     if (!confirmed) return;
 
-    // Create tasks
     state.project.addTasks(tasksToCreate, 'Estimator');
 
-    // Switch to Plan view
     var planTab = document.querySelector('.view-tab[data-view="plan"]');
     if (planTab) planTab.click();
 
@@ -467,12 +445,32 @@
   }
 
   function renderEstimator(state) {
-    renderModeToggle(state);
-    renderParams(state);
-    renderDetailedGrid(state);
-    renderHighLevelGrid(state);
-    renderSummary(state);
-    renderPushActions(state);
+    var container = document.getElementById('estimator-view');
+
+    var html = '<div class="estimator-container">' +
+      '<div class="estimator-header">' +
+        renderHeader(state) +
+      '</div>' +
+      '<div class="estimator-body">' +
+        '<div class="estimator-main">' +
+          (state.project.estimator.mode === 'detailed' ? renderDetailedGrid(state) : renderHighLevelGrid(state)) +
+        '</div>' +
+        '<div class="estimator-sidebar">' +
+          renderSummary(state) +
+          renderPushActions(state) +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    container.innerHTML = html;
+
+    wireHeader(state);
+    if (state.project.estimator.mode === 'detailed') {
+      wireDetailedGrid(state);
+    } else {
+      wireHighLevelGrid(state);
+    }
+    wirePushActions(state);
   }
 
   PP.renderEstimator = renderEstimator;

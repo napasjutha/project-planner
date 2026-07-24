@@ -45,13 +45,13 @@
     }
   };
 
-  // Powered Stages distribution percentages
+  // Powered Stages distribution percentages (from Excel)
   var POWERED_STAGES = {
-    Vision: 0.10,
-    Validate: 0.15,
-    Construct: 0.50,
-    Deploy: 0.15,
-    Evolve: 0.10
+    Vision: 0.12,
+    Validate: 0.34,
+    Construct: 0.36,
+    Deploy: 0.10,
+    Evolve: 0.08
   };
 
   // Role allocation by activity
@@ -297,9 +297,38 @@
     }
 
     // Apply overhead percentages multiplicatively (sequential) to match Excel calculation
-    summary.totalDays = summary.totalDays * (1 + estimator.params.contingencyPct);
-    summary.totalDays = summary.totalDays * (1 + estimator.params.projectManagementPct);
-    summary.totalDays = summary.totalDays * (1 + estimator.params.changeManagementPct);
+    var overheadMultiplier = (1 + estimator.params.contingencyPct) *
+                              (1 + estimator.params.projectManagementPct) *
+                              (1 + estimator.params.changeManagementPct);
+
+    summary.totalDays = summary.totalDays * overheadMultiplier;
+
+    // Apply same overhead multiplier to all breakdowns
+    for (var key in summary.byStage) {
+      if (summary.byStage.hasOwnProperty(key)) {
+        summary.byStage[key] = summary.byStage[key] * overheadMultiplier;
+      }
+    }
+    for (var key in summary.byRole) {
+      if (summary.byRole.hasOwnProperty(key)) {
+        summary.byRole[key] = summary.byRole[key] * overheadMultiplier;
+      }
+    }
+    for (var key in summary.byActivity) {
+      if (summary.byActivity.hasOwnProperty(key)) {
+        summary.byActivity[key] = summary.byActivity[key] * overheadMultiplier;
+      }
+    }
+    for (var key in summary.byCloud) {
+      if (summary.byCloud.hasOwnProperty(key)) {
+        summary.byCloud[key] = summary.byCloud[key] * overheadMultiplier;
+      }
+    }
+    for (var key in summary.byComponent) {
+      if (summary.byComponent.hasOwnProperty(key)) {
+        summary.byComponent[key] = summary.byComponent[key] * overheadMultiplier;
+      }
+    }
 
     return summary;
   }

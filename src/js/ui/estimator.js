@@ -319,16 +319,21 @@
       return html;
     }
 
-    var html = '<div class="summary-total">' +
-      '<div class="summary-total-label">Total Effort</div>' +
-      '<div class="summary-total-value">' + summary.totalDays.toFixed(1) + '</div>' +
-      '<div class="summary-total-label">' + (summary.totalDays * 8).toFixed(0) + ' hours</div>' +
-    '</div>' +
-    renderBreakdownTable('By Cloud', summary.byCloud) +
-    renderBreakdownTable('By Powered Stage', summary.byStage) +
-    renderBreakdownTable('By Role', summary.byRole) +
-    renderBreakdownTable('By Component Type', summary.byComponent) +
-    renderBreakdownTable('By Activity', summary.byActivity);
+    var html = '<div class="estimator-summary-section">' +
+      '<h3 style="margin:0 0 16px 0;font-size:16px;font-weight:600">Estimation Summary</h3>' +
+      '<div class="estimator-summary-grid">' +
+        '<div class="summary-total">' +
+          '<div class="summary-total-label">Total Effort</div>' +
+          '<div class="summary-total-value">' + summary.totalDays.toFixed(1) + '</div>' +
+          '<div class="summary-total-label">' + (summary.totalDays * 8).toFixed(0) + ' hours</div>' +
+        '</div>' +
+        renderBreakdownTable('By Cloud', summary.byCloud) +
+        renderBreakdownTable('By Powered Stage', summary.byStage) +
+        renderBreakdownTable('By Role', summary.byRole) +
+        renderBreakdownTable('By Component Type', summary.byComponent) +
+        renderBreakdownTable('By Activity', summary.byActivity) +
+      '</div>' +
+    '</div>';
 
     return html;
   }
@@ -341,16 +346,13 @@
           return cloud.low > 0 || cloud.medium > 0 || cloud.high > 0;
         });
 
-    var html = '<div class="push-section">';
+    if (!hasData) return '';
 
-    if (hasData) {
-      html += '<p>Convert your estimates into tasks in the Plan view.</p>' +
-        '<button id="push-to-plan-btn" class="primary-button">Push to Plan</button>';
-    } else {
-      html += '<p style="font-style:italic">Add requirements or component counts first.</p>';
-    }
+    var html = '<div style="margin-top:24px;padding:20px;background:var(--surface-alt);border-radius:var(--radius-lg);border:1px solid var(--border)">' +
+      '<p style="margin:0 0 12px 0;font-size:13px;color:var(--text-secondary)">Convert your estimates into tasks in the Plan view.</p>' +
+      '<button id="push-to-plan-btn" class="primary-button">Push to Plan</button>' +
+    '</div>';
 
-    html += '</div>';
     return html;
   }
 

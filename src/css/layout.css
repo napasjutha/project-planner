@@ -67,24 +67,18 @@
   font-size: 13px;
 }
 .estimator-body {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-.estimator-main {
   flex: 1;
   overflow: auto;
   padding: 24px;
 }
-.estimator-sidebar {
-  width: 380px;
-  border-left: 1px solid var(--border);
-  background: var(--surface-alt);
-  overflow: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.estimator-summary-section {
+  margin-bottom: 24px;
+}
+.estimator-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
 }
 .estimator-card {
   background: var(--surface);
@@ -157,19 +151,18 @@
 }
 .summary-total {
   text-align: center;
-  padding: 24px;
+  padding: 20px;
   background: linear-gradient(135deg, var(--kpmg-blue) 0%, var(--kpmg-blue-mid) 100%);
   color: white;
   border-radius: var(--radius-lg);
-  margin-bottom: 20px;
 }
 .summary-total-value {
-  font-size: 42px;
+  font-size: 36px;
   font-weight: 700;
-  margin: 8px 0;
+  margin: 4px 0;
 }
 .summary-total-label {
-  font-size: 13px;
+  font-size: 12px;
   opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.05em;

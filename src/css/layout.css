@@ -150,7 +150,10 @@
   border-color: var(--status-delayed);
 }
 .summary-total {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 20px;
   background: linear-gradient(135deg, var(--kpmg-blue) 0%, var(--kpmg-blue-mid) 100%);
   color: white;

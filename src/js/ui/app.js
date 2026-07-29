@@ -281,7 +281,7 @@
         window.alert('That file does not look like a ProjectPlanner project (missing meta/tasks).');
         return;
       }
-      state.project = new PP.Project(parsed);
+      state.project = PP.Project.fromJSON(parsed);
       state.dirty = false;
       state.scurveOverlaySnapshotId = null;
       state.snapshotCompareA = null;
@@ -431,7 +431,7 @@
 
   function boot() {
     var embedded = JSON.parse(document.getElementById('project-data').textContent);
-    var project = new PP.Project(embedded);
+    var project = PP.Project.fromJSON(embedded);
 
     var stored = localStorage.getItem(storageKey(project.meta.id));
     if (stored) {
@@ -441,7 +441,7 @@
           'Unsaved local changes found (local revision ' + storedData.meta.revision +
           ' vs opened file revision ' + project.meta.revision + '). Restore them?'
         );
-        if (restore) project = new PP.Project(storedData);
+        if (restore) project = PP.Project.fromJSON(storedData);
       }
     }
 

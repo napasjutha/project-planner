@@ -647,7 +647,7 @@
         '<th style="width:100px">Low</th>' +
         '<th style="width:100px">Medium</th>' +
         '<th style="width:100px">High</th>' +
-        '<th style="width:100px">Total</th>' +
+        '<th style="width:140px">Total Effort (days)</th>' +
         '<th style="width:60px"></th>' +
       '</tr></thead>' +
       '<tbody>';
@@ -660,14 +660,19 @@
 
     features.forEach(function (feature) {
       var counts = estimator.highlevel.byFeature[feature];
-      var total = counts.low + counts.medium + counts.high;
+
+      // Calculate effort for each complexity level
+      var lowEffort = counts.low * PP.calculateRequirement({ feature: feature, solutionTypes: ['Configuration'], complexity: 'Low' }, estimator.params).totalDays;
+      var mediumEffort = counts.medium * PP.calculateRequirement({ feature: feature, solutionTypes: ['Configuration'], complexity: 'Medium' }, estimator.params).totalDays;
+      var highEffort = counts.high * PP.calculateRequirement({ feature: feature, solutionTypes: ['Configuration'], complexity: 'High' }, estimator.params).totalDays;
+      var totalEffort = lowEffort + mediumEffort + highEffort;
 
       html += '<tr data-feature="' + escapeHtml(feature) + '">' +
         '<td>' + escapeHtml(feature) + '</td>' +
         '<td><input type="number" class="hl-input" data-feature="' + escapeHtml(feature) + '" data-complexity="low" value="' + counts.low + '" min="0"></td>' +
         '<td><input type="number" class="hl-input" data-feature="' + escapeHtml(feature) + '" data-complexity="medium" value="' + counts.medium + '" min="0"></td>' +
         '<td><input type="number" class="hl-input" data-feature="' + escapeHtml(feature) + '" data-complexity="high" value="' + counts.high + '" min="0"></td>' +
-        '<td style="text-align:right">' + total + '</td>' +
+        '<td style="text-align:right">' + totalEffort.toFixed(1) + '</td>' +
         '<td><button class="hl-delete-feature" data-feature="' + escapeHtml(feature) + '">&times;</button></td>' +
       '</tr>';
     });
@@ -694,7 +699,7 @@
         '<th style="width:100px">Low</th>' +
         '<th style="width:100px">Medium</th>' +
         '<th style="width:100px">High</th>' +
-        '<th style="width:100px">Total</th>' +
+        '<th style="width:140px">Total Effort (days)</th>' +
       '</tr></thead>' +
       '<tbody>';
 
@@ -702,14 +707,19 @@
 
     priorities.forEach(function (priority) {
       var counts = estimator.highlevel.byMoscow[priority];
-      var total = counts.low + counts.medium + counts.high;
+
+      // Calculate effort for each complexity level
+      var lowEffort = counts.low * PP.calculateRequirement({ moscow: priority, solutionTypes: ['Configuration'], complexity: 'Low' }, estimator.params).totalDays;
+      var mediumEffort = counts.medium * PP.calculateRequirement({ moscow: priority, solutionTypes: ['Configuration'], complexity: 'Medium' }, estimator.params).totalDays;
+      var highEffort = counts.high * PP.calculateRequirement({ moscow: priority, solutionTypes: ['Configuration'], complexity: 'High' }, estimator.params).totalDays;
+      var totalEffort = lowEffort + mediumEffort + highEffort;
 
       html += '<tr>' +
         '<td>' + priority + '</td>' +
         '<td><input type="number" class="hl-input-moscow" data-moscow="' + priority + '" data-complexity="low" value="' + counts.low + '" min="0"></td>' +
         '<td><input type="number" class="hl-input-moscow" data-moscow="' + priority + '" data-complexity="medium" value="' + counts.medium + '" min="0"></td>' +
         '<td><input type="number" class="hl-input-moscow" data-moscow="' + priority + '" data-complexity="high" value="' + counts.high + '" min="0"></td>' +
-        '<td style="text-align:right">' + total + '</td>' +
+        '<td style="text-align:right">' + totalEffort.toFixed(1) + '</td>' +
       '</tr>';
     });
 

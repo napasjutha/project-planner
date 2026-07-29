@@ -15,7 +15,7 @@
 
   var paramsExpanded = false;
   var summaryView = 'table'; // 'table' or 'chart'
-  var chartCategory = 'byCloud'; // 'byCloud', 'byStage', 'byRole', 'byComponent', 'byActivity'
+  var chartCategory = 'byFeature'; // 'byFeature', 'byStage', 'byRole', 'bySolutionType', 'byActivity'
   var summaryValueMode = 'days'; // 'days' or 'hours'
   var highlevelTab = 'feature'; // 'feature' or 'moscow'
 
@@ -816,10 +816,10 @@
     function renderChartView() {
       var html = '<div class="estimator-card" style="grid-column: 1 / -1">' +
         '<div class="chart-legend">' +
-          '<button class="legend-btn ' + (chartCategory === 'byCloud' ? 'active' : '') + '" data-category="byCloud">Cloud</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'byFeature' ? 'active' : '') + '" data-category="byFeature">Feature</button>' +
           '<button class="legend-btn ' + (chartCategory === 'byStage' ? 'active' : '') + '" data-category="byStage">Powered Stage</button>' +
           '<button class="legend-btn ' + (chartCategory === 'byRole' ? 'active' : '') + '" data-category="byRole">Role</button>' +
-          '<button class="legend-btn ' + (chartCategory === 'byComponent' ? 'active' : '') + '" data-category="byComponent">Solution Type</button>' +
+          '<button class="legend-btn ' + (chartCategory === 'bySolutionType' ? 'active' : '') + '" data-category="bySolutionType">Solution Type</button>' +
           '<button class="legend-btn ' + (chartCategory === 'byActivity' ? 'active' : '') + '" data-category="byActivity">Activity</button>' +
         '</div>' +
         '<div class="chart-container">' +
@@ -844,10 +844,10 @@
           '<div class="summary-total-label">' + (summary.totalDays * 8).toFixed(0) + ' hours</div>' +
         '</div>' +
         (summaryView === 'table'
-          ? renderBreakdownTable('By Cloud', summary.byCloud) +
+          ? renderBreakdownTable('By Feature', summary.byFeature) +
             renderBreakdownTable('By Powered Stage', summary.byStage) +
             renderBreakdownTable('By Role', summary.byRole) +
-            renderBreakdownTable('By Solution Type', summary.byComponent) +
+            renderBreakdownTable('By Solution Type', summary.bySolutionType) +
             renderBreakdownTable('By Activity', summary.byActivity)
           : renderChartView()
         ) +

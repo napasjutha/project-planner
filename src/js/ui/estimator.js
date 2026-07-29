@@ -7,6 +7,12 @@
     });
   }
 
+  var POWERED_STAGE_TOLERANCE = 0.01;
+
+  function sumPoweredStages(ps) {
+    return ps.Vision + ps.Validate + ps.Construct + ps.Deploy + ps.Evolve;
+  }
+
   var paramsExpanded = false;
   var summaryView = 'table'; // 'table' or 'chart'
   var chartCategory = 'byCloud'; // 'byCloud', 'byStage', 'byRole', 'byComponent', 'byActivity'
@@ -64,10 +70,8 @@
       '</div></div>';
 
     // Powered Stages section
-    var psSum = params.poweredStages.Vision + params.poweredStages.Validate +
-                params.poweredStages.Construct + params.poweredStages.Deploy +
-                params.poweredStages.Evolve;
-    var psValid = Math.abs(psSum - 100) < 0.01;
+    var psSum = sumPoweredStages(params.poweredStages);
+    var psValid = Math.abs(psSum - 100) < POWERED_STAGE_TOLERANCE;
 
     html += '<div class="param-section">' +
       '<h4>Powered Stage Distribution</h4>' +
@@ -221,11 +225,9 @@
         params.poweredStages[stage] = value;
 
         // Validate sum
-        var sum = params.poweredStages.Vision + params.poweredStages.Validate +
-                  params.poweredStages.Construct + params.poweredStages.Deploy +
-                  params.poweredStages.Evolve;
+        var sum = sumPoweredStages(params.poweredStages);
 
-        if (Math.abs(sum - 100) < 0.01) {
+        if (Math.abs(sum - 100) < POWERED_STAGE_TOLERANCE) {
           // Valid - recalc
           state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
         }

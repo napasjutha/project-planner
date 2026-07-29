@@ -167,3 +167,73 @@ test('ROLE_ALLOCATION distributions sum to 1.0', () => {
     assert.strictEqual(sum, 1.0, `${activity} role allocation should sum to 100%`);
   }
 });
+
+test('Uses configurable powered stages from params', function () {
+  var estimator = {
+    mode: 'detailed',
+    requirements: [
+      {
+        solutionTypes: ['Configuration'],
+        complexity: 'Medium',
+        feature: 'Test Feature'
+      }
+    ],
+    params: {
+      poweredStages: { Vision: 20, Validate: 30, Construct: 30, Deploy: 15, Evolve: 5 },
+      contingencyPct: 0.1,
+      changeManagementPct: 0.2,
+      projectManagementPct: 0.2,
+      integrationsCount: 0,
+      migrationsCount: 0
+    }
+  };
+
+  var summary = engine.recalcSummary(estimator);
+  var totalBase = summary.totalDays / 1.584; // Remove overheads
+
+  // Verify custom distribution applied (20%, 30%, 30%, 15%, 5%)
+  assert.ok(Math.abs((summary.byStage.Vision / 1.584) / totalBase - 0.20) < 0.01);
+  assert.ok(Math.abs((summary.byStage.Validate / 1.584) / totalBase - 0.30) < 0.01);
+  assert.ok(Math.abs((summary.byStage.Construct / 1.584) / totalBase - 0.30) < 0.01);
+});
+
+test('Uses primary solution type (first in array) for calculation', function () {
+  var req = {
+    solutionTypes: ['Configuration', 'Customization'],
+    complexity: 'Medium',
+    feature: 'Test Feature'
+  };
+  var params = {
+    poweredStages: { Vision: 12, Validate: 34, Construct: 36, Deploy: 10, Evolve: 8 }
+  };
+
+  var calc = engine.calculateRequirement(req, params);
+
+  // Should use Configuration base hours (57 * 1.21 / 8 = 8.62125), not Customization
+  assert.ok(Math.abs(calc.totalDays - 8.62125) < 0.01);
+});
+
+test('Summary includes byFeature instead of byCloud', function () {
+  var estimator = {
+    mode: 'detailed',
+    requirements: [
+      { solutionTypes: ['Configuration'], complexity: 'Medium', feature: 'Field Service' },
+      { solutionTypes: ['OOTB'], complexity: 'Low', feature: 'Reports' }
+    ],
+    params: {
+      poweredStages: { Vision: 12, Validate: 34, Construct: 36, Deploy: 10, Evolve: 8 },
+      contingencyPct: 0,
+      changeManagementPct: 0,
+      projectManagementPct: 0,
+      integrationsCount: 0,
+      migrationsCount: 0
+    }
+  };
+
+  var summary = engine.recalcSummary(estimator);
+
+  assert.ok(summary.byFeature);
+  assert.ok(summary.byFeature['Field Service'] > 0);
+  assert.ok(summary.byFeature['Reports'] > 0);
+  assert.ok(!summary.byCloud); // Should not exist
+});

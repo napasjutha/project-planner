@@ -70,14 +70,18 @@
   /**
    * Calculate effort for a single requirement
    * @param {Object} req - Requirement object with solutionType and complexity
+   * @param {Object} params - Optional params object with poweredStages override
    * @returns {Object} - { totalDays, byActivity, byStage, byRole }
    */
-  function calculateRequirement(req) {
-    if (!req.solutionType || !req.complexity) {
+  function calculateRequirement(req, params) {
+    // Use primary solution type (first in array) or fallback to solutionType
+    var primaryType = req.solutionTypes ? req.solutionTypes[0] : req.solutionType;
+
+    if (!primaryType || !req.complexity) {
       return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
     }
 
-    var baseHours = BASE_HOURS[req.solutionType];
+    var baseHours = BASE_HOURS[primaryType];
     if (!baseHours) {
       return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
     }
@@ -106,12 +110,17 @@
       byActivity[activity] = (complexityHours[activity] * multiplier) / 8;
     }
 
-    // Distribute across Powered Stages
+    // Distribute across Powered Stages using configurable percentages
     var byStage = {};
+    var stageDistribution = params && params.poweredStages ? params.poweredStages : POWERED_STAGES;
+    var isConfigurable = params && params.poweredStages; // True if using configurable percentages (0-100 scale)
     var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
     for (var i = 0; i < stages.length; i++) {
       var stage = stages[i];
-      byStage[stage] = totalDays * POWERED_STAGES[stage];
+      var percentage = stageDistribution[stage] || POWERED_STAGES[stage];
+      // Configurable params use 0-100 scale, default POWERED_STAGES use 0-1 scale
+      var multiplier = isConfigurable ? (percentage / 100) : percentage;
+      byStage[stage] = totalDays * multiplier;
     }
 
     // Allocate to roles from Powered Stages
@@ -182,6 +191,58 @@
   }
 
   /**
+   * Calculate high-level estimate from feature counts
+   * @param {Object} counts - { low: N, medium: N, high: N }
+   * @param {Object} params - Optional params object with poweredStages override
+   * @returns {Object} - { totalDays, byActivity, byStage, byRole }
+   */
+  function calculateHighLevelFeature(counts, params) {
+    if (!counts) {
+      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
+    }
+
+    var result = { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
+
+    // Use Configuration as default solution type for high-level
+    var complexities = ['Low', 'Medium', 'High'];
+    for (var i = 0; i < complexities.length; i++) {
+      var complexity = complexities[i];
+      var count = counts[complexity.toLowerCase()] || 0;
+      if (count === 0) continue;
+
+      var calc = calculateRequirement(
+        { solutionTypes: ['Configuration'], complexity: complexity, feature: 'HighLevel' },
+        params
+      );
+
+      result.totalDays += calc.totalDays * count;
+
+      // Merge byActivity
+      for (var activity in calc.byActivity) {
+        if (calc.byActivity.hasOwnProperty(activity)) {
+          result.byActivity[activity] = (result.byActivity[activity] || 0) + calc.byActivity[activity] * count;
+        }
+      }
+
+      // Merge byStage
+      for (var stage in calc.byStage) {
+        if (calc.byStage.hasOwnProperty(stage)) {
+          result.byStage[stage] = (result.byStage[stage] || 0) + calc.byStage[stage] * count;
+        }
+      }
+
+      // Merge byRole
+      for (var role in calc.byRole) {
+        if (calc.byRole.hasOwnProperty(role)) {
+          result.byRole[role] = (result.byRole[role] || 0) + calc.byRole[role] * count;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Recalculate summary for entire estimator
    * @param {Object} estimator - Estimator data
    * @returns {Object} - Updated summary
@@ -189,10 +250,10 @@
   function recalcSummary(estimator) {
     var summary = {
       totalDays: 0,
-      byCloud: {},
+      byFeature: {},
       byStage: {},
       byRole: {},
-      byComponent: {},
+      bySolutionType: {},
       byActivity: {}
     };
 
@@ -200,13 +261,13 @@
       // Detailed mode: iterate through requirements
       for (var i = 0; i < estimator.requirements.length; i++) {
         var req = estimator.requirements[i];
-        var calc = calculateRequirement(req);
+        var calc = calculateRequirement(req, estimator.params);
 
         summary.totalDays += calc.totalDays;
 
-        // By Cloud
-        if (req.cloud) {
-          summary.byCloud[req.cloud] = (summary.byCloud[req.cloud] || 0) + calc.totalDays;
+        // By Feature
+        if (req.feature) {
+          summary.byFeature[req.feature] = (summary.byFeature[req.feature] || 0) + calc.totalDays;
         }
 
         // By Stage
@@ -223,9 +284,10 @@
           }
         }
 
-        // By Component (Solution Type)
-        if (req.solutionType) {
-          summary.byComponent[req.solutionType] = (summary.byComponent[req.solutionType] || 0) + calc.totalDays;
+        // By Solution Type (primary type from array)
+        var primaryType = req.solutionTypes ? req.solutionTypes[0] : req.solutionType;
+        if (primaryType) {
+          summary.bySolutionType[primaryType] = (summary.bySolutionType[primaryType] || 0) + calc.totalDays;
         }
 
         // By Activity
@@ -236,36 +298,34 @@
         }
       }
     } else {
-      // High-level mode: iterate through clouds
-      var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
-      for (var i = 0; i < clouds.length; i++) {
-        var cloud = clouds[i];
-        var calc = calculateHighLevelCloud(estimator.highlevel, cloud);
+      // High-level mode: iterate through features
+      if (estimator.highlevel && estimator.highlevel.byFeature) {
+        for (var feature in estimator.highlevel.byFeature) {
+          if (estimator.highlevel.byFeature.hasOwnProperty(feature)) {
+            var counts = estimator.highlevel.byFeature[feature];
+            var calc = calculateHighLevelFeature(counts, estimator.params);
 
-        summary.totalDays += calc.totalDays;
-        summary.byCloud[cloud] = calc.totalDays;
+            summary.totalDays += calc.totalDays;
+            summary.byFeature[feature] = calc.totalDays;
 
-        // All high-level clouds use Configuration solution type
-        summary.byComponent.Configuration = (summary.byComponent.Configuration || 0) + calc.totalDays;
+            // Merge byStage
+            for (var stage in calc.byStage) {
+              if (calc.byStage.hasOwnProperty(stage)) {
+                summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
+              }
+            }
+            for (var role in calc.byRole) {
+              if (calc.byRole.hasOwnProperty(role)) {
+                summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
+              }
+            }
+            for (var activity in calc.byActivity) {
+              if (calc.byActivity.hasOwnProperty(activity)) {
+                summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
+              }
+            }
 
-        // Merge byStage
-        for (var stage in calc.byStage) {
-          if (calc.byStage.hasOwnProperty(stage)) {
-            summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
-          }
-        }
-
-        // Merge byRole
-        for (var role in calc.byRole) {
-          if (calc.byRole.hasOwnProperty(role)) {
-            summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
-          }
-        }
-
-        // Merge byActivity
-        for (var activity in calc.byActivity) {
-          if (calc.byActivity.hasOwnProperty(activity)) {
-            summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
+            summary.bySolutionType.Configuration = (summary.bySolutionType.Configuration || 0) + calc.totalDays;
           }
         }
       }
@@ -273,12 +333,15 @@
 
     // Add integrations
     if (estimator.params.integrationsCount > 0) {
-      var integrationCalc = calculateRequirement({ solutionType: 'Integration', complexity: 'Medium' });
+      var integrationCalc = calculateRequirement(
+        { solutionTypes: ['Integration'], complexity: 'Medium', feature: 'Integration' },
+        estimator.params
+      );
       var count = estimator.params.integrationsCount;
 
       summary.totalDays += integrationCalc.totalDays * count;
-      summary.byCloud.Integration = (summary.byCloud.Integration || 0) + integrationCalc.totalDays * count;
-      summary.byComponent.Integration = (summary.byComponent.Integration || 0) + integrationCalc.totalDays * count;
+      summary.byFeature.Integration = (summary.byFeature.Integration || 0) + integrationCalc.totalDays * count;
+      summary.bySolutionType.Integration = (summary.bySolutionType.Integration || 0) + integrationCalc.totalDays * count;
 
       for (var activity in integrationCalc.byActivity) {
         if (integrationCalc.byActivity.hasOwnProperty(activity)) {
@@ -299,12 +362,15 @@
 
     // Add migrations
     if (estimator.params.migrationsCount > 0) {
-      var migrationCalc = calculateRequirement({ solutionType: 'Migration', complexity: 'Medium' });
+      var migrationCalc = calculateRequirement(
+        { solutionTypes: ['Migration'], complexity: 'Medium', feature: 'Migration' },
+        estimator.params
+      );
       var count = estimator.params.migrationsCount;
 
       summary.totalDays += migrationCalc.totalDays * count;
-      summary.byCloud.Migration = (summary.byCloud.Migration || 0) + migrationCalc.totalDays * count;
-      summary.byComponent.Migration = (summary.byComponent.Migration || 0) + migrationCalc.totalDays * count;
+      summary.byFeature.Migration = (summary.byFeature.Migration || 0) + migrationCalc.totalDays * count;
+      summary.bySolutionType.Migration = (summary.bySolutionType.Migration || 0) + migrationCalc.totalDays * count;
 
       for (var activity in migrationCalc.byActivity) {
         if (migrationCalc.byActivity.hasOwnProperty(activity)) {
@@ -341,14 +407,14 @@
         summary.byRole[key] = summary.byRole[key] * overheadMultiplier;
       }
     }
-    for (var key in summary.byComponent) {
-      if (summary.byComponent.hasOwnProperty(key)) {
-        summary.byComponent[key] = summary.byComponent[key] * overheadMultiplier;
+    for (var key in summary.bySolutionType) {
+      if (summary.bySolutionType.hasOwnProperty(key)) {
+        summary.bySolutionType[key] = summary.bySolutionType[key] * overheadMultiplier;
       }
     }
 
-    // byCloud and byActivity remain as BASE values (no overheads applied)
-    // This matches Excel where activities and cloud totals are shown before overheads
+    // byFeature and byActivity remain as BASE values (no overheads applied)
+    // This matches Excel where activities and feature totals are shown before overheads
 
     return summary;
   }
@@ -361,6 +427,7 @@
     generateRequirementId: generateRequirementId,
     calculateRequirement: calculateRequirement,
     calculateHighLevelCloud: calculateHighLevelCloud,
+    calculateHighLevelFeature: calculateHighLevelFeature,
     recalcSummary: recalcSummary
   };
 });

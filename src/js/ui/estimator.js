@@ -317,10 +317,40 @@
     reader.readAsText(file, 'UTF-8');
   }
 
+  function renderSolutionTypeModal(req, state) {
+    var types = ['OOTB', 'Configuration', 'Customization', 'Integration', 'Migration'];
+    var selected = req.solutionTypes || [];
+
+    var html = '<div class="modal-overlay" id="solution-type-modal">' +
+      '<div class="modal-content">' +
+        '<h3>Select Solution Types</h3>' +
+        '<p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">First selected type is primary (used for calculations)</p>' +
+        '<div class="solution-type-checkboxes">';
+
+    types.forEach(function (type) {
+      var checked = selected.includes(type);
+      var isPrimary = selected[0] === type;
+      html += '<label class="solution-type-option' + (isPrimary ? ' primary' : '') + '">' +
+        '<input type="checkbox" value="' + type + '"' + (checked ? ' checked' : '') + '>' +
+        '<span>' + type + (isPrimary ? ' [Primary]' : '') + '</span>' +
+      '</label>';
+    });
+
+    html += '</div>' +
+      '<div class="modal-actions">' +
+        '<button id="solution-type-save">Save</button>' +
+        '<button id="solution-type-cancel">Cancel</button>' +
+      '</div>' +
+    '</div></div>';
+
+    return html;
+  }
+
   function renderDetailedGrid(state) {
     if (state.project.estimator.mode !== 'detailed') return '';
 
     var requirements = state.project.estimator.requirements;
+    var estimator = state.project.estimator;
 
     var html = '<div class="estimator-card">' +
       '<h3>Requirements</h3>' +
@@ -329,9 +359,8 @@
         '<thead><tr>' +
           '<th style="width:40px">#</th>' +
           '<th>Requirement</th>' +
-          '<th style="width:120px">Cloud</th>' +
-          '<th>Feature</th>' +
-          '<th style="width:140px">Solution Type</th>' +
+          '<th style="width:120px">Feature</th>' +
+          '<th style="width:160px">Solution Type</th>' +
           '<th style="width:120px">Complexity</th>' +
           '<th style="width:100px">MoSCoW</th>' +
           '<th style="width:120px">Release Phase</th>' +
@@ -341,34 +370,45 @@
         '<tbody id="requirements-tbody">';
 
     requirements.forEach(function (req, index) {
-      var calc = PP.calculateRequirement(req);
+      var calc = PP.calculateRequirement(req, estimator.params);
+
       html += '<tr data-req-id="' + req.id + '">' +
         '<td>' + (index + 1) + '</td>' +
         '<td><input type="text" class="req-name" value="' + escapeHtml(req.name || '') + '" placeholder="Requirement name"></td>' +
-        '<td><select class="req-cloud">' +
-          '<option value="">-</option>' +
-          '<option value="Sales"' + (req.cloud === 'Sales' ? ' selected' : '') + '>Sales</option>' +
-          '<option value="Service"' + (req.cloud === 'Service' ? ' selected' : '') + '>Service</option>' +
-          '<option value="Marketing"' + (req.cloud === 'Marketing' ? ' selected' : '') + '>Marketing</option>' +
-          '<option value="Community"' + (req.cloud === 'Community' ? ' selected' : '') + '>Community</option>' +
-          '<option value="Experience"' + (req.cloud === 'Experience' ? ' selected' : '') + '>Experience</option>' +
-          '<option value="CPQ"' + (req.cloud === 'CPQ' ? ' selected' : '') + '>CPQ</option>' +
-        '</select></td>' +
-        '<td><input type="text" class="req-feature" value="' + escapeHtml(req.feature || '') + '" placeholder="Feature"></td>' +
-        '<td><select class="req-solutionType">' +
-          '<option value="">-</option>' +
-          '<option value="OOTB"' + (req.solutionType === 'OOTB' ? ' selected' : '') + '>OOTB</option>' +
-          '<option value="Configuration"' + (req.solutionType === 'Configuration' ? ' selected' : '') + '>Configuration</option>' +
-          '<option value="Customization"' + (req.solutionType === 'Customization' ? ' selected' : '') + '>Customization</option>' +
-          '<option value="Integration"' + (req.solutionType === 'Integration' ? ' selected' : '') + '>Integration</option>' +
-          '<option value="Migration"' + (req.solutionType === 'Migration' ? ' selected' : '') + '>Migration</option>' +
-        '</select></td>' +
+
+        // Feature dropdown (from params)
+        '<td><select class="req-feature">' +
+          '<option value="">-</option>';
+
+      estimator.params.features.forEach(function (feature) {
+        html += '<option value="' + escapeHtml(feature) + '"' + (req.feature === feature ? ' selected' : '') + '>' + escapeHtml(feature) + '</option>';
+      });
+
+      html += '</select></td>' +
+
+        // Solution Type multi-select cell
+        '<td><div class="solution-types-cell" data-req-id="' + req.id + '">';
+
+      if (req.solutionTypes && req.solutionTypes.length > 0) {
+        html += '<div class="solution-type-primary">' + escapeHtml(req.solutionTypes[0]) + '</div>';
+        if (req.solutionTypes.length > 1) {
+          html += '<div class="solution-type-tags">+' + req.solutionTypes.slice(1).map(escapeHtml).join(', +') + '</div>';
+        }
+      } else {
+        html += '<span class="placeholder">Select types...</span>';
+      }
+
+      html += '</div></td>' +
+
+        // Complexity dropdown
         '<td><select class="req-complexity">' +
           '<option value="">-</option>' +
           '<option value="Low"' + (req.complexity === 'Low' ? ' selected' : '') + '>Low</option>' +
           '<option value="Medium"' + (req.complexity === 'Medium' ? ' selected' : '') + '>Medium</option>' +
           '<option value="High"' + (req.complexity === 'High' ? ' selected' : '') + '>High</option>' +
         '</select></td>' +
+
+        // MoSCoW dropdown
         '<td><select class="req-moscow">' +
           '<option value="">-</option>' +
           '<option value="Must"' + (req.moscow === 'Must' ? ' selected' : '') + '>Must</option>' +
@@ -376,14 +416,17 @@
           '<option value="Could"' + (req.moscow === 'Could' ? ' selected' : '') + '>Could</option>' +
           '<option value="Wont"' + (req.moscow === 'Wont' ? ' selected' : '') + '>Won\'t</option>' +
         '</select></td>' +
+
+        // Release Phase dropdown (from params)
         '<td><select class="req-phase">' +
-          '<option value="">-</option>' +
-          '<option value="Phase-1"' + (req.releasePhase === 'Phase-1' ? ' selected' : '') + '>Phase-1</option>' +
-          '<option value="Phase-2"' + (req.releasePhase === 'Phase-2' ? ' selected' : '') + '>Phase-2</option>' +
-          '<option value="Phase-3"' + (req.releasePhase === 'Phase-3' ? ' selected' : '') + '>Phase-3</option>' +
-          '<option value="Phase-4"' + (req.releasePhase === 'Phase-4' ? ' selected' : '') + '>Phase-4</option>' +
-          '<option value="Deferred"' + (req.releasePhase === 'Deferred' ? ' selected' : '') + '>Deferred</option>' +
-        '</select></td>' +
+          '<option value="">-</option>';
+
+      estimator.params.phases.forEach(function (phase) {
+        html += '<option value="' + escapeHtml(phase) + '"' + (req.releasePhase === phase ? ' selected' : '') + '>' + escapeHtml(phase) + '</option>';
+      });
+
+      html += '</select></td>' +
+
         '<td style="text-align:right">' + calc.totalDays.toFixed(2) + '</td>' +
         '<td><button class="delete-req-btn" data-req-id="' + req.id + '">Delete</button></td>' +
       '</tr>';
@@ -394,6 +437,8 @@
   }
 
   function wireDetailedGrid(state) {
+    var estimator = state.project.estimator;
+
     var addBtn = document.getElementById('add-requirement-btn');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
@@ -401,9 +446,8 @@
         state.project.estimator.requirements.push({
           id: PP.generateRequirementId(),
           name: '',
-          cloud: '',
           feature: '',
-          solutionType: '',
+          solutionTypes: [],
           complexity: '',
           moscow: '',
           releasePhase: ''
@@ -425,6 +469,50 @@
       });
     });
 
+    // Wire solution type cells
+    var solutionTypeCells = document.querySelectorAll('.solution-types-cell');
+    solutionTypeCells.forEach(function (cell) {
+      cell.addEventListener('click', function () {
+        var reqId = cell.getAttribute('data-req-id');
+        var req = estimator.requirements.find(function (r) { return r.id === reqId; });
+
+        if (!req) return;
+
+        // Show modal
+        var modal = document.createElement('div');
+        modal.innerHTML = renderSolutionTypeModal(req, state);
+        document.body.appendChild(modal.firstChild);
+
+        // Wire save button
+        document.getElementById('solution-type-save').addEventListener('click', function () {
+          var checkboxes = document.querySelectorAll('.solution-type-checkboxes input[type="checkbox"]');
+          var newTypes = [];
+          checkboxes.forEach(function (cb) {
+            if (cb.checked) {
+              newTypes.push(cb.value);
+            }
+          });
+
+          if (newTypes.length === 0) {
+            alert('Please select at least one solution type');
+            return;
+          }
+
+          state.project._pushUndo();
+          req.solutionTypes = newTypes;
+          state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+
+          document.getElementById('solution-type-modal').remove();
+          PP.refresh(true);
+        });
+
+        // Wire cancel button
+        document.getElementById('solution-type-cancel').addEventListener('click', function () {
+          document.getElementById('solution-type-modal').remove();
+        });
+      });
+    });
+
     var tbody = document.getElementById('requirements-tbody');
     if (!tbody) return;
 
@@ -438,22 +526,22 @@
         PP.refresh(true);
       });
 
-      row.querySelector('.req-cloud').addEventListener('change', function (e) {
-        state.project._pushUndo();
-        req.cloud = e.target.value;
-        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
-        PP.refresh(true);
-      });
-
       row.querySelector('.req-feature').addEventListener('change', function (e) {
-        state.project._pushUndo();
-        req.feature = e.target.value;
-        PP.refresh(true);
-      });
+        var value = e.target.value;
 
-      row.querySelector('.req-solutionType').addEventListener('change', function (e) {
+        // If typing new feature (not in params.features), add it
+        if (value && !estimator.params.features.includes(value)) {
+          estimator.params.features.push(value);
+
+          // Initialize in high-level
+          if (!estimator.highlevel.byFeature) {
+            estimator.highlevel.byFeature = {};
+          }
+          estimator.highlevel.byFeature[value] = { low: 0, medium: 0, high: 0 };
+        }
+
         state.project._pushUndo();
-        req.solutionType = e.target.value;
+        req.feature = value;
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
         PP.refresh(true);
       });

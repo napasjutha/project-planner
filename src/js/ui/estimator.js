@@ -392,15 +392,15 @@
         '<td>' + (index + 1) + '</td>' +
         '<td><input type="text" class="req-name" value="' + escapeHtml(req.name || '') + '" placeholder="Requirement name"></td>' +
 
-        // Feature dropdown (from params)
-        '<td><select class="req-feature">' +
-          '<option value="">-</option>';
+        // Feature input with datalist
+        '<td><input type="text" class="req-feature" list="features-list-' + req.id + '" value="' + escapeHtml(req.feature || '') + '" placeholder="Feature">' +
+        '<datalist id="features-list-' + req.id + '">';
 
       estimator.params.features.forEach(function (feature) {
-        html += '<option value="' + escapeHtml(feature) + '"' + (req.feature === feature ? ' selected' : '') + '>' + escapeHtml(feature) + '</option>';
+        html += '<option value="' + escapeHtml(feature) + '">';
       });
 
-      html += '</select></td>' +
+      html += '</datalist></td>' +
 
         // Solution Type multi-select cell
         '<td><div class="solution-types-cell" data-req-id="' + req.id + '">';

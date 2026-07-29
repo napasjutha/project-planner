@@ -304,3 +304,57 @@ input, select, textarea {
   color: white;
   border-color: var(--primary);
 }
+
+.highlevel-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid var(--border);
+}
+
+.hl-tab {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: -2px;
+}
+
+.hl-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.highlevel-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.highlevel-table th,
+.highlevel-table td {
+  padding: 8px;
+  border: 1px solid var(--border);
+}
+
+.highlevel-table input {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.hl-delete-feature {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.hl-delete-feature:hover {
+  color: var(--danger);
+}

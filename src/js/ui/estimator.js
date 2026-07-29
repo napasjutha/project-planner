@@ -17,6 +17,7 @@
   var summaryView = 'table'; // 'table' or 'chart'
   var chartCategory = 'byCloud'; // 'byCloud', 'byStage', 'byRole', 'byComponent', 'byActivity'
   var summaryValueMode = 'days'; // 'days' or 'hours'
+  var highlevelTab = 'feature'; // 'feature' or 'moscow'
 
   function renderHeader(state) {
     var estimator = state.project.estimator;
@@ -570,47 +571,206 @@
   function renderHighLevelGrid(state) {
     if (state.project.estimator.mode !== 'highlevel') return '';
 
-    var highlevel = state.project.estimator.highlevel;
-    var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
+    var estimator = state.project.estimator;
 
     var html = '<div class="estimator-card">' +
-      '<h3>Component Counts by Cloud and Complexity</h3>' +
-      '<table class="estimator-table highlevel-table">' +
-        '<thead><tr>' +
-          '<th>Cloud</th>' +
-          '<th style="text-align:center">Low</th>' +
-          '<th style="text-align:center">Medium</th>' +
-          '<th style="text-align:center">High</th>' +
-          '<th style="text-align:right">Total Effort (days)</th>' +
-        '</tr></thead>' +
-        '<tbody>';
+      '<h3>Component Counts</h3>' +
+      '<div class="highlevel-tabs">' +
+        '<button class="hl-tab' + (highlevelTab === 'feature' ? ' active' : '') + '" data-tab="feature">By Feature</button>' +
+        '<button class="hl-tab' + (highlevelTab === 'moscow' ? ' active' : '') + '" data-tab="moscow">By MoSCoW</button>' +
+      '</div>' +
+      '<div class="highlevel-content">';
 
-    clouds.forEach(function (cloud) {
-      var calc = PP.calculateHighLevelCloud(highlevel, cloud);
-      html += '<tr>' +
-        '<td>' + cloud + '</td>' +
-        '<td style="text-align:center"><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="low" min="0" step="1" value="' + highlevel[cloud].low + '"></td>' +
-        '<td style="text-align:center"><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="medium" min="0" step="1" value="' + highlevel[cloud].medium + '"></td>' +
-        '<td style="text-align:center"><input type="number" class="hl-count" data-cloud="' + cloud + '" data-complexity="high" min="0" step="1" value="' + highlevel[cloud].high + '"></td>' +
-        '<td style="text-align:right">' + calc.totalDays.toFixed(2) + '</td>' +
+    if (highlevelTab === 'feature') {
+      html += renderFeatureMatrix(estimator);
+    } else {
+      html += renderMoscowMatrix(estimator);
+    }
+
+    html += '</div></div>';
+
+    return html;
+  }
+
+  function renderFeatureMatrix(estimator) {
+    var html = '<table class="highlevel-table">' +
+      '<thead><tr>' +
+        '<th>Feature</th>' +
+        '<th style="width:100px">Low</th>' +
+        '<th style="width:100px">Medium</th>' +
+        '<th style="width:100px">High</th>' +
+        '<th style="width:100px">Total</th>' +
+        '<th style="width:60px"></th>' +
+      '</tr></thead>' +
+      '<tbody>';
+
+    if (!estimator.highlevel.byFeature) {
+      estimator.highlevel.byFeature = {};
+    }
+
+    var features = Object.keys(estimator.highlevel.byFeature);
+
+    features.forEach(function (feature) {
+      var counts = estimator.highlevel.byFeature[feature];
+      var total = counts.low + counts.medium + counts.high;
+
+      html += '<tr data-feature="' + escapeHtml(feature) + '">' +
+        '<td>' + escapeHtml(feature) + '</td>' +
+        '<td><input type="number" class="hl-input" data-feature="' + escapeHtml(feature) + '" data-complexity="low" value="' + counts.low + '" min="0"></td>' +
+        '<td><input type="number" class="hl-input" data-feature="' + escapeHtml(feature) + '" data-complexity="medium" value="' + counts.medium + '" min="0"></td>' +
+        '<td><input type="number" class="hl-input" data-feature="' + escapeHtml(feature) + '" data-complexity="high" value="' + counts.high + '" min="0"></td>' +
+        '<td style="text-align:right">' + total + '</td>' +
+        '<td><button class="hl-delete-feature" data-feature="' + escapeHtml(feature) + '">&times;</button></td>' +
       '</tr>';
     });
 
-    html += '</tbody></table></div>';
+    html += '</tbody></table>' +
+      '<button id="hl-add-feature-btn" style="margin-top:8px">+ Add Feature</button>';
+
+    return html;
+  }
+
+  function renderMoscowMatrix(estimator) {
+    if (!estimator.highlevel.byMoscow) {
+      estimator.highlevel.byMoscow = {
+        Must: { low: 0, medium: 0, high: 0 },
+        Should: { low: 0, medium: 0, high: 0 },
+        Could: { low: 0, medium: 0, high: 0 },
+        "Won't": { low: 0, medium: 0, high: 0 }
+      };
+    }
+
+    var html = '<table class="highlevel-table">' +
+      '<thead><tr>' +
+        '<th>Priority</th>' +
+        '<th style="width:100px">Low</th>' +
+        '<th style="width:100px">Medium</th>' +
+        '<th style="width:100px">High</th>' +
+        '<th style="width:100px">Total</th>' +
+      '</tr></thead>' +
+      '<tbody>';
+
+    var priorities = ['Must', 'Should', 'Could', "Won't"];
+
+    priorities.forEach(function (priority) {
+      var counts = estimator.highlevel.byMoscow[priority];
+      var total = counts.low + counts.medium + counts.high;
+
+      html += '<tr>' +
+        '<td>' + priority + '</td>' +
+        '<td><input type="number" class="hl-input-moscow" data-moscow="' + priority + '" data-complexity="low" value="' + counts.low + '" min="0"></td>' +
+        '<td><input type="number" class="hl-input-moscow" data-moscow="' + priority + '" data-complexity="medium" value="' + counts.medium + '" min="0"></td>' +
+        '<td><input type="number" class="hl-input-moscow" data-moscow="' + priority + '" data-complexity="high" value="' + counts.high + '" min="0"></td>' +
+        '<td style="text-align:right">' + total + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table>';
+
     return html;
   }
 
   function wireHighLevelGrid(state) {
-    var inputs = document.querySelectorAll('.hl-count');
-    inputs.forEach(function (input) {
+    var estimator = state.project.estimator;
+
+    // Wire tab buttons
+    var tabButtons = document.querySelectorAll('.hl-tab');
+    tabButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        highlevelTab = btn.getAttribute('data-tab');
+        PP.refresh(true);
+      });
+    });
+
+    // Wire feature matrix inputs
+    var featureInputs = document.querySelectorAll('.hl-input');
+    featureInputs.forEach(function (input) {
       input.addEventListener('change', function () {
-        var cloud = input.dataset.cloud;
-        var complexity = input.dataset.complexity;
-        var value = parseInt(input.value, 10) || 0;
+        var feature = input.getAttribute('data-feature');
+        var complexity = input.getAttribute('data-complexity');
+        var value = parseInt(input.value, 10);
+
+        if (isNaN(value) || value < 0) {
+          input.value = estimator.highlevel.byFeature[feature][complexity];
+          return;
+        }
 
         state.project._pushUndo();
-        state.project.estimator.highlevel[cloud][complexity] = value;
-        state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        estimator.highlevel.byFeature[feature][complexity] = value;
+        estimator.summary = PP.recalcSummary(estimator);
+        PP.refresh(true);
+      });
+    });
+
+    // Wire MoSCoW matrix inputs
+    var moscowInputs = document.querySelectorAll('.hl-input-moscow');
+    moscowInputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        var moscow = input.getAttribute('data-moscow');
+        var complexity = input.getAttribute('data-complexity');
+        var value = parseInt(input.value, 10);
+
+        if (isNaN(value) || value < 0) {
+          input.value = estimator.highlevel.byMoscow[moscow][complexity];
+          return;
+        }
+
+        state.project._pushUndo();
+        estimator.highlevel.byMoscow[moscow][complexity] = value;
+        estimator.summary = PP.recalcSummary(estimator);
+        PP.refresh(true);
+      });
+    });
+
+    // Wire add feature button
+    var addFeatureBtn = document.getElementById('hl-add-feature-btn');
+    if (addFeatureBtn) {
+      addFeatureBtn.addEventListener('click', function () {
+        var featureName = prompt('Enter feature name:');
+        if (!featureName) return;
+
+        state.project._pushUndo();
+
+        // Add to params.features if not exists
+        if (!estimator.params.features.includes(featureName)) {
+          estimator.params.features.push(featureName);
+        }
+
+        // Add to highlevel.byFeature
+        if (!estimator.highlevel.byFeature) {
+          estimator.highlevel.byFeature = {};
+        }
+        estimator.highlevel.byFeature[featureName] = { low: 0, medium: 0, high: 0 };
+
+        PP.refresh(true);
+      });
+    }
+
+    // Wire delete feature buttons
+    var deleteButtons = document.querySelectorAll('.hl-delete-feature');
+    deleteButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var feature = btn.getAttribute('data-feature');
+
+        var confirm = window.confirm('Delete feature "' + feature + '"?');
+        if (!confirm) return;
+
+        state.project._pushUndo();
+
+        // Remove from highlevel
+        delete estimator.highlevel.byFeature[feature];
+
+        // Remove from params if not used in detailed requirements
+        var inUse = estimator.requirements.some(function (r) {
+          return r.feature === feature;
+        });
+        if (!inUse) {
+          estimator.params.features = estimator.params.features.filter(function (f) {
+            return f !== feature;
+          });
+        }
+
+        estimator.summary = PP.recalcSummary(estimator);
         PP.refresh(true);
       });
     });

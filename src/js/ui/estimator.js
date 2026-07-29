@@ -291,12 +291,27 @@
       }
 
       result.requirements.forEach(function (req) {
+        // Auto-add feature to params if not exists
+        if (req.feature && !state.project.estimator.params.features.includes(req.feature)) {
+          state.project.estimator.params.features.push(req.feature);
+
+          // Initialize in high-level
+          if (!state.project.estimator.highlevel.byFeature) {
+            state.project.estimator.highlevel.byFeature = {};
+          }
+          state.project.estimator.highlevel.byFeature[req.feature] = { low: 0, medium: 0, high: 0 };
+        }
+
+        // Auto-add phase to params if not exists
+        if (req.releasePhase && !state.project.estimator.params.phases.includes(req.releasePhase)) {
+          state.project.estimator.params.phases.push(req.releasePhase);
+        }
+
         var requirement = {
           id: PP.generateRequirementId(),
           name: req.name,
-          cloud: req.cloud,
           feature: req.feature,
-          solutionType: req.solutionType,
+          solutionTypes: req.solutionTypes,
           complexity: req.complexity,
           moscow: req.moscow,
           releasePhase: req.releasePhase

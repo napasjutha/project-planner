@@ -287,6 +287,148 @@
   text-align: center;
 }
 
+.estimator-header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 150ms ease;
+}
+
+.mode-toggle label:has(input:checked) {
+  background: var(--kpmg-blue);
+  color: white;
+  border-color: var(--kpmg-blue);
+}
+
+.mode-toggle label:hover:not(:has(input:checked)) {
+  background: var(--surface-sunken);
+}
+
+.mode-toggle input[type="radio"] {
+  margin: 0;
+}
+
+.estimator-params {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.param-section {
+  margin-bottom: 16px;
+}
+
+.param-section:last-child {
+  margin-bottom: 0;
+}
+
+.param-section h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.chip-delete {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.chip-delete:hover {
+  color: var(--status-delayed);
+}
+
+.chip-add {
+  padding: 4px 8px;
+  background: var(--kpmg-blue);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.powered-stages-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.powered-stages-inputs.invalid {
+  border: 1px solid var(--status-delayed);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+
+.ps-input {
+  width: 60px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.ps-sum {
+  margin-left: auto;
+  font-weight: 600;
+}
+
+.ps-sum.valid {
+  color: var(--status-complete);
+}
+
+.ps-sum.invalid {
+  color: var(--status-delayed);
+}
+
+.param-input {
+  width: 80px;
+  padding: 4px;
+  margin-left: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
 #app-header { border-bottom: 1px solid var(--border); padding: 16px 24px; }
 
 #header-top { display: flex; align-items: center; gap: 16px; }

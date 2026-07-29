@@ -14,84 +14,250 @@
 
   function renderHeader(state) {
     var estimator = state.project.estimator;
-    var params = estimator.params;
-
-    var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-      '<div class="estimator-mode-toggle">' +
-        '<button id="mode-detailed-btn" class="' + (estimator.mode === 'detailed' ? 'active' : '') + '">Detailed Estimate</button>' +
-        '<button id="mode-highlevel-btn" class="' + (estimator.mode === 'highlevel' ? 'active' : '') + '">High Level Estimate</button>' +
+    var html = '<div class="estimator-header-content">' +
+      '<div class="mode-toggle">' +
+        '<label><input type="radio" name="estimator-mode" value="detailed"' + (estimator.mode === 'detailed' ? ' checked' : '') + '> Detailed</label>' +
+        '<label><input type="radio" name="estimator-mode" value="highlevel"' + (estimator.mode === 'highlevel' ? ' checked' : '') + '> High Level</label>' +
       '</div>' +
-      '<div>' +
-        '<button id="estimator-import-csv-btn" style="padding:6px 12px;font-size:12px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-md);cursor:pointer">Import CSV</button>' +
-        '<input type="file" id="estimator-import-csv-input" accept=".csv" style="display:none">' +
-      '</div>' +
-    '</div>' +
-    '<div class="estimator-params-toggle" id="params-toggle">' +
-      '<span>' + (paramsExpanded ? '▼' : '▶') + '</span> Estimation Parameters' +
-    '</div>' +
-    '<div class="estimator-params-content" id="params-content" ' + (paramsExpanded ? '' : 'style="display:none"') + '>' +
-      '<label>Contingency %<input type="number" id="param-contingency" min="0" max="100" step="1" value="' + (params.contingencyPct * 100) + '"></label>' +
-      '<label>Confidence %<input type="number" id="param-confidence" min="0" max="100" step="1" value="' + (params.confidencePct * 100) + '"></label>' +
-      '<label>Change Mgmt %<input type="number" id="param-changeManagement" min="0" max="100" step="1" value="' + (params.changeManagementPct * 100) + '"></label>' +
-      '<label>Project Mgmt %<input type="number" id="param-projectManagement" min="0" max="100" step="1" value="' + (params.projectManagementPct * 100) + '"></label>' +
-      '<label>Integrations Count<input type="number" id="param-integrations" min="0" step="1" value="' + params.integrationsCount + '"></label>' +
-      '<label>Migrations Count<input type="number" id="param-migrations" min="0" step="1" value="' + params.migrationsCount + '"></label>' +
+      '<button id="toggle-params-btn" style="margin-left:auto">' + (paramsExpanded ? 'Hide' : 'Show') + ' Parameters</button>' +
     '</div>';
+
+    if (paramsExpanded) {
+      html += renderParams(state);
+    }
+
+    return html;
+  }
+
+  function renderParams(state) {
+    var params = state.project.estimator.params;
+
+    var html = '<div class="estimator-params">' +
+      '<div class="param-section">' +
+        '<h4>Features</h4>' +
+        '<div class="chip-container">';
+
+    // Features chips
+    params.features.forEach(function (feature) {
+      html += '<div class="chip" data-type="feature" data-value="' + escapeHtml(feature) + '">' +
+        '<span>' + escapeHtml(feature) + '</span>' +
+        '<button class="chip-delete">&times;</button>' +
+      '</div>';
+    });
+
+    html += '<button class="chip-add" data-type="feature">+ Add Feature</button>' +
+      '</div></div>';
+
+    // Phases section
+    html += '<div class="param-section">' +
+      '<h4>Release Phases</h4>' +
+      '<div class="chip-container">';
+
+    params.phases.forEach(function (phase) {
+      html += '<div class="chip" data-type="phase" data-value="' + escapeHtml(phase) + '">' +
+        '<span>' + escapeHtml(phase) + '</span>' +
+        '<button class="chip-delete">&times;</button>' +
+      '</div>';
+    });
+
+    html += '<button class="chip-add" data-type="phase">+ Add Phase</button>' +
+      '</div></div>';
+
+    // Powered Stages section
+    var psSum = params.poweredStages.Vision + params.poweredStages.Validate +
+                params.poweredStages.Construct + params.poweredStages.Deploy +
+                params.poweredStages.Evolve;
+    var psValid = Math.abs(psSum - 100) < 0.01;
+
+    html += '<div class="param-section">' +
+      '<h4>Powered Stage Distribution</h4>' +
+      '<div class="powered-stages-inputs' + (psValid ? '' : ' invalid') + '">' +
+        '<label>Vision: <input type="number" class="ps-input" data-stage="Vision" value="' + params.poweredStages.Vision + '" min="0" max="100">%</label>' +
+        '<label>Validate: <input type="number" class="ps-input" data-stage="Validate" value="' + params.poweredStages.Validate + '" min="0" max="100">%</label>' +
+        '<label>Construct: <input type="number" class="ps-input" data-stage="Construct" value="' + params.poweredStages.Construct + '" min="0" max="100">%</label>' +
+        '<label>Deploy: <input type="number" class="ps-input" data-stage="Deploy" value="' + params.poweredStages.Deploy + '" min="0" max="100">%</label>' +
+        '<label>Evolve: <input type="number" class="ps-input" data-stage="Evolve" value="' + params.poweredStages.Evolve + '" min="0" max="100">%</label>' +
+        '<span class="ps-sum' + (psValid ? ' valid' : ' invalid') + '">Total: ' + psSum.toFixed(0) + '%' + (psValid ? ' ✓' : ' (must equal 100%)') + '</span>' +
+      '</div>' +
+    '</div>';
+
+    // Overheads section
+    html += '<div class="param-section">' +
+      '<h4>Overheads</h4>' +
+      '<label>Contingency: <input type="number" class="param-input" data-param="contingencyPct" value="' + (params.contingencyPct * 100) + '" min="0" max="100" step="1">%</label>' +
+      '<label>Change Management: <input type="number" class="param-input" data-param="changeManagementPct" value="' + (params.changeManagementPct * 100) + '" min="0" max="100" step="1">%</label>' +
+      '<label>Project Management: <input type="number" class="param-input" data-param="projectManagementPct" value="' + (params.projectManagementPct * 100) + '" min="0" max="100" step="1">%</label>' +
+    '</div>';
+
+    // Context section
+    html += '<div class="param-section">' +
+      '<h4>Context</h4>' +
+      '<label>Integrations: <input type="number" class="param-input" data-param="integrationsCount" value="' + params.integrationsCount + '" min="0" step="1"></label>' +
+      '<label>Migrations: <input type="number" class="param-input" data-param="migrationsCount" value="' + params.migrationsCount + '" min="0" step="1"></label>' +
+    '</div>';
+
+    html += '</div>';
 
     return html;
   }
 
   function wireHeader(state) {
-    document.getElementById('mode-detailed-btn').addEventListener('click', function () {
-      if (state.project.estimator.mode === 'detailed') return;
-      state.project._pushUndo();
-      state.project.estimator.mode = 'detailed';
-      PP.refresh(true);
-    });
-
-    document.getElementById('mode-highlevel-btn').addEventListener('click', function () {
-      if (state.project.estimator.mode === 'highlevel') return;
-      state.project._pushUndo();
-      state.project.estimator.mode = 'highlevel';
-      PP.refresh(true);
-    });
-
-    document.getElementById('params-toggle').addEventListener('click', function () {
-      paramsExpanded = !paramsExpanded;
-      PP.refresh(true);
-    });
-
-    var paramIds = ['contingency', 'confidence', 'changeManagement', 'projectManagement',
-                    'integrations', 'migrations'];
-
-    paramIds.forEach(function (id) {
-      var input = document.getElementById('param-' + id);
-      input.addEventListener('change', function () {
+    var modeRadios = document.querySelectorAll('input[name="estimator-mode"]');
+    modeRadios.forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        if (state.project.estimator.mode === radio.value) return;
         state.project._pushUndo();
-        var value = parseFloat(input.value);
-        var params = state.project.estimator.params;
+        state.project.estimator.mode = radio.value;
+        PP.refresh(true);
+      });
+    });
 
-        if (id === 'integrations') {
-          params.integrationsCount = value;
-        } else if (id === 'migrations') {
-          params.migrationsCount = value;
+    // Toggle params visibility
+    var toggleParamsBtn = document.getElementById('toggle-params-btn');
+    if (toggleParamsBtn) {
+      toggleParamsBtn.addEventListener('click', function () {
+        paramsExpanded = !paramsExpanded;
+        PP.refresh(true);
+      });
+    }
+
+    // Wire params if expanded
+    if (paramsExpanded) {
+      wireParams(state);
+    }
+  }
+
+  function wireParams(state) {
+    var params = state.project.estimator.params;
+
+    // Wire chip delete buttons
+    var deleteButtons = document.querySelectorAll('.chip-delete');
+    deleteButtons.forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var chip = btn.closest('.chip');
+        var type = chip.getAttribute('data-type');
+        var value = chip.getAttribute('data-value');
+
+        // Check if in use
+        if (type === 'feature') {
+          var inUse = state.project.estimator.requirements.some(function (r) {
+            return r.feature === value;
+          });
+          if (inUse) {
+            alert('Cannot delete - feature is used in requirements');
+            return;
+          }
+
+          state.project._pushUndo();
+          params.features = params.features.filter(function (f) { return f !== value; });
+
+          // Remove from high-level
+          if (state.project.estimator.highlevel.byFeature) {
+            delete state.project.estimator.highlevel.byFeature[value];
+          }
+        } else if (type === 'phase') {
+          var inUse = state.project.estimator.requirements.some(function (r) {
+            return r.releasePhase === value;
+          });
+          if (inUse) {
+            alert('Cannot delete - phase is used in requirements');
+            return;
+          }
+
+          state.project._pushUndo();
+          params.phases = params.phases.filter(function (p) { return p !== value; });
+        }
+
+        PP.refresh(true);
+      });
+    });
+
+    // Wire chip add buttons
+    var addButtons = document.querySelectorAll('.chip-add');
+    addButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var type = btn.getAttribute('data-type');
+        var value = prompt('Enter new ' + type + ' name:');
+
+        if (!value) return;
+
+        state.project._pushUndo();
+
+        if (type === 'feature') {
+          if (!params.features.includes(value)) {
+            params.features.push(value);
+
+            // Initialize in high-level
+            if (!state.project.estimator.highlevel.byFeature) {
+              state.project.estimator.highlevel.byFeature = {};
+            }
+            state.project.estimator.highlevel.byFeature[value] = { low: 0, medium: 0, high: 0 };
+          }
+        } else if (type === 'phase') {
+          if (!params.phases.includes(value)) {
+            params.phases.push(value);
+          }
+        }
+
+        PP.refresh(true);
+      });
+    });
+
+    // Wire powered stage inputs
+    var psInputs = document.querySelectorAll('.ps-input');
+    psInputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        var stage = input.getAttribute('data-stage');
+        var value = parseInt(input.value, 10);
+
+        if (isNaN(value) || value < 0 || value > 100) {
+          alert('Value must be between 0 and 100');
+          input.value = params.poweredStages[stage];
+          return;
+        }
+
+        state.project._pushUndo();
+        params.poweredStages[stage] = value;
+
+        // Validate sum
+        var sum = params.poweredStages.Vision + params.poweredStages.Validate +
+                  params.poweredStages.Construct + params.poweredStages.Deploy +
+                  params.poweredStages.Evolve;
+
+        if (Math.abs(sum - 100) < 0.01) {
+          // Valid - recalc
+          state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+        }
+
+        PP.refresh(true);
+      });
+    });
+
+    // Wire overhead inputs
+    var paramInputs = document.querySelectorAll('.param-input');
+    paramInputs.forEach(function (input) {
+      input.addEventListener('change', function () {
+        var param = input.getAttribute('data-param');
+        var value = parseFloat(input.value);
+
+        if (isNaN(value) || value < 0) {
+          alert('Value must be >= 0');
+          return;
+        }
+
+        state.project._pushUndo();
+
+        // Convert percentage inputs back to decimals
+        if (param.endsWith('Pct')) {
+          params[param] = value / 100;
         } else {
-          params[id + 'Pct'] = value / 100;
+          params[param] = parseInt(value, 10);
         }
 
         state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
         PP.refresh(true);
       });
-    });
-
-    document.getElementById('estimator-import-csv-btn').addEventListener('click', function () {
-      document.getElementById('estimator-import-csv-input').click();
-    });
-
-    document.getElementById('estimator-import-csv-input').addEventListener('change', function (e) {
-      var file = e.target.files[0];
-      if (file) handleEstimatorImportCsv(state, file);
-      e.target.value = '';
     });
   }
 

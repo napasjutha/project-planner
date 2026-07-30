@@ -330,7 +330,7 @@
               }
             }
 
-            summary.bySolutionType.Configuration = (summary.bySolutionType.Configuration || 0) + calc.totalDays;
+            // Don't populate bySolutionType in high-level mode (will show "No data")
           }
         }
       }
@@ -346,7 +346,9 @@
 
       summary.totalDays += integrationCalc.totalDays * count;
       summary.byFeature.Integration = (summary.byFeature.Integration || 0) + integrationCalc.totalDays * count;
-      summary.bySolutionType.Integration = (summary.bySolutionType.Integration || 0) + integrationCalc.totalDays * count;
+      if (estimator.mode === 'detailed') {
+        summary.bySolutionType.Integration = (summary.bySolutionType.Integration || 0) + integrationCalc.totalDays * count;
+      }
 
       for (var activity in integrationCalc.byActivity) {
         if (integrationCalc.byActivity.hasOwnProperty(activity)) {
@@ -375,7 +377,9 @@
 
       summary.totalDays += migrationCalc.totalDays * count;
       summary.byFeature.Migration = (summary.byFeature.Migration || 0) + migrationCalc.totalDays * count;
-      summary.bySolutionType.Migration = (summary.bySolutionType.Migration || 0) + migrationCalc.totalDays * count;
+      if (estimator.mode === 'detailed') {
+        summary.bySolutionType.Migration = (summary.bySolutionType.Migration || 0) + migrationCalc.totalDays * count;
+      }
 
       for (var activity in migrationCalc.byActivity) {
         if (migrationCalc.byActivity.hasOwnProperty(activity)) {

@@ -110,9 +110,9 @@ function renderParams(state) {
   stages.forEach(function(stage, idx) {
     html += '<div class="param-field">' +
       '<button class="ps-reorder-btn" data-stage="' + escapeHtml(stage) +
-      '" data-direction="up"' + (idx === 0 ? ' disabled' : '') + '>▲</button>' +
+      '" data-direction="up"' + (idx === 0 ? ' disabled' : '') + '>◀</button>' +
       '<button class="ps-reorder-btn" data-stage="' + escapeHtml(stage) +
-      '" data-direction="down"' + (idx === stages.length - 1 ? ' disabled' : '') + '>▼</button>' +
+      '" data-direction="down"' + (idx === stages.length - 1 ? ' disabled' : '') + '>▶</button>' +
       '<label>' + escapeHtml(stage) + ':</label>' +
       '<input type="number" class="ps-input param-input" data-stage="' +
       escapeHtml(stage) + '" value="' + escapeHtml(params.poweredStages[stage]) +

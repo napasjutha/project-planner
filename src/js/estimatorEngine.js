@@ -74,70 +74,72 @@
    * @returns {Object} - { totalDays, byActivity, byStage, byRole }
    */
   function calculateRequirement(req, params) {
-    // Use primary solution type (first in array) or fallback to solutionType
-    var primaryType = req.solutionTypes ? req.solutionTypes[0] : req.solutionType;
+    // Get all solution types
+    var types = req.solutionTypes || (req.solutionType ? [req.solutionType] : []);
 
-    if (!primaryType || !req.complexity) {
+    if (types.length === 0 || !req.complexity) {
       return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
     }
 
-    var baseHours = BASE_HOURS[primaryType];
-    if (!baseHours) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
-    var complexityHours = baseHours[req.complexity];
-    if (!complexityHours) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
-    // Calculate total base hours
-    var totalBaseHours = 0;
     var activities = ['Discovery', 'Requirements', 'Design', 'Development', 'Testing', 'UAT', 'Deployment', 'Documentation'];
-    for (var i = 0; i < activities.length; i++) {
-      totalBaseHours += complexityHours[activities[i]];
-    }
+    var result = { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
 
-    // Apply complexity multiplier
-    var multiplier = COMPLEXITY_MULTIPLIER[req.complexity];
-    var adjustedHours = totalBaseHours * multiplier;
-    var totalDays = adjustedHours / 8;
+    // Calculate effort for ALL solution types and sum them
+    for (var t = 0; t < types.length; t++) {
+      var type = types[t];
+      var baseHours = BASE_HOURS[type];
+      if (!baseHours) continue;
 
-    // Calculate by activity (in days)
-    var byActivity = {};
-    for (var i = 0; i < activities.length; i++) {
-      var activity = activities[i];
-      byActivity[activity] = (complexityHours[activity] * multiplier) / 8;
-    }
+      var complexityHours = baseHours[req.complexity];
+      if (!complexityHours) continue;
 
-    // Distribute across Powered Stages using configurable percentages
-    var byStage = {};
-    var stageDistribution = params && params.poweredStages ? params.poweredStages : POWERED_STAGES;
-    var isConfigurable = params && params.poweredStages; // True if using configurable percentages (0-100 scale)
-    var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
-    for (var i = 0; i < stages.length; i++) {
-      var stage = stages[i];
-      var percentage = stageDistribution[stage] || POWERED_STAGES[stage];
-      // Configurable params use 0-100 scale, default POWERED_STAGES use 0-1 scale
-      var multiplier = isConfigurable ? (percentage / 100) : percentage;
-      byStage[stage] = totalDays * multiplier;
-    }
+      // Calculate total base hours for this type
+      var totalBaseHours = 0;
+      for (var i = 0; i < activities.length; i++) {
+        totalBaseHours += complexityHours[activities[i]];
+      }
 
-    // Allocate to roles from Powered Stages
-    var byRole = {};
-    for (var role in ROLE_ALLOCATION_BY_STAGE) {
-      if (ROLE_ALLOCATION_BY_STAGE.hasOwnProperty(role)) {
-        byRole[role] = 0;
-        var roleAllocation = ROLE_ALLOCATION_BY_STAGE[role];
-        for (var stage in byStage) {
-          if (byStage.hasOwnProperty(stage) && roleAllocation.hasOwnProperty(stage)) {
-            byRole[role] += byStage[stage] * roleAllocation[stage];
+      // Apply complexity multiplier
+      var multiplier = COMPLEXITY_MULTIPLIER[req.complexity];
+      var adjustedHours = totalBaseHours * multiplier;
+      var totalDays = adjustedHours / 8;
+
+      result.totalDays += totalDays;
+
+      // Calculate by activity (in days)
+      for (var i = 0; i < activities.length; i++) {
+        var activity = activities[i];
+        result.byActivity[activity] = (result.byActivity[activity] || 0) + (complexityHours[activity] * multiplier) / 8;
+      }
+
+      // Distribute across Powered Stages using configurable percentages
+      var stageDistribution = params && params.poweredStages ? params.poweredStages : POWERED_STAGES;
+      var isConfigurable = params && params.poweredStages;
+      var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
+      for (var i = 0; i < stages.length; i++) {
+        var stage = stages[i];
+        var percentage = stageDistribution[stage] || POWERED_STAGES[stage];
+        var stageMultiplier = isConfigurable ? (percentage / 100) : percentage;
+        result.byStage[stage] = (result.byStage[stage] || 0) + totalDays * stageMultiplier;
+      }
+
+      // Allocate to roles from Powered Stages
+      for (var role in ROLE_ALLOCATION_BY_STAGE) {
+        if (ROLE_ALLOCATION_BY_STAGE.hasOwnProperty(role)) {
+          var roleAllocation = ROLE_ALLOCATION_BY_STAGE[role];
+          for (var i = 0; i < stages.length; i++) {
+            var stage = stages[i];
+            if (roleAllocation.hasOwnProperty(stage)) {
+              var stageMultiplier = isConfigurable ? (stageDistribution[stage] / 100) : (stageDistribution[stage] || POWERED_STAGES[stage]);
+              var stageDays = totalDays * stageMultiplier;
+              result.byRole[role] = (result.byRole[role] || 0) + stageDays * roleAllocation[stage];
+            }
           }
         }
       }
     }
 
-    return { totalDays: totalDays, byActivity: byActivity, byStage: byStage, byRole: byRole };
+    return result;
   }
 
   /**

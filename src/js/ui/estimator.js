@@ -23,8 +23,8 @@
     var estimator = state.project.estimator;
     var html = '<div class="estimator-header-content">' +
       '<div class="mode-toggle">' +
-        '<label><input type="radio" name="estimator-mode" value="detailed"' + (estimator.mode === 'detailed' ? ' checked' : '') + '> Detailed</label>' +
-        '<label><input type="radio" name="estimator-mode" value="highlevel"' + (estimator.mode === 'highlevel' ? ' checked' : '') + '> High Level</label>' +
+        '<label><input type="radio" name="estimator-mode" value="detailed"' + (estimator.mode === 'detailed' ? ' checked' : '') + '>Detailed Estimate</label>' +
+        '<label><input type="radio" name="estimator-mode" value="highlevel"' + (estimator.mode === 'highlevel' ? ' checked' : '') + '>High Level Estimate</label>' +
       '</div>' +
       '<button id="toggle-params-btn" style="margin-left:auto">' + (paramsExpanded ? 'Hide' : 'Show') + ' Parameters</button>' +
     '</div>';

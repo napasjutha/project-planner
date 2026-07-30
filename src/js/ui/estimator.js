@@ -770,75 +770,86 @@ function renderHighLevelGrid(state) {
 }
 
 function renderFeatureMatrix(estimator) {
+  // Build pivot from requirements
+  var pivot = {};
+
+  estimator.requirements.forEach(function(req) {
+    var feature = req.feature || 'Unassigned';
+
+    if (!pivot[feature]) {
+      pivot[feature] = {
+        low: 0,
+        medium: 0,
+        high: 0,
+        ootb: 0,
+        configuration: 0,
+        customization: 0,
+        integration: 0,
+        migration: 0,
+        totalEffort: 0
+      };
+    }
+
+    // Count by complexity
+    if (req.complexity === 'Low') pivot[feature].low++;
+    if (req.complexity === 'Medium') pivot[feature].medium++;
+    if (req.complexity === 'High') pivot[feature].high++;
+
+    // Count by solution types (requirement can have multiple)
+    var types = req.solutionTypes || [];
+    for (var t = 0; t < types.length; t++) {
+      var type = types[t].toLowerCase();
+      if (pivot[feature][type] !== undefined) {
+        pivot[feature][type]++;
+      }
+    }
+
+    // Sum effort
+    if (req.solutionTypes && req.solutionTypes.length > 0 && req.complexity) {
+      var calc = PP.calculateRequirement(req, estimator.params);
+      pivot[feature].totalEffort += calc.totalDays;
+    }
+  });
+
   var html = '<table class="highlevel-table">' +
       '<thead><tr>' +
       '<th>Feature</th>' +
-      '<th style="width:120px">Low</th>' +
-      '<th style="width:120px">Medium</th>' +
-      '<th style="width:120px">High</th>' +
-      '<th style="width:160px">Total Effort (days)</th>' +
-      '<th style="width:60px"></th>' +
+      '<th style="width:60px">Low</th>' +
+      '<th style="width:60px">Med</th>' +
+      '<th style="width:60px">High</th>' +
+      '<th style="width:60px">OOTB</th>' +
+      '<th style="width:80px">Config</th>' +
+      '<th style="width:80px">Custom</th>' +
+      '<th style="width:70px">Integ</th>' +
+      '<th style="width:60px">Migr</th>' +
+      '<th style="width:140px">Total Effort (days)</th>' +
       '</tr></thead>' +
       '<tbody>';
 
-  if (!estimator.highlevel.byFeature) {
-    estimator.highlevel.byFeature = {};
+  var features = Object.keys(pivot).sort();
+
+  if (features.length === 0) {
+    html += '<tr><td colspan="10" style="text-align:center;color:var(--text-secondary);padding:24px;">' +
+        'No requirements yet. Switch to Detailed mode to add requirements.</td></tr>';
+  } else {
+    features.forEach(function(feature) {
+      var data = pivot[feature];
+      html += '<tr>' +
+          '<td>' + escapeHtml(feature) + '</td>' +
+          '<td style="text-align:center">' + data.low + '</td>' +
+          '<td style="text-align:center">' + data.medium + '</td>' +
+          '<td style="text-align:center">' + data.high + '</td>' +
+          '<td style="text-align:center">' + data.ootb + '</td>' +
+          '<td style="text-align:center">' + data.configuration + '</td>' +
+          '<td style="text-align:center">' + data.customization + '</td>' +
+          '<td style="text-align:center">' + data.integration + '</td>' +
+          '<td style="text-align:center">' + data.migration + '</td>' +
+          '<td style="text-align:right">' + data.totalEffort.toFixed(2) + '</td>' +
+          '</tr>';
+    });
   }
 
-  var features = Object.keys(estimator.highlevel.byFeature);
-
-  features.forEach(function(feature) {
-    var counts = estimator.highlevel.byFeature[feature];
-
-    // Calculate effort for each complexity level
-    var lowEffort = counts.low *
-        PP.calculateRequirement(
-              {
-                feature: feature,
-                solutionTypes: ['Configuration'],
-                complexity: 'Low'
-              },
-              estimator.params)
-            .totalDays;
-    var mediumEffort = counts.medium *
-        PP.calculateRequirement(
-              {
-                feature: feature,
-                solutionTypes: ['Configuration'],
-                complexity: 'Medium'
-              },
-              estimator.params)
-            .totalDays;
-    var highEffort = counts.high *
-        PP.calculateRequirement(
-              {
-                feature: feature,
-                solutionTypes: ['Configuration'],
-                complexity: 'High'
-              },
-              estimator.params)
-            .totalDays;
-    var totalEffort = lowEffort + mediumEffort + highEffort;
-
-    html += '<tr data-feature="' + escapeHtml(feature) + '">' +
-        '<td>' + escapeHtml(feature) + '</td>' +
-        '<td><input type="number" class="hl-input" data-feature="' +
-        escapeHtml(feature) + '" data-complexity="low" value="' + counts.low +
-        '" min="0"></td>' +
-        '<td><input type="number" class="hl-input" data-feature="' +
-        escapeHtml(feature) + '" data-complexity="medium" value="' +
-        counts.medium + '" min="0"></td>' +
-        '<td><input type="number" class="hl-input" data-feature="' +
-        escapeHtml(feature) + '" data-complexity="high" value="' + counts.high +
-        '" min="0"></td>' +
-        '<td>' + totalEffort.toFixed(2) + '</td>' +
-        '<td><button class="hl-delete-feature" data-feature="' +
-        escapeHtml(feature) + '">&times;</button></td>' +
-        '</tr>';
-  });
-
-  html += '</tbody></table>' +
-      '<button id="hl-add-feature-btn" style="margin-top:8px">+ Add Feature</button>';
+  html += '</tbody></table>';
 
   return html;
 }

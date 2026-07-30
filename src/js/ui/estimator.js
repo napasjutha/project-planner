@@ -106,9 +106,13 @@ function renderParams(state) {
       '<h4>Powered Stage Distribution</h4>' +
       '<div class="powered-stages-grid' + (psValid ? '' : ' invalid') + '">';
 
-  var stages = Object.keys(params.poweredStages).sort();
-  stages.forEach(function(stage) {
+  var stages = params.stageOrder || Object.keys(params.poweredStages).sort();
+  stages.forEach(function(stage, idx) {
     html += '<div class="param-field">' +
+      '<button class="ps-reorder-btn" data-stage="' + escapeHtml(stage) +
+      '" data-direction="up"' + (idx === 0 ? ' disabled' : '') + '>▲</button>' +
+      '<button class="ps-reorder-btn" data-stage="' + escapeHtml(stage) +
+      '" data-direction="down"' + (idx === stages.length - 1 ? ' disabled' : '') + '>▼</button>' +
       '<label>' + escapeHtml(stage) + ':</label>' +
       '<input type="number" class="ps-input param-input" data-stage="' +
       escapeHtml(stage) + '" value="' + escapeHtml(params.poweredStages[stage]) +
@@ -205,9 +209,45 @@ function wireHeader(state) {
 
       state.project._pushUndo();
       params.poweredStages[stageName] = pctNum;
+      if (!params.stageOrder) {
+        params.stageOrder = Object.keys(params.poweredStages).sort();
+      } else {
+        params.stageOrder.push(stageName);
+      }
       PP.refresh();
     });
   }
+
+  // Wire reorder powered stage buttons
+  var reorderBtns = document.querySelectorAll('.ps-reorder-btn');
+  reorderBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var stage = btn.getAttribute('data-stage');
+      var direction = btn.getAttribute('data-direction');
+      var params = state.project.estimator.params;
+
+      if (!params.stageOrder) {
+        params.stageOrder = Object.keys(params.poweredStages).sort();
+      }
+
+      var idx = params.stageOrder.indexOf(stage);
+      if (idx === -1) return;
+
+      state.project._pushUndo();
+
+      if (direction === 'up' && idx > 0) {
+        var temp = params.stageOrder[idx - 1];
+        params.stageOrder[idx - 1] = params.stageOrder[idx];
+        params.stageOrder[idx] = temp;
+      } else if (direction === 'down' && idx < params.stageOrder.length - 1) {
+        var temp = params.stageOrder[idx + 1];
+        params.stageOrder[idx + 1] = params.stageOrder[idx];
+        params.stageOrder[idx] = temp;
+      }
+
+      PP.refresh();
+    });
+  });
 
   // Wire delete powered stage buttons
   var deleteStageButtons = document.querySelectorAll('.ps-delete-btn');
@@ -223,15 +263,22 @@ function wireHeader(state) {
       }
 
       state.project._pushUndo();
-      redistributeStages(stage, params.poweredStages);
+      redistributeStages(stage, params.poweredStages, params);
       state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
       PP.refresh();
     });
   });
 
-  function redistributeStages(stageToDelete, poweredStages) {
+  function redistributeStages(stageToDelete, poweredStages, params) {
     var deletedPct = poweredStages[stageToDelete];
     delete poweredStages[stageToDelete];
+
+    if (params.stageOrder) {
+      var idx = params.stageOrder.indexOf(stageToDelete);
+      if (idx !== -1) {
+        params.stageOrder.splice(idx, 1);
+      }
+    }
 
     var remaining = Object.keys(poweredStages);
     var remainingTotal = remaining.reduce(function(sum, key) {

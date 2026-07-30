@@ -524,3 +524,22 @@ input, select, textarea {
 #ps-add-stage-btn:hover {
   opacity: 0.9;
 }
+
+.ps-reorder-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.ps-reorder-btn:hover:not(:disabled) {
+  color: var(--primary);
+}
+
+.ps-reorder-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

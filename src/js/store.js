@@ -158,6 +158,7 @@
           Deploy: 10,
           Evolve: 8
         },
+        stageOrder: ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'],
         contingencyPct: 0.1,
         changeManagementPct: 0.2,
         projectManagementPct: 0.2,
@@ -243,6 +244,7 @@
             Deploy: 10,
             Evolve: 8
           },
+          stageOrder: ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'],
           contingencyPct: 0.1,
           changeManagementPct: 0.2,
           projectManagementPct: 0.2,

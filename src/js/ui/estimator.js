@@ -105,7 +105,7 @@ function renderParams(state) {
     html += '<div class="param-field">' +
       '<label>' + escapeHtml(stage) + ':</label>' +
       '<input type="number" class="ps-input param-input" data-stage="' +
-      escapeHtml(stage) + '" value="' + params.poweredStages[stage] +
+      escapeHtml(stage) + '" value="' + escapeHtml(params.poweredStages[stage]) +
       '" min="0" max="100">' +
       '<button class="ps-delete-btn" data-stage="' + escapeHtml(stage) +
       '"' + (stages.length === 1 ? ' disabled' : '') + '>&times;</button>' +

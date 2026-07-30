@@ -250,11 +250,10 @@
     return errors.length ? { errors, activities: [] } : { errors: [], activities };
   }
 
-  const ESTIMATOR_CSV_HEADERS = ['Requirement', 'Cloud', 'Feature', 'Solution Type', 'Complexity', 'MoSCoW', 'Release Phase'];
-  const VALID_CLOUDS = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
+  const ESTIMATOR_CSV_HEADERS = ['Requirement', 'Feature', 'Solution Types', 'Complexity', 'MoSCoW', 'Release Phase'];
   const VALID_SOLUTION_TYPES = ['OOTB', 'Configuration', 'Customization', 'Integration', 'Migration'];
   const VALID_COMPLEXITIES = ['Low', 'Medium', 'High'];
-  const VALID_MOSCOW = ['Must Have', 'Should Have', 'Could Have', 'Won\'t Have'];
+  const VALID_MOSCOW = ['Must', 'Should', 'Could', 'Won\'t'];
 
   function estimatorCsvTemplateText(params) {
     var paramsLine = '';
@@ -269,8 +268,8 @@
     }
     return paramsLine +
       ESTIMATOR_CSV_HEADERS.join(',') + '\n' +
-      'Account Management,Sales,Objects,Configuration,Medium,Must Have,Phase 1\n' +
-      'Case Assignment Rules,Service,Business Logic,Configuration,Low,Must Have,Phase 1\n';
+      'Account Management,CRM,Configuration,Medium,Must,Phase 1\n' +
+      'Case Assignment Rules,Service,Configuration|Customization,Low,Must,Phase 1\n';
   }
 
   function parseEstimatorCsv(rows) {
@@ -311,17 +310,17 @@
         return;
       }
       const c = cells.map(v => v.trim());
-      const [name, cloud, feature, solutionType, complexity, moscow, releasePhase] = c;
+      const [name, feature, solutionTypesStr, complexity, moscow, releasePhase] = c;
 
       if (!name) errors.push(label + ': Requirement is required');
 
-      if (cloud && VALID_CLOUDS.indexOf(cloud) === -1) {
-        errors.push(label + ": Cloud '" + cloud + "' must be one of: " + VALID_CLOUDS.join(', '));
-      }
-
-      if (solutionType && VALID_SOLUTION_TYPES.indexOf(solutionType) === -1) {
-        errors.push(label + ": Solution Type '" + solutionType + "' must be one of: " + VALID_SOLUTION_TYPES.join(', '));
-      }
+      // Parse pipe-delimited solution types
+      const solutionTypes = solutionTypesStr ? solutionTypesStr.split('|').map(s => s.trim()).filter(Boolean) : [];
+      solutionTypes.forEach(function (st) {
+        if (VALID_SOLUTION_TYPES.indexOf(st) === -1) {
+          errors.push(label + ": Solution Type '" + st + "' must be one of: " + VALID_SOLUTION_TYPES.join(', '));
+        }
+      });
 
       if (complexity && VALID_COMPLEXITIES.indexOf(complexity) === -1) {
         errors.push(label + ": Complexity '" + complexity + "' must be one of: " + VALID_COMPLEXITIES.join(', '));
@@ -333,9 +332,8 @@
 
       requirements.push({
         name: name,
-        cloud: cloud || '',
         feature: feature || '',
-        solutionType: solutionType || '',
+        solutionTypes: solutionTypes.length > 0 ? solutionTypes : ['Configuration'],
         complexity: complexity || '',
         moscow: moscow || '',
         releasePhase: releasePhase || ''

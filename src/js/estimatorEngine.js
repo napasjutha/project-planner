@@ -54,16 +54,13 @@
     Evolve: 0.08
   };
 
-  // Role allocation by activity
-  var ROLE_ALLOCATION = {
-    Discovery: { 'Solution Architect': 0.7, 'Developer': 0.3 },
-    Requirements: { 'Solution Architect': 0.8, 'QA': 0.2 },
-    Design: { 'Solution Architect': 0.6, 'Developer': 0.4 },
-    Development: { 'Developer': 1.0 },
-    Testing: { 'QA': 0.7, 'Developer': 0.3 },
-    UAT: { 'QA': 0.5, 'Solution Architect': 0.3, 'Developer': 0.2 },
-    Deployment: { 'Developer': 0.6, 'Solution Architect': 0.4 },
-    Documentation: { 'Solution Architect': 0.5, 'Developer': 0.5 }
+  // Role allocation by Powered Stage (from Excel Mapping sheet rows 5-9, cols AY-BC)
+  var ROLE_ALLOCATION_BY_STAGE = {
+    'Engagement Management': { Vision: 0.10, Validate: 0.05, Construct: 0.05, Deploy: 0.05, Evolve: 0.05 },
+    'Delivery Management': { Vision: 0.30, Validate: 0.20, Construct: 0.10, Deploy: 0.10, Evolve: 0.20 },
+    'Solution Architect/Analyst': { Vision: 0.50, Validate: 0.25, Construct: 0.15, Deploy: 0.10, Evolve: 0.20 },
+    'Developer': { Vision: 0.10, Validate: 0.30, Construct: 0.50, Deploy: 0.40, Evolve: 0.45 },
+    'QA': { Vision: 0.00, Validate: 0.20, Construct: 0.20, Deploy: 0.35, Evolve: 0.10 }
   };
 
   function generateRequirementId() {
@@ -73,115 +70,78 @@
   /**
    * Calculate effort for a single requirement
    * @param {Object} req - Requirement object with solutionType and complexity
+   * @param {Object} params - Optional params object with poweredStages override
    * @returns {Object} - { totalDays, byActivity, byStage, byRole }
    */
-  function calculateRequirement(req) {
-    if (!req.solutionType || !req.complexity) {
+  function calculateRequirement(req, params) {
+    // Get all solution types
+    var types = req.solutionTypes || (req.solutionType ? [req.solutionType] : []);
+
+    if (types.length === 0 || !req.complexity) {
       return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
     }
 
-    var baseHours = BASE_HOURS[req.solutionType];
-    if (!baseHours) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
-    var complexityHours = baseHours[req.complexity];
-    if (!complexityHours) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
-    // Calculate total base hours
-    var totalBaseHours = 0;
     var activities = ['Discovery', 'Requirements', 'Design', 'Development', 'Testing', 'UAT', 'Deployment', 'Documentation'];
-    for (var i = 0; i < activities.length; i++) {
-      totalBaseHours += complexityHours[activities[i]];
-    }
-
-    // Apply complexity multiplier
-    var multiplier = COMPLEXITY_MULTIPLIER[req.complexity];
-    var adjustedHours = totalBaseHours * multiplier;
-    var totalDays = adjustedHours / 8;
-
-    // Calculate by activity (in days)
-    var byActivity = {};
-    for (var i = 0; i < activities.length; i++) {
-      var activity = activities[i];
-      byActivity[activity] = (complexityHours[activity] * multiplier) / 8;
-    }
-
-    // Distribute across Powered Stages
-    var byStage = {};
-    var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
-    for (var i = 0; i < stages.length; i++) {
-      var stage = stages[i];
-      byStage[stage] = totalDays * POWERED_STAGES[stage];
-    }
-
-    // Allocate to roles
-    var byRole = {};
-    for (var i = 0; i < activities.length; i++) {
-      var activity = activities[i];
-      var activityDays = byActivity[activity];
-      var allocation = ROLE_ALLOCATION[activity];
-      for (var role in allocation) {
-        if (allocation.hasOwnProperty(role)) {
-          byRole[role] = (byRole[role] || 0) + activityDays * allocation[role];
-        }
-      }
-    }
-
-    return { totalDays: totalDays, byActivity: byActivity, byStage: byStage, byRole: byRole };
-  }
-
-  /**
-   * Calculate high-level estimate from component counts
-   * @param {Object} highlevel - { Cloud: { low: N, medium: N, high: N }, ... }
-   * @param {string} cloud - Cloud name (Sales, Service, etc.)
-   * @returns {Object} - { totalDays, byActivity, byStage, byRole }
-   */
-  function calculateHighLevelCloud(highlevel, cloud) {
-    var counts = highlevel[cloud];
-    if (!counts) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
     var result = { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
 
-    // For high-level, we use Configuration as the default solution type
-    var complexities = ['Low', 'Medium', 'High'];
-    for (var i = 0; i < complexities.length; i++) {
-      var complexity = complexities[i];
-      var count = counts[complexity.toLowerCase()] || 0;
-      if (count === 0) continue;
+    // Calculate effort for ALL solution types and sum them
+    for (var t = 0; t < types.length; t++) {
+      var type = types[t];
+      var baseHours = BASE_HOURS[type];
+      if (!baseHours) continue;
 
-      var calc = calculateRequirement({ solutionType: 'Configuration', complexity: complexity });
+      var complexityHours = baseHours[req.complexity];
+      if (!complexityHours) continue;
 
-      result.totalDays += calc.totalDays * count;
-
-      // Merge byActivity
-      for (var activity in calc.byActivity) {
-        if (calc.byActivity.hasOwnProperty(activity)) {
-          result.byActivity[activity] = (result.byActivity[activity] || 0) + calc.byActivity[activity] * count;
-        }
+      // Calculate total base hours for this type
+      var totalBaseHours = 0;
+      for (var i = 0; i < activities.length; i++) {
+        totalBaseHours += complexityHours[activities[i]];
       }
 
-      // Merge byStage
-      for (var stage in calc.byStage) {
-        if (calc.byStage.hasOwnProperty(stage)) {
-          result.byStage[stage] = (result.byStage[stage] || 0) + calc.byStage[stage] * count;
-        }
+      // Apply complexity multiplier
+      var multiplier = COMPLEXITY_MULTIPLIER[req.complexity];
+      var adjustedHours = totalBaseHours * multiplier;
+      var totalDays = adjustedHours / 8;
+
+      result.totalDays += totalDays;
+
+      // Calculate by activity (in days)
+      for (var i = 0; i < activities.length; i++) {
+        var activity = activities[i];
+        result.byActivity[activity] = (result.byActivity[activity] || 0) + (complexityHours[activity] * multiplier) / 8;
       }
 
-      // Merge byRole
-      for (var role in calc.byRole) {
-        if (calc.byRole.hasOwnProperty(role)) {
-          result.byRole[role] = (result.byRole[role] || 0) + calc.byRole[role] * count;
+      // Distribute across Powered Stages using configurable percentages
+      var stageDistribution = params && params.poweredStages ? params.poweredStages : POWERED_STAGES;
+      var isConfigurable = params && params.poweredStages;
+      var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
+      for (var i = 0; i < stages.length; i++) {
+        var stage = stages[i];
+        var percentage = stageDistribution[stage] || POWERED_STAGES[stage];
+        var stageMultiplier = isConfigurable ? (percentage / 100) : percentage;
+        result.byStage[stage] = (result.byStage[stage] || 0) + totalDays * stageMultiplier;
+      }
+
+      // Allocate to roles from Powered Stages
+      for (var role in ROLE_ALLOCATION_BY_STAGE) {
+        if (ROLE_ALLOCATION_BY_STAGE.hasOwnProperty(role)) {
+          var roleAllocation = ROLE_ALLOCATION_BY_STAGE[role];
+          for (var i = 0; i < stages.length; i++) {
+            var stage = stages[i];
+            if (roleAllocation.hasOwnProperty(stage)) {
+              var stageMultiplier = isConfigurable ? (stageDistribution[stage] / 100) : (stageDistribution[stage] || POWERED_STAGES[stage]);
+              var stageDays = totalDays * stageMultiplier;
+              result.byRole[role] = (result.byRole[role] || 0) + stageDays * roleAllocation[stage];
+            }
+          }
         }
       }
     }
 
     return result;
   }
+
 
   /**
    * Recalculate summary for entire estimator
@@ -191,109 +151,116 @@
   function recalcSummary(estimator) {
     var summary = {
       totalDays: 0,
-      byCloud: {},
+      byFeature: {},
       byStage: {},
       byRole: {},
-      byComponent: {},
+      bySolutionType: {},
       byActivity: {}
     };
 
-    if (estimator.mode === 'detailed') {
-      // Detailed mode: iterate through requirements
-      for (var i = 0; i < estimator.requirements.length; i++) {
-        var req = estimator.requirements[i];
-        var calc = calculateRequirement(req);
+    // Always iterate through requirements (mode only affects UI display)
+    for (var i = 0; i < estimator.requirements.length; i++) {
+      var req = estimator.requirements[i];
+      var calc = calculateRequirement(req, estimator.params);
 
-        summary.totalDays += calc.totalDays;
+      summary.totalDays += calc.totalDays;
 
-        // By Cloud
-        if (req.cloud) {
-          summary.byCloud[req.cloud] = (summary.byCloud[req.cloud] || 0) + calc.totalDays;
-        }
+      // By Feature
+      if (req.feature) {
+        summary.byFeature[req.feature] = (summary.byFeature[req.feature] || 0) + calc.totalDays;
+      }
 
-        // By Stage
-        for (var stage in calc.byStage) {
-          if (calc.byStage.hasOwnProperty(stage)) {
-            summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
-          }
-        }
-
-        // By Role
-        for (var role in calc.byRole) {
-          if (calc.byRole.hasOwnProperty(role)) {
-            summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
-          }
-        }
-
-        // By Component (Solution Type)
-        if (req.solutionType) {
-          summary.byComponent[req.solutionType] = (summary.byComponent[req.solutionType] || 0) + calc.totalDays;
-        }
-
-        // By Activity
-        for (var activity in calc.byActivity) {
-          if (calc.byActivity.hasOwnProperty(activity)) {
-            summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
-          }
+      // By Stage
+      for (var stage in calc.byStage) {
+        if (calc.byStage.hasOwnProperty(stage)) {
+          summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
         }
       }
-    } else {
-      // High-level mode: iterate through clouds
-      var clouds = ['Sales', 'Service', 'Marketing', 'Community', 'Experience', 'CPQ', 'Integration', 'Migration'];
-      for (var i = 0; i < clouds.length; i++) {
-        var cloud = clouds[i];
-        var calc = calculateHighLevelCloud(estimator.highlevel, cloud);
 
-        summary.totalDays += calc.totalDays;
-        summary.byCloud[cloud] = calc.totalDays;
-
-        // Merge byStage
-        for (var stage in calc.byStage) {
-          if (calc.byStage.hasOwnProperty(stage)) {
-            summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
-          }
+      // By Role
+      for (var role in calc.byRole) {
+        if (calc.byRole.hasOwnProperty(role)) {
+          summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
         }
+      }
 
-        // Merge byRole
-        for (var role in calc.byRole) {
-          if (calc.byRole.hasOwnProperty(role)) {
-            summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
-          }
+      // By Solution Type (all types - no primary distinction)
+      var types = req.solutionTypes || (req.solutionType ? [req.solutionType] : []);
+      for (var t = 0; t < types.length; t++) {
+        var type = types[t];
+        if (type) {
+          summary.bySolutionType[type] = (summary.bySolutionType[type] || 0) + calc.totalDays;
         }
+      }
 
-        // Merge byActivity
-        for (var activity in calc.byActivity) {
-          if (calc.byActivity.hasOwnProperty(activity)) {
-            summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
-          }
+      // By Activity
+      for (var activity in calc.byActivity) {
+        if (calc.byActivity.hasOwnProperty(activity)) {
+          summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
         }
       }
     }
 
     // Add integrations
     if (estimator.params.integrationsCount > 0) {
-      var integrationBaseHours = 0;
-      var integrationHours = BASE_HOURS.Integration.Medium;
-      var activities = ['Discovery', 'Requirements', 'Design', 'Development', 'Testing', 'UAT', 'Deployment', 'Documentation'];
-      for (var i = 0; i < activities.length; i++) {
-        integrationBaseHours += integrationHours[activities[i]];
+      var integrationCalc = calculateRequirement(
+        { solutionTypes: ['Integration'], complexity: 'Medium', feature: 'Integration' },
+        estimator.params
+      );
+      var count = estimator.params.integrationsCount;
+
+      summary.totalDays += integrationCalc.totalDays * count;
+      summary.byFeature.Integration = (summary.byFeature.Integration || 0) + integrationCalc.totalDays * count;
+      if (estimator.mode === 'detailed') {
+        summary.bySolutionType.Integration = (summary.bySolutionType.Integration || 0) + integrationCalc.totalDays * count;
       }
-      var integrationDays = estimator.params.integrationsCount * (integrationBaseHours / 8) * COMPLEXITY_MULTIPLIER.Medium;
-      summary.totalDays += integrationDays;
-      summary.byComponent.Integration = (summary.byComponent.Integration || 0) + integrationDays;
+
+      for (var activity in integrationCalc.byActivity) {
+        if (integrationCalc.byActivity.hasOwnProperty(activity)) {
+          summary.byActivity[activity] = (summary.byActivity[activity] || 0) + integrationCalc.byActivity[activity] * count;
+        }
+      }
+      for (var stage in integrationCalc.byStage) {
+        if (integrationCalc.byStage.hasOwnProperty(stage)) {
+          summary.byStage[stage] = (summary.byStage[stage] || 0) + integrationCalc.byStage[stage] * count;
+        }
+      }
+      for (var role in integrationCalc.byRole) {
+        if (integrationCalc.byRole.hasOwnProperty(role)) {
+          summary.byRole[role] = (summary.byRole[role] || 0) + integrationCalc.byRole[role] * count;
+        }
+      }
     }
 
     // Add migrations
     if (estimator.params.migrationsCount > 0) {
-      var migrationBaseHours = 0;
-      var migrationHours = BASE_HOURS.Migration.Medium;
-      var activities = ['Discovery', 'Requirements', 'Design', 'Development', 'Testing', 'UAT', 'Deployment', 'Documentation'];
-      for (var i = 0; i < activities.length; i++) {
-        migrationBaseHours += migrationHours[activities[i]];
+      var migrationCalc = calculateRequirement(
+        { solutionTypes: ['Migration'], complexity: 'Medium', feature: 'Migration' },
+        estimator.params
+      );
+      var count = estimator.params.migrationsCount;
+
+      summary.totalDays += migrationCalc.totalDays * count;
+      summary.byFeature.Migration = (summary.byFeature.Migration || 0) + migrationCalc.totalDays * count;
+      if (estimator.mode === 'detailed') {
+        summary.bySolutionType.Migration = (summary.bySolutionType.Migration || 0) + migrationCalc.totalDays * count;
       }
-      var migrationDays = estimator.params.migrationsCount * (migrationBaseHours / 8) * COMPLEXITY_MULTIPLIER.Medium;
-      summary.totalDays += migrationDays;
-      summary.byComponent.Migration = (summary.byComponent.Migration || 0) + migrationDays;
+
+      for (var activity in migrationCalc.byActivity) {
+        if (migrationCalc.byActivity.hasOwnProperty(activity)) {
+          summary.byActivity[activity] = (summary.byActivity[activity] || 0) + migrationCalc.byActivity[activity] * count;
+        }
+      }
+      for (var stage in migrationCalc.byStage) {
+        if (migrationCalc.byStage.hasOwnProperty(stage)) {
+          summary.byStage[stage] = (summary.byStage[stage] || 0) + migrationCalc.byStage[stage] * count;
+        }
+      }
+      for (var role in migrationCalc.byRole) {
+        if (migrationCalc.byRole.hasOwnProperty(role)) {
+          summary.byRole[role] = (summary.byRole[role] || 0) + migrationCalc.byRole[role] * count;
+        }
+      }
     }
 
     // Apply overhead percentages multiplicatively (sequential) to match Excel calculation
@@ -303,7 +270,7 @@
 
     summary.totalDays = summary.totalDays * overheadMultiplier;
 
-    // Apply same overhead multiplier to all breakdowns
+    // Apply all overheads to stages, roles, and components
     for (var key in summary.byStage) {
       if (summary.byStage.hasOwnProperty(key)) {
         summary.byStage[key] = summary.byStage[key] * overheadMultiplier;
@@ -314,21 +281,14 @@
         summary.byRole[key] = summary.byRole[key] * overheadMultiplier;
       }
     }
-    for (var key in summary.byActivity) {
-      if (summary.byActivity.hasOwnProperty(key)) {
-        summary.byActivity[key] = summary.byActivity[key] * overheadMultiplier;
+    for (var key in summary.bySolutionType) {
+      if (summary.bySolutionType.hasOwnProperty(key)) {
+        summary.bySolutionType[key] = summary.bySolutionType[key] * overheadMultiplier;
       }
     }
-    for (var key in summary.byCloud) {
-      if (summary.byCloud.hasOwnProperty(key)) {
-        summary.byCloud[key] = summary.byCloud[key] * overheadMultiplier;
-      }
-    }
-    for (var key in summary.byComponent) {
-      if (summary.byComponent.hasOwnProperty(key)) {
-        summary.byComponent[key] = summary.byComponent[key] * overheadMultiplier;
-      }
-    }
+
+    // byFeature and byActivity remain as BASE values (no overheads applied)
+    // This matches Excel where activities and feature totals are shown before overheads
 
     return summary;
   }
@@ -337,10 +297,9 @@
     COMPLEXITY_MULTIPLIER: COMPLEXITY_MULTIPLIER,
     BASE_HOURS: BASE_HOURS,
     POWERED_STAGES: POWERED_STAGES,
-    ROLE_ALLOCATION: ROLE_ALLOCATION,
+    ROLE_ALLOCATION_BY_STAGE: ROLE_ALLOCATION_BY_STAGE,
     generateRequirementId: generateRequirementId,
     calculateRequirement: calculateRequirement,
-    calculateHighLevelCloud: calculateHighLevelCloud,
     recalcSummary: recalcSummary
   };
 });

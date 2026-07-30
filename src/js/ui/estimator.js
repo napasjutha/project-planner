@@ -1012,7 +1012,67 @@
       });
 
       drawChart(state);
+      wireChartTooltip(state);
     }
+  }
+
+  function wireChartTooltip(state) {
+    var canvas = document.getElementById('summary-chart');
+    if (!canvas || chartCategory !== 'byRole') return;
+
+    // Remove existing tooltip if any
+    var existingTooltip = document.getElementById('chart-tooltip');
+    if (existingTooltip) {
+      existingTooltip.remove();
+    }
+
+    var tooltip = document.createElement('div');
+    tooltip.id = 'chart-tooltip';
+    tooltip.style.position = 'absolute';
+    tooltip.style.display = 'none';
+    tooltip.style.background = 'rgba(0, 0, 0, 0.8)';
+    tooltip.style.color = 'white';
+    tooltip.style.padding = '8px 12px';
+    tooltip.style.borderRadius = '4px';
+    tooltip.style.fontSize = '14px';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.zIndex = '1000';
+    document.body.appendChild(tooltip);
+
+    canvas.addEventListener('mousemove', function (e) {
+      var rect = canvas.getBoundingClientRect();
+      var scaleX = canvas.width / rect.width;
+      var scaleY = canvas.height / rect.height;
+      var mouseX = (e.clientX - rect.left) * scaleX;
+      var mouseY = (e.clientY - rect.top) * scaleY;
+
+      var hoveredSegment = null;
+      for (var i = 0; i < chartSegments.length; i++) {
+        var seg = chartSegments[i];
+        if (mouseX >= seg.x && mouseX <= seg.x + seg.width &&
+            mouseY >= seg.y && mouseY <= seg.y + seg.height) {
+          hoveredSegment = seg;
+          break;
+        }
+      }
+
+      if (hoveredSegment) {
+        tooltip.innerHTML = '<strong>' + hoveredSegment.stage + '</strong><br>' +
+                           hoveredSegment.role + ': ' + hoveredSegment.value.toFixed(1) + ' days';
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 10) + 'px';
+        tooltip.style.top = (e.clientY + 10) + 'px';
+        canvas.style.cursor = 'pointer';
+      } else {
+        tooltip.style.display = 'none';
+        canvas.style.cursor = 'default';
+      }
+    });
+
+    canvas.addEventListener('mouseleave', function () {
+      tooltip.style.display = 'none';
+      canvas.style.cursor = 'default';
+    });
   }
 
   function drawChart(state) {
@@ -1092,6 +1152,8 @@
     });
   }
 
+  var chartSegments = [];  // Store segment coordinates for tooltip
+
   function drawRoleByStageChart(ctx, state, width, height, textColor, stageColors) {
     var summary = state.project.estimator.summary;
     var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
@@ -1132,6 +1194,9 @@
     var bottomMargin = 40;
     var chartWidth = width - leftMargin - rightMargin;
 
+    // Clear segments array
+    chartSegments = [];
+
     // Draw legend at top
     var legendX = leftMargin;
     var legendY = 40;
@@ -1166,6 +1231,17 @@
         if (segmentWidth > 0) {
           ctx.fillStyle = stageColors[stage];
           ctx.fillRect(x, y, segmentWidth, barHeight);
+
+          // Store segment coordinates for tooltip
+          chartSegments.push({
+            x: x,
+            y: y,
+            width: segmentWidth,
+            height: barHeight,
+            stage: stage,
+            role: item.label,
+            value: stageValue
+          });
 
           // Show value if segment is wide enough
           if (segmentWidth > 60) {

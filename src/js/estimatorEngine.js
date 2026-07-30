@@ -284,10 +284,13 @@
           }
         }
 
-        // By Solution Type (primary type from array)
-        var primaryType = req.solutionTypes ? req.solutionTypes[0] : req.solutionType;
-        if (primaryType) {
-          summary.bySolutionType[primaryType] = (summary.bySolutionType[primaryType] || 0) + calc.totalDays;
+        // By Solution Type (all types - no primary distinction)
+        var types = req.solutionTypes || (req.solutionType ? [req.solutionType] : []);
+        for (var t = 0; t < types.length; t++) {
+          var type = types[t];
+          if (type) {
+            summary.bySolutionType[type] = (summary.bySolutionType[type] || 0) + calc.totalDays;
+          }
         }
 
         // By Activity

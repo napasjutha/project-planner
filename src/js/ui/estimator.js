@@ -941,7 +941,7 @@
           '<button class="legend-btn ' + (chartCategory === 'byActivity' ? 'active' : '') + '" data-category="byActivity">Activity</button>' +
         '</div>' +
         '<div class="chart-container">' +
-          '<canvas id="summary-chart" width="800" height="400"></canvas>' +
+          '<canvas id="summary-chart" width="1600" height="800"></canvas>' +
         '</div>' +
       '</div>';
       return html;
@@ -1064,11 +1064,11 @@
     items.sort(function (a, b) { return b.value - a.value; });
 
     var maxValue = Math.max.apply(null, items.map(function (item) { return item.value; }));
-    var barHeight = 30;
-    var barSpacing = 10;
-    var leftMargin = 150;
-    var rightMargin = 80;
-    var topMargin = 20;
+    var barHeight = 60;
+    var barSpacing = 20;
+    var leftMargin = 300;
+    var rightMargin = 160;
+    var topMargin = 40;
     var chartWidth = width - leftMargin - rightMargin;
 
     // Draw bars
@@ -1082,13 +1082,13 @@
 
       // Label
       ctx.fillStyle = textColor;
-      ctx.font = '12px sans-serif';
+      ctx.font = '24px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(item.label, leftMargin - 10, y + barHeight / 2 + 4);
+      ctx.fillText(item.label, leftMargin - 20, y + barHeight / 2 + 8);
 
       // Value
       ctx.textAlign = 'left';
-      ctx.fillText(item.value.toFixed(1) + ' days', leftMargin + barWidth + 10, y + barHeight / 2 + 4);
+      ctx.fillText(item.value.toFixed(1) + ' days', leftMargin + barWidth + 20, y + barHeight / 2 + 8);
     });
   }
 
@@ -1124,19 +1124,19 @@
     if (items.length === 0) return;
 
     var maxValue = Math.max.apply(null, items.map(function (item) { return item.total; }));
-    var barHeight = 30;
-    var barSpacing = 10;
-    var leftMargin = 180;
-    var rightMargin = 80;
-    var topMargin = 60;  // Extra space for legend
-    var bottomMargin = 20;
+    var barHeight = 60;
+    var barSpacing = 20;
+    var leftMargin = 360;
+    var rightMargin = 160;
+    var topMargin = 120;  // Extra space for legend
+    var bottomMargin = 40;
     var chartWidth = width - leftMargin - rightMargin;
 
     // Draw legend at top
     var legendX = leftMargin;
-    var legendY = 20;
-    var legendItemWidth = 100;
-    ctx.font = '11px sans-serif';
+    var legendY = 40;
+    var legendItemWidth = 200;
+    ctx.font = '22px sans-serif';
 
     for (var i = 0; i < stages.length; i++) {
       var stage = stages[i];
@@ -1144,12 +1144,12 @@
 
       // Color box
       ctx.fillStyle = stageColors[stage];
-      ctx.fillRect(x, legendY, 12, 12);
+      ctx.fillRect(x, legendY, 24, 24);
 
       // Label
       ctx.fillStyle = textColor;
       ctx.textAlign = 'left';
-      ctx.fillText(stage, x + 16, legendY + 10);
+      ctx.fillText(stage, x + 32, legendY + 20);
     }
 
     // Draw stacked bars
@@ -1168,11 +1168,11 @@
           ctx.fillRect(x, y, segmentWidth, barHeight);
 
           // Show value if segment is wide enough
-          if (segmentWidth > 30) {
+          if (segmentWidth > 60) {
             ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 10px sans-serif';
+            ctx.font = 'bold 20px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(stageValue.toFixed(1), x + segmentWidth / 2, y + barHeight / 2 + 3);
+            ctx.fillText(stageValue.toFixed(1), x + segmentWidth / 2, y + barHeight / 2 + 6);
           }
 
           x += segmentWidth;
@@ -1181,13 +1181,13 @@
 
       // Role label
       ctx.fillStyle = textColor;
-      ctx.font = '12px sans-serif';
+      ctx.font = '24px sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(item.label, leftMargin - 10, y + barHeight / 2 + 4);
+      ctx.fillText(item.label, leftMargin - 20, y + barHeight / 2 + 8);
 
       // Total value
       ctx.textAlign = 'left';
-      ctx.fillText(item.total.toFixed(1) + ' days', leftMargin + (item.total / maxValue) * chartWidth + 10, y + barHeight / 2 + 4);
+      ctx.fillText(item.total.toFixed(1) + ' days', leftMargin + (item.total / maxValue) * chartWidth + 20, y + barHeight / 2 + 8);
     });
   }
 

@@ -859,24 +859,18 @@ function renderMoscowMatrix(estimator) {
   var pivot = {};
 
   priorities.forEach(function(p) {
-    pivot[p] = { low: 0, medium: 0, high: 0, totalEffort: 0 };
+    pivot[p] = { low: 0, medium: 0, high: 0 };
   });
 
   estimator.requirements.forEach(function(req) {
     var moscow = req.moscow || 'Must';
     if (!pivot[moscow]) {
-      pivot[moscow] = { low: 0, medium: 0, high: 0, totalEffort: 0 };
+      pivot[moscow] = { low: 0, medium: 0, high: 0 };
     }
 
     if (req.complexity === 'Low') pivot[moscow].low++;
     if (req.complexity === 'Medium') pivot[moscow].medium++;
     if (req.complexity === 'High') pivot[moscow].high++;
-
-    // Sum effort
-    if (req.solutionTypes && req.solutionTypes.length > 0 && req.complexity) {
-      var calc = PP.calculateRequirement(req, estimator.params);
-      pivot[moscow].totalEffort += calc.totalDays;
-    }
   });
 
   var html = '<table class="highlevel-table">' +
@@ -886,7 +880,6 @@ function renderMoscowMatrix(estimator) {
       '<th style="width:120px">Medium</th>' +
       '<th style="width:120px">High</th>' +
       '<th style="width:80px">Total</th>' +
-      '<th style="width:140px">Total Effort (days)</th>' +
       '</tr></thead>' +
       '<tbody>';
 
@@ -899,7 +892,6 @@ function renderMoscowMatrix(estimator) {
         '<td style="text-align:center">' + counts.medium + '</td>' +
         '<td style="text-align:center">' + counts.high + '</td>' +
         '<td style="text-align:center">' + totalCount + '</td>' +
-        '<td style="text-align:right">' + counts.totalEffort.toFixed(2) + '</td>' +
         '</tr>';
   });
 

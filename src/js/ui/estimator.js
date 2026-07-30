@@ -1212,9 +1212,9 @@ function wireChartTooltip(state) {
           ' days';
       tooltip.style.display = 'block';
 
-      // Position tooltip right at cursor location
-      tooltip.style.left = (e.clientX + 10) + 'px';
-      tooltip.style.top = (e.clientY - 10) + 'px';
+      // Position tooltip right next to cursor
+      tooltip.style.left = (e.clientX + 2) + 'px';
+      tooltip.style.top = (e.clientY + 2) + 'px';
       canvas.style.cursor = 'pointer';
     } else {
       tooltip.style.display = 'none';

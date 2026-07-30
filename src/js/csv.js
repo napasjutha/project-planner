@@ -260,7 +260,6 @@
     if (params) {
       paramsLine = '# PARAMS: ' +
         'contingency=' + (params.contingencyPct * 100) + ',' +
-        'confidence=' + (params.confidencePct * 100) + ',' +
         'changeManagement=' + (params.changeManagementPct * 100) + ',' +
         'projectManagement=' + (params.projectManagementPct * 100) + ',' +
         'integrations=' + params.integrationsCount + ',' +

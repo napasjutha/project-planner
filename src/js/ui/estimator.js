@@ -135,11 +135,6 @@ function renderParams(state) {
       (params.contingencyPct * 100) + '" min="0" max="100" step="1">' +
       '</div>' +
       '<div class="param-field">' +
-      '<label>Confidence %</label>' +
-      '<input type="number" class="param-input" data-param="confidencePct" value="' +
-      ((params.confidencePct || 1) * 100) + '" min="0" max="100" step="1">' +
-      '</div>' +
-      '<div class="param-field">' +
       '<label>Change Mgmt %</label>' +
       '<input type="number" class="param-input" data-param="changeManagementPct" value="' +
       (params.changeManagementPct * 100) + '" min="0" max="100" step="1">' +

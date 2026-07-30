@@ -159,7 +159,6 @@
           Evolve: 8
         },
         contingencyPct: 0.1,
-        confidencePct: 1,
         changeManagementPct: 0.2,
         projectManagementPct: 0.2,
         integrationsCount: 0,
@@ -245,7 +244,6 @@
             Evolve: 8
           },
           contingencyPct: 0.1,
-          confidencePct: 1,
           changeManagementPct: 0.2,
           projectManagementPct: 0.2,
           integrationsCount: 0,

@@ -208,6 +208,62 @@ function wireHeader(state) {
     });
   }
 
+  // Wire delete powered stage buttons
+  var deleteStageButtons = document.querySelectorAll('.ps-delete-btn');
+  deleteStageButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var stage = btn.getAttribute('data-stage');
+      var params = state.project.estimator.params;
+      var stages = Object.keys(params.poweredStages);
+
+      if (stages.length === 1) {
+        alert('Cannot delete the last stage');
+        return;
+      }
+
+      state.project._pushUndo();
+      redistributeStages(stage, params.poweredStages);
+      state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
+      PP.refresh();
+    });
+  });
+
+  function redistributeStages(stageToDelete, poweredStages) {
+    var deletedPct = poweredStages[stageToDelete];
+    delete poweredStages[stageToDelete];
+
+    var remaining = Object.keys(poweredStages);
+    var remainingTotal = remaining.reduce(function(sum, key) {
+      return sum + poweredStages[key];
+    }, 0);
+
+    if (remainingTotal === 0) {
+      // Edge case: all stages were 0%, distribute evenly
+      remaining.forEach(function(key) {
+        poweredStages[key] = Math.round(100 / remaining.length * 100) / 100;
+      });
+      return;
+    }
+
+    // Proportional redistribution
+    var scaleFactor = 100 / remainingTotal;
+    remaining.forEach(function(key) {
+      poweredStages[key] = Math.round(poweredStages[key] * scaleFactor * 100) / 100;
+    });
+
+    // Fix rounding errors by adjusting largest stage
+    var newTotal = remaining.reduce(function(sum, key) {
+      return sum + poweredStages[key];
+    }, 0);
+    if (Math.abs(newTotal - 100) > 0.01) {
+      var largest = remaining.sort(function(a, b) {
+        return poweredStages[b] - poweredStages[a];
+      })[0];
+      poweredStages[largest] += (100 - newTotal);
+      poweredStages[largest] = Math.round(poweredStages[largest] * 100) / 100;
+    }
+  }
+
   // Wire params if expanded
   if (paramsExpanded) {
     wireParams(state);

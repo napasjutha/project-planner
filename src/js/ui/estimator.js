@@ -1032,10 +1032,25 @@
     var kpmgBlue = computedStyle.getPropertyValue('--kpmg-blue').trim() || '#00338d';
     var textColor = computedStyle.getPropertyValue('--text').trim() || '#000';
 
+    // Stage colors
+    var stageColors = {
+      'Vision': '#34C759',      // Green
+      'Validate': '#5AC8FA',    // Light blue
+      'Construct': '#007AFF',   // Blue
+      'Deploy': '#AF52DE',      // Purple
+      'Evolve': '#FF9500'       // Orange
+    };
+
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Prepare data
+    // Special handling for byRole - show stacked by stage
+    if (chartCategory === 'byRole') {
+      drawRoleByStageChart(ctx, state, width, height, textColor, stageColors);
+      return;
+    }
+
+    // Prepare data for other categories
     var items = [];
     for (var key in data) {
       if (data.hasOwnProperty(key)) {
@@ -1074,6 +1089,105 @@
       // Value
       ctx.textAlign = 'left';
       ctx.fillText(item.value.toFixed(1) + ' days', leftMargin + barWidth + 10, y + barHeight / 2 + 4);
+    });
+  }
+
+  function drawRoleByStageChart(ctx, state, width, height, textColor, stageColors) {
+    var summary = state.project.estimator.summary;
+    var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
+
+    // Calculate role breakdown by stage
+    var roleBreakdown = {};
+    for (var role in PP.ROLE_ALLOCATION_BY_STAGE) {
+      if (PP.ROLE_ALLOCATION_BY_STAGE.hasOwnProperty(role)) {
+        roleBreakdown[role] = { total: 0, byStage: {} };
+        for (var i = 0; i < stages.length; i++) {
+          var stage = stages[i];
+          var stageTotal = summary.byStage[stage] || 0;
+          var roleAllocation = PP.ROLE_ALLOCATION_BY_STAGE[role][stage] || 0;
+          var roleStageEffort = stageTotal * roleAllocation;
+          roleBreakdown[role].byStage[stage] = roleStageEffort;
+          roleBreakdown[role].total += roleStageEffort;
+        }
+      }
+    }
+
+    // Convert to items and sort
+    var items = [];
+    for (var role in roleBreakdown) {
+      if (roleBreakdown.hasOwnProperty(role)) {
+        items.push({ label: role, total: roleBreakdown[role].total, byStage: roleBreakdown[role].byStage });
+      }
+    }
+    items.sort(function (a, b) { return b.total - a.total; });
+
+    if (items.length === 0) return;
+
+    var maxValue = Math.max.apply(null, items.map(function (item) { return item.total; }));
+    var barHeight = 30;
+    var barSpacing = 10;
+    var leftMargin = 180;
+    var rightMargin = 80;
+    var topMargin = 60;  // Extra space for legend
+    var bottomMargin = 20;
+    var chartWidth = width - leftMargin - rightMargin;
+
+    // Draw legend at top
+    var legendX = leftMargin;
+    var legendY = 20;
+    var legendItemWidth = 100;
+    ctx.font = '11px sans-serif';
+
+    for (var i = 0; i < stages.length; i++) {
+      var stage = stages[i];
+      var x = legendX + i * legendItemWidth;
+
+      // Color box
+      ctx.fillStyle = stageColors[stage];
+      ctx.fillRect(x, legendY, 12, 12);
+
+      // Label
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'left';
+      ctx.fillText(stage, x + 16, legendY + 10);
+    }
+
+    // Draw stacked bars
+    items.forEach(function (item, i) {
+      var y = topMargin + i * (barHeight + barSpacing);
+      var x = leftMargin;
+
+      // Draw each stage segment
+      for (var j = 0; j < stages.length; j++) {
+        var stage = stages[j];
+        var stageValue = item.byStage[stage] || 0;
+        var segmentWidth = (stageValue / maxValue) * chartWidth;
+
+        if (segmentWidth > 0) {
+          ctx.fillStyle = stageColors[stage];
+          ctx.fillRect(x, y, segmentWidth, barHeight);
+
+          // Show value if segment is wide enough
+          if (segmentWidth > 30) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(stageValue.toFixed(1), x + segmentWidth / 2, y + barHeight / 2 + 3);
+          }
+
+          x += segmentWidth;
+        }
+      }
+
+      // Role label
+      ctx.fillStyle = textColor;
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(item.label, leftMargin - 10, y + barHeight / 2 + 4);
+
+      // Total value
+      ctx.textAlign = 'left';
+      ctx.fillText(item.total.toFixed(1) + ' days', leftMargin + (item.total / maxValue) * chartWidth + 10, y + barHeight / 2 + 4);
     });
   }
 

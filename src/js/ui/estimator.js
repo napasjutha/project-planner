@@ -859,7 +859,8 @@ function renderFeatureMatrix(estimator) {
         customization: 0,
         integration: 0,
         migration: 0,
-        totalEffort: 0
+        totalEffort: 0,
+        phases: []
       };
     }
 
@@ -877,6 +878,11 @@ function renderFeatureMatrix(estimator) {
       }
     }
 
+    // Collect unique phases
+    if (req.releasePhase && pivot[feature].phases.indexOf(req.releasePhase) === -1) {
+      pivot[feature].phases.push(req.releasePhase);
+    }
+
     // Sum effort
     if (req.solutionTypes && req.solutionTypes.length > 0 && req.complexity) {
       var calc = PP.calculateRequirement(req, estimator.params);
@@ -885,8 +891,15 @@ function renderFeatureMatrix(estimator) {
   });
 
   var html = '<table class="highlevel-table">' +
-      '<thead><tr>' +
-      '<th>Feature</th>' +
+      '<thead>' +
+      '<tr>' +
+      '<th rowspan="2">Feature</th>' +
+      '<th colspan="3" style="text-align:center;border-bottom:1px solid var(--border)">Complexity</th>' +
+      '<th colspan="5" style="text-align:center;border-bottom:1px solid var(--border)">Solution Type</th>' +
+      '<th rowspan="2" style="width:120px">Phases</th>' +
+      '<th rowspan="2" style="width:140px">Total Effort (days)</th>' +
+      '</tr>' +
+      '<tr>' +
       '<th style="width:60px">Low</th>' +
       '<th style="width:60px">Med</th>' +
       '<th style="width:60px">High</th>' +
@@ -895,18 +908,19 @@ function renderFeatureMatrix(estimator) {
       '<th style="width:80px">Custom</th>' +
       '<th style="width:70px">Integ</th>' +
       '<th style="width:60px">Migr</th>' +
-      '<th style="width:140px">Total Effort (days)</th>' +
-      '</tr></thead>' +
+      '</tr>' +
+      '</thead>' +
       '<tbody>';
 
   var features = Object.keys(pivot).sort();
 
   if (features.length === 0) {
-    html += '<tr><td colspan="10" style="text-align:center;color:var(--text-secondary);padding:24px;">' +
+    html += '<tr><td colspan="11" style="text-align:center;color:var(--text-secondary);padding:24px;">' +
         'No requirements yet. Switch to Detailed mode to add requirements.</td></tr>';
   } else {
     features.forEach(function(feature) {
       var data = pivot[feature];
+      var phasesDisplay = data.phases.sort().join(', ');
       html += '<tr>' +
           '<td>' + escapeHtml(feature) + '</td>' +
           '<td style="text-align:center">' + data.low + '</td>' +
@@ -917,6 +931,7 @@ function renderFeatureMatrix(estimator) {
           '<td style="text-align:center">' + data.customization + '</td>' +
           '<td style="text-align:center">' + data.integration + '</td>' +
           '<td style="text-align:center">' + data.migration + '</td>' +
+          '<td>' + escapeHtml(phasesDisplay) + '</td>' +
           '<td style="text-align:right">' + data.totalEffort.toFixed(2) + '</td>' +
           '</tr>';
     });

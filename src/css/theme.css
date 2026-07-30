@@ -488,3 +488,39 @@ input, select, textarea {
 .hl-delete-feature:hover {
   color: var(--danger);
 }
+
+.ps-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+  margin-left: 4px;
+  line-height: 1;
+}
+
+.ps-delete-btn:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.ps-delete-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+#ps-add-stage-btn {
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+#ps-add-stage-btn:hover {
+  opacity: 0.9;
+}

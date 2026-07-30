@@ -773,10 +773,10 @@ function renderFeatureMatrix(estimator) {
   var html = '<table class="highlevel-table">' +
       '<thead><tr>' +
       '<th>Feature</th>' +
-      '<th style="width:100px">Low</th>' +
-      '<th style="width:100px">Medium</th>' +
-      '<th style="width:100px">High</th>' +
-      '<th style="width:140px">Total Effort (days)</th>' +
+      '<th style="width:120px">Low</th>' +
+      '<th style="width:120px">Medium</th>' +
+      '<th style="width:120px">High</th>' +
+      '<th style="width:160px">Total Effort (days)</th>' +
       '<th style="width:60px"></th>' +
       '</tr></thead>' +
       '<tbody>';
@@ -831,7 +831,7 @@ function renderFeatureMatrix(estimator) {
         '<td><input type="number" class="hl-input" data-feature="' +
         escapeHtml(feature) + '" data-complexity="high" value="' + counts.high +
         '" min="0"></td>' +
-        '<td style="text-align:right">' + totalEffort.toFixed(1) + '</td>' +
+        '<td>' + totalEffort.toFixed(2) + '</td>' +
         '<td><button class="hl-delete-feature" data-feature="' +
         escapeHtml(feature) + '">&times;</button></td>' +
         '</tr>';
@@ -856,10 +856,10 @@ function renderMoscowMatrix(estimator) {
   var html = '<table class="highlevel-table">' +
       '<thead><tr>' +
       '<th>Priority</th>' +
-      '<th style="width:100px">Low</th>' +
-      '<th style="width:100px">Medium</th>' +
-      '<th style="width:100px">High</th>' +
-      '<th style="width:140px">Total Effort (days)</th>' +
+      '<th style="width:120px">Low</th>' +
+      '<th style="width:120px">Medium</th>' +
+      '<th style="width:120px">High</th>' +
+      '<th style="width:160px">Total Effort (days)</th>' +
       '</tr></thead>' +
       '<tbody>';
 
@@ -909,7 +909,7 @@ function renderMoscowMatrix(estimator) {
         '<td><input type="number" class="hl-input-moscow" data-moscow="' +
         priority + '" data-complexity="high" value="' + counts.high +
         '" min="0"></td>' +
-        '<td style="text-align:right">' + totalEffort.toFixed(1) + '</td>' +
+        '<td>' + totalEffort.toFixed(2) + '</td>' +
         '</tr>';
   });
 
@@ -1213,8 +1213,8 @@ function wireChartTooltip(state) {
       tooltip.style.display = 'block';
 
       // Position tooltip right next to cursor
-      tooltip.style.left = (e.clientX + 2) + 'px';
-      tooltip.style.top = (e.clientY + 2) + 'px';
+      tooltip.style.left = (e.clientX + 0.5) + 'px';
+      tooltip.style.top = (e.clientY + 0.5) + 'px';
       canvas.style.cursor = 'pointer';
     } else {
       tooltip.style.display = 'none';

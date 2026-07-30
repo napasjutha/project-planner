@@ -94,19 +94,32 @@
       '</div>' +
     '</div>';
 
-    // Overheads section
-    html += '<div class="param-section">' +
-      '<h4>Overheads</h4>' +
-      '<label>Contingency: <input type="number" class="param-input" data-param="contingencyPct" value="' + (params.contingencyPct * 100) + '" min="0" max="100" step="1">%</label>' +
-      '<label>Change Management: <input type="number" class="param-input" data-param="changeManagementPct" value="' + (params.changeManagementPct * 100) + '" min="0" max="100" step="1">%</label>' +
-      '<label>Project Management: <input type="number" class="param-input" data-param="projectManagementPct" value="' + (params.projectManagementPct * 100) + '" min="0" max="100" step="1">%</label>' +
-    '</div>';
-
-    // Context section
-    html += '<div class="param-section">' +
-      '<h4>Context</h4>' +
-      '<label>Integrations: <input type="number" class="param-input" data-param="integrationsCount" value="' + params.integrationsCount + '" min="0" step="1"></label>' +
-      '<label>Migrations: <input type="number" class="param-input" data-param="migrationsCount" value="' + params.migrationsCount + '" min="0" step="1"></label>' +
+    // Estimation Parameters section (grid layout)
+    html += '<div class="param-section estimation-params-grid">' +
+      '<div class="param-field">' +
+        '<label>Contingency %</label>' +
+        '<input type="number" class="param-input" data-param="contingencyPct" value="' + (params.contingencyPct * 100) + '" min="0" max="100" step="1">' +
+      '</div>' +
+      '<div class="param-field">' +
+        '<label>Confidence %</label>' +
+        '<input type="number" class="param-input" data-param="confidencePct" value="' + ((params.confidencePct || 1) * 100) + '" min="0" max="100" step="1">' +
+      '</div>' +
+      '<div class="param-field">' +
+        '<label>Change Mgmt %</label>' +
+        '<input type="number" class="param-input" data-param="changeManagementPct" value="' + (params.changeManagementPct * 100) + '" min="0" max="100" step="1">' +
+      '</div>' +
+      '<div class="param-field">' +
+        '<label>Project Mgmt %</label>' +
+        '<input type="number" class="param-input" data-param="projectManagementPct" value="' + (params.projectManagementPct * 100) + '" min="0" max="100" step="1">' +
+      '</div>' +
+      '<div class="param-field">' +
+        '<label>Integrations Count</label>' +
+        '<input type="number" class="param-input" data-param="integrationsCount" value="' + params.integrationsCount + '" min="0" step="1">' +
+      '</div>' +
+      '<div class="param-field">' +
+        '<label>Migrations Count</label>' +
+        '<input type="number" class="param-input" data-param="migrationsCount" value="' + params.migrationsCount + '" min="0" step="1">' +
+      '</div>' +
     '</div>';
 
     html += '</div>';

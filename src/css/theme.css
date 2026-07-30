@@ -241,12 +241,31 @@ input, select, textarea {
   color: var(--danger);
 }
 
+.estimation-params-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.param-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-field label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .param-input {
-  width: 80px;
-  padding: 4px;
-  margin-left: 8px;
+  width: 100%;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  font-size: 14px;
 }
 
 .solution-types-cell {

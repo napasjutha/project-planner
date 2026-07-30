@@ -180,6 +180,34 @@ function wireHeader(state) {
     });
   }
 
+  // Wire add powered stage button
+  var addStageBtn = document.getElementById('ps-add-stage-btn');
+  if (addStageBtn) {
+    addStageBtn.addEventListener('click', function() {
+      var params = state.project.estimator.params;
+
+      var stageName = prompt('Stage name:');
+      if (!stageName || stageName.trim() === '') return;
+      stageName = stageName.trim();
+
+      if (params.poweredStages[stageName] !== undefined) {
+        alert('Stage "' + stageName + '" already exists');
+        return;
+      }
+
+      var pct = prompt('Initial percentage (0-100):', '0');
+      var pctNum = parseFloat(pct);
+      if (isNaN(pctNum) || pctNum < 0 || pctNum > 100) {
+        alert('Invalid percentage. Must be 0-100.');
+        return;
+      }
+
+      state.project._pushUndo();
+      params.poweredStages[stageName] = pctNum;
+      PP.refresh();
+    });
+  }
+
   // Wire params if expanded
   if (paramsExpanded) {
     wireParams(state);

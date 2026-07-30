@@ -142,107 +142,6 @@
     return result;
   }
 
-  /**
-   * Calculate high-level estimate from component counts
-   * @param {Object} highlevel - { Cloud: { low: N, medium: N, high: N }, ... }
-   * @param {string} cloud - Cloud name (Sales, Service, etc.)
-   * @returns {Object} - { totalDays, byActivity, byStage, byRole }
-   */
-  function calculateHighLevelCloud(highlevel, cloud) {
-    var counts = highlevel[cloud];
-    if (!counts) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
-    var result = { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-
-    // For high-level, we use Configuration as the default solution type
-    var complexities = ['Low', 'Medium', 'High'];
-    for (var i = 0; i < complexities.length; i++) {
-      var complexity = complexities[i];
-      var count = counts[complexity.toLowerCase()] || 0;
-      if (count === 0) continue;
-
-      var calc = calculateRequirement({ solutionType: 'Configuration', complexity: complexity });
-
-      result.totalDays += calc.totalDays * count;
-
-      // Merge byActivity
-      for (var activity in calc.byActivity) {
-        if (calc.byActivity.hasOwnProperty(activity)) {
-          result.byActivity[activity] = (result.byActivity[activity] || 0) + calc.byActivity[activity] * count;
-        }
-      }
-
-      // Merge byStage
-      for (var stage in calc.byStage) {
-        if (calc.byStage.hasOwnProperty(stage)) {
-          result.byStage[stage] = (result.byStage[stage] || 0) + calc.byStage[stage] * count;
-        }
-      }
-
-      // Merge byRole
-      for (var role in calc.byRole) {
-        if (calc.byRole.hasOwnProperty(role)) {
-          result.byRole[role] = (result.byRole[role] || 0) + calc.byRole[role] * count;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Calculate high-level estimate from feature counts
-   * @param {Object} counts - { low: N, medium: N, high: N }
-   * @param {Object} params - Optional params object with poweredStages override
-   * @returns {Object} - { totalDays, byActivity, byStage, byRole }
-   */
-  function calculateHighLevelFeature(counts, params) {
-    if (!counts) {
-      return { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-    }
-
-    var result = { totalDays: 0, byActivity: {}, byStage: {}, byRole: {} };
-
-    // Use Configuration as default solution type for high-level
-    var complexities = ['Low', 'Medium', 'High'];
-    for (var i = 0; i < complexities.length; i++) {
-      var complexity = complexities[i];
-      var count = counts[complexity.toLowerCase()] || 0;
-      if (count === 0) continue;
-
-      var calc = calculateRequirement(
-        { solutionTypes: ['Configuration'], complexity: complexity, feature: 'HighLevel' },
-        params
-      );
-
-      result.totalDays += calc.totalDays * count;
-
-      // Merge byActivity
-      for (var activity in calc.byActivity) {
-        if (calc.byActivity.hasOwnProperty(activity)) {
-          result.byActivity[activity] = (result.byActivity[activity] || 0) + calc.byActivity[activity] * count;
-        }
-      }
-
-      // Merge byStage
-      for (var stage in calc.byStage) {
-        if (calc.byStage.hasOwnProperty(stage)) {
-          result.byStage[stage] = (result.byStage[stage] || 0) + calc.byStage[stage] * count;
-        }
-      }
-
-      // Merge byRole
-      for (var role in calc.byRole) {
-        if (calc.byRole.hasOwnProperty(role)) {
-          result.byRole[role] = (result.byRole[role] || 0) + calc.byRole[role] * count;
-        }
-      }
-    }
-
-    return result;
-  }
 
   /**
    * Recalculate summary for entire estimator
@@ -435,8 +334,6 @@
     ROLE_ALLOCATION_BY_STAGE: ROLE_ALLOCATION_BY_STAGE,
     generateRequirementId: generateRequirementId,
     calculateRequirement: calculateRequirement,
-    calculateHighLevelCloud: calculateHighLevelCloud,
-    calculateHighLevelFeature: calculateHighLevelFeature,
     recalcSummary: recalcSummary
   };
 });

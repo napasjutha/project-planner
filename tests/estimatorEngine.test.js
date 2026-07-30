@@ -43,23 +43,6 @@ test('calculateRequirement - invalid inputs', () => {
   assert.strictEqual(result.totalDays, 0, 'Invalid solution type should return 0');
 });
 
-test('calculateHighLevelCloud - Sales cloud with mixed complexity', () => {
-  const highlevel = {
-    Sales: { low: 3, medium: 2, high: 1 }
-  };
-  const result = engine.calculateHighLevelCloud(highlevel, 'Sales');
-
-  // Uses Configuration as default
-  // Low: 28.5h * 1.10 / 8 = 3.92 days * 3 = 11.76 days
-  // Medium: 57h * 1.21 / 8 = 8.62 days * 2 = 17.24 days
-  // High: 122h * 1.375 / 8 = 19.59 days * 1 = 19.59 days
-  // Total = 48.59 days
-  assert.ok(result.totalDays > 48 && result.totalDays < 49, 'Total should be ~48.6 days');
-  assert.ok(result.byActivity.Discovery > 0, 'Should have Discovery');
-  assert.ok(result.byStage.Construct > 0, 'Should have Construct stage');
-  assert.ok(result.byRole.Developer > 0, 'Should have Developer role');
-});
-
 test('recalcSummary - detailed mode with two requirements', () => {
   const estimator = {
     mode: 'detailed',

@@ -1061,16 +1061,9 @@
                            hoveredSegment.role + ': ' + hoveredSegment.value.toFixed(1) + ' days';
         tooltip.style.display = 'block';
 
-        // Position tooltip next to the segment
-        var segmentCenterX = hoveredSegment.x + hoveredSegment.width / 2;
-        var segmentCenterY = hoveredSegment.y + hoveredSegment.height / 2;
-
-        // Convert canvas coordinates to screen coordinates
-        var tooltipX = rect.left + (segmentCenterX / scaleX);
-        var tooltipY = rect.top + (segmentCenterY / scaleY);
-
-        tooltip.style.left = (tooltipX + 10) + 'px';
-        tooltip.style.top = (tooltipY - 30) + 'px';
+        // Position tooltip right at cursor location
+        tooltip.style.left = (e.clientX + 10) + 'px';
+        tooltip.style.top = (e.clientY - 40) + 'px';
         canvas.style.cursor = 'pointer';
       } else {
         tooltip.style.display = 'none';

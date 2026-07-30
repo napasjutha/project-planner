@@ -1063,7 +1063,7 @@
 
         // Position tooltip right at cursor location
         tooltip.style.left = (e.clientX + 10) + 'px';
-        tooltip.style.top = (e.clientY - 40) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
         canvas.style.cursor = 'pointer';
       } else {
         tooltip.style.display = 'none';

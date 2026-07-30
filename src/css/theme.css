@@ -525,13 +525,19 @@ input, select, textarea {
   opacity: 0.9;
 }
 
+.ps-reorder-btns {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 4px;
+}
+
 .ps-reorder-btn {
   background: none;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 14px;
-  padding: 0 2px;
+  font-size: 12px;
+  padding: 0 3px;
   line-height: 1;
 }
 

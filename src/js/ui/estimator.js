@@ -109,11 +109,12 @@ function renderParams(state) {
   var stages = params.stageOrder || Object.keys(params.poweredStages).sort();
   stages.forEach(function(stage, idx) {
     html += '<div class="param-field">' +
+      '<label>' + escapeHtml(stage) + ':<span class="ps-reorder-btns">' +
       '<button class="ps-reorder-btn" data-stage="' + escapeHtml(stage) +
       '" data-direction="up"' + (idx === 0 ? ' disabled' : '') + '>◀</button>' +
       '<button class="ps-reorder-btn" data-stage="' + escapeHtml(stage) +
       '" data-direction="down"' + (idx === stages.length - 1 ? ' disabled' : '') + '>▶</button>' +
-      '<label>' + escapeHtml(stage) + ':</label>' +
+      '</span></label>' +
       '<input type="number" class="ps-input param-input" data-stage="' +
       escapeHtml(stage) + '" value="' + escapeHtml(params.poweredStages[stage]) +
       '" min="0" max="100">' +

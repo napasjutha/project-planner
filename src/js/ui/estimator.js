@@ -1060,8 +1060,17 @@
         tooltip.innerHTML = '<strong>' + hoveredSegment.stage + '</strong><br>' +
                            hoveredSegment.role + ': ' + hoveredSegment.value.toFixed(1) + ' days';
         tooltip.style.display = 'block';
-        tooltip.style.left = (e.clientX + 10) + 'px';
-        tooltip.style.top = (e.clientY + 10) + 'px';
+
+        // Position tooltip next to the segment
+        var segmentCenterX = hoveredSegment.x + hoveredSegment.width / 2;
+        var segmentCenterY = hoveredSegment.y + hoveredSegment.height / 2;
+
+        // Convert canvas coordinates to screen coordinates
+        var tooltipX = rect.left + (segmentCenterX / scaleX);
+        var tooltipY = rect.top + (segmentCenterY / scaleY);
+
+        tooltip.style.left = (tooltipX + 10) + 'px';
+        tooltip.style.top = (tooltipY - 30) + 'px';
         canvas.style.cursor = 'pointer';
       } else {
         tooltip.style.display = 'none';
@@ -1092,13 +1101,13 @@
     var kpmgBlue = computedStyle.getPropertyValue('--kpmg-blue').trim() || '#00338d';
     var textColor = computedStyle.getPropertyValue('--text').trim() || '#000';
 
-    // Stage colors
+    // Stage colors - blue gradient palette
     var stageColors = {
-      'Vision': '#34C759',      // Green
-      'Validate': '#5AC8FA',    // Light blue
-      'Construct': '#007AFF',   // Blue
-      'Deploy': '#AF52DE',      // Purple
-      'Evolve': '#FF9500'       // Orange
+      'Vision': '#00254D',      // Dark navy
+      'Validate': '#003D73',    // Navy blue
+      'Construct': '#0074B7',   // Medium blue
+      'Deploy': '#7FAFCC',      // Light blue
+      'Evolve': '#C5D9E6'       // Very light blue
     };
 
     // Clear canvas
@@ -1245,7 +1254,9 @@
 
           // Show value if segment is wide enough
           if (segmentWidth > 60) {
-            ctx.fillStyle = '#ffffff';
+            // Use dark text for light segments, white text for dark segments
+            var useDarkText = (stage === 'Deploy' || stage === 'Evolve');
+            ctx.fillStyle = useDarkText ? '#000000' : '#ffffff';
             ctx.font = 'bold 20px sans-serif';
             ctx.textAlign = 'center';
             ctx.fillText(stageValue.toFixed(1), x + segmentWidth / 2, y + barHeight / 2 + 6);

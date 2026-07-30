@@ -16,7 +16,13 @@ function escapeHtml(s) {
 var POWERED_STAGE_TOLERANCE = 0.01;
 
 function sumPoweredStages(ps) {
-  return ps.Vision + ps.Validate + ps.Construct + ps.Deploy + ps.Evolve;
+  var sum = 0;
+  for (var key in ps) {
+    if (ps.hasOwnProperty(key)) {
+      sum += ps[key];
+    }
+  }
+  return sum;
 }
 
 var paramsExpanded = false;

@@ -115,7 +115,7 @@
       // Distribute across Powered Stages using configurable percentages
       var stageDistribution = params && params.poweredStages ? params.poweredStages : POWERED_STAGES;
       var isConfigurable = params && params.poweredStages;
-      var stages = ['Vision', 'Validate', 'Construct', 'Deploy', 'Evolve'];
+      var stages = Object.keys(stageDistribution);
       for (var i = 0; i < stages.length; i++) {
         var stage = stages[i];
         var percentage = stageDistribution[stage] || POWERED_STAGES[stage];

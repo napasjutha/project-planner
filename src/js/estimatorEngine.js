@@ -158,79 +158,45 @@
       byActivity: {}
     };
 
-    if (estimator.mode === 'detailed') {
-      // Detailed mode: iterate through requirements
-      for (var i = 0; i < estimator.requirements.length; i++) {
-        var req = estimator.requirements[i];
-        var calc = calculateRequirement(req, estimator.params);
+    // Always iterate through requirements (mode only affects UI display)
+    for (var i = 0; i < estimator.requirements.length; i++) {
+      var req = estimator.requirements[i];
+      var calc = calculateRequirement(req, estimator.params);
 
-        summary.totalDays += calc.totalDays;
+      summary.totalDays += calc.totalDays;
 
-        // By Feature
-        if (req.feature) {
-          summary.byFeature[req.feature] = (summary.byFeature[req.feature] || 0) + calc.totalDays;
-        }
+      // By Feature
+      if (req.feature) {
+        summary.byFeature[req.feature] = (summary.byFeature[req.feature] || 0) + calc.totalDays;
+      }
 
-        // By Stage
-        for (var stage in calc.byStage) {
-          if (calc.byStage.hasOwnProperty(stage)) {
-            summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
-          }
-        }
-
-        // By Role
-        for (var role in calc.byRole) {
-          if (calc.byRole.hasOwnProperty(role)) {
-            summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
-          }
-        }
-
-        // By Solution Type (all types - no primary distinction)
-        var types = req.solutionTypes || (req.solutionType ? [req.solutionType] : []);
-        for (var t = 0; t < types.length; t++) {
-          var type = types[t];
-          if (type) {
-            summary.bySolutionType[type] = (summary.bySolutionType[type] || 0) + calc.totalDays;
-          }
-        }
-
-        // By Activity
-        for (var activity in calc.byActivity) {
-          if (calc.byActivity.hasOwnProperty(activity)) {
-            summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
-          }
+      // By Stage
+      for (var stage in calc.byStage) {
+        if (calc.byStage.hasOwnProperty(stage)) {
+          summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
         }
       }
-    } else {
-      // High-level mode: iterate through features
-      if (estimator.highlevel && estimator.highlevel.byFeature) {
-        for (var feature in estimator.highlevel.byFeature) {
-          if (estimator.highlevel.byFeature.hasOwnProperty(feature)) {
-            var counts = estimator.highlevel.byFeature[feature];
-            var calc = calculateHighLevelFeature(counts, estimator.params);
 
-            summary.totalDays += calc.totalDays;
-            summary.byFeature[feature] = calc.totalDays;
+      // By Role
+      for (var role in calc.byRole) {
+        if (calc.byRole.hasOwnProperty(role)) {
+          summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
+        }
+      }
 
-            // Merge byStage
-            for (var stage in calc.byStage) {
-              if (calc.byStage.hasOwnProperty(stage)) {
-                summary.byStage[stage] = (summary.byStage[stage] || 0) + calc.byStage[stage];
-              }
-            }
-            for (var role in calc.byRole) {
-              if (calc.byRole.hasOwnProperty(role)) {
-                summary.byRole[role] = (summary.byRole[role] || 0) + calc.byRole[role];
-              }
-            }
-            for (var activity in calc.byActivity) {
-              if (calc.byActivity.hasOwnProperty(activity)) {
-                summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
-              }
-            }
+      // By Solution Type (all types - no primary distinction)
+      var types = req.solutionTypes || (req.solutionType ? [req.solutionType] : []);
+      for (var t = 0; t < types.length; t++) {
+        var type = types[t];
+        if (type) {
+          summary.bySolutionType[type] = (summary.bySolutionType[type] || 0) + calc.totalDays;
+        }
+      }
 
-            // Don't populate bySolutionType in high-level mode (will show "No data")
-          }
+      // By Activity
+      for (var activity in calc.byActivity) {
+        if (calc.byActivity.hasOwnProperty(activity)) {
+          summary.byActivity[activity] = (summary.byActivity[activity] || 0) + calc.byActivity[activity];
         }
       }
     }

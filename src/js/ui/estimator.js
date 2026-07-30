@@ -52,7 +52,12 @@
       '</div>';
     });
 
-    html += '</div></div>';
+    html += '</div>' +
+      '<div class="chip-add-input">' +
+        '<input type="text" id="add-feature-input" placeholder="New feature name" />' +
+        '<button id="add-feature-btn">Add</button>' +
+      '</div>' +
+      '</div>';
 
     // Phases section
     html += '<div class="param-section">' +
@@ -66,7 +71,12 @@
       '</div>';
     });
 
-    html += '</div></div>';
+    html += '</div>' +
+      '<div class="chip-add-input">' +
+        '<input type="text" id="add-phase-input" placeholder="New phase name" />' +
+        '<button id="add-phase-btn">Add</button>' +
+      '</div>' +
+      '</div>';
 
     // Powered Stages section
     var psSum = sumPoweredStages(params.poweredStages);
@@ -176,6 +186,63 @@
       });
     });
 
+    // Wire add feature button
+    var addFeatureBtn = document.getElementById('add-feature-btn');
+    var addFeatureInput = document.getElementById('add-feature-input');
+    if (addFeatureBtn && addFeatureInput) {
+      var addFeature = function () {
+        var value = addFeatureInput.value.trim();
+        if (!value) return;
+
+        if (params.features.includes(value)) {
+          alert('Feature already exists');
+          return;
+        }
+
+        state.project._pushUndo();
+        params.features.push(value);
+
+        // Initialize in high-level
+        if (!state.project.estimator.highlevel.byFeature) {
+          state.project.estimator.highlevel.byFeature = {};
+        }
+        state.project.estimator.highlevel.byFeature[value] = { low: 0, medium: 0, high: 0 };
+
+        addFeatureInput.value = '';
+        PP.refresh(true);
+      };
+
+      addFeatureBtn.addEventListener('click', addFeature);
+      addFeatureInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') addFeature();
+      });
+    }
+
+    // Wire add phase button
+    var addPhaseBtn = document.getElementById('add-phase-btn');
+    var addPhaseInput = document.getElementById('add-phase-input');
+    if (addPhaseBtn && addPhaseInput) {
+      var addPhase = function () {
+        var value = addPhaseInput.value.trim();
+        if (!value) return;
+
+        if (params.phases.includes(value)) {
+          alert('Phase already exists');
+          return;
+        }
+
+        state.project._pushUndo();
+        params.phases.push(value);
+
+        addPhaseInput.value = '';
+        PP.refresh(true);
+      };
+
+      addPhaseBtn.addEventListener('click', addPhase);
+      addPhaseInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') addPhase();
+      });
+    }
 
     // Wire powered stage inputs
     var psInputs = document.querySelectorAll('.ps-input');

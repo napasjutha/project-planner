@@ -208,36 +208,39 @@ input, select, textarea {
   opacity: 0.9;
 }
 
-.powered-stages-inputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
+.powered-stages-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+  margin-bottom: 0;
 }
 
-.powered-stages-inputs.invalid {
+.powered-stages-grid.invalid {
   border: 1px solid var(--danger);
   padding: 8px;
   border-radius: var(--radius-md);
 }
 
-.ps-input {
-  width: 60px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+.ps-total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.ps-sum {
-  margin-left: auto;
+.ps-sum-value {
+  padding: 8px 12px;
   font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  min-height: 38px;
 }
 
-.ps-sum.valid {
-  color: var(--success);
+.ps-sum-value.valid {
+  color: var(--status-complete);
 }
 
-.ps-sum.invalid {
+.ps-sum-value.invalid {
   color: var(--danger);
 }
 

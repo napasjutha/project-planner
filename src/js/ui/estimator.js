@@ -84,13 +84,31 @@
 
     html += '<div class="param-section">' +
       '<h4>Powered Stage Distribution</h4>' +
-      '<div class="powered-stages-inputs' + (psValid ? '' : ' invalid') + '">' +
-        '<label>Vision: <input type="number" class="ps-input" data-stage="Vision" value="' + params.poweredStages.Vision + '" min="0" max="100">%</label>' +
-        '<label>Validate: <input type="number" class="ps-input" data-stage="Validate" value="' + params.poweredStages.Validate + '" min="0" max="100">%</label>' +
-        '<label>Construct: <input type="number" class="ps-input" data-stage="Construct" value="' + params.poweredStages.Construct + '" min="0" max="100">%</label>' +
-        '<label>Deploy: <input type="number" class="ps-input" data-stage="Deploy" value="' + params.poweredStages.Deploy + '" min="0" max="100">%</label>' +
-        '<label>Evolve: <input type="number" class="ps-input" data-stage="Evolve" value="' + params.poweredStages.Evolve + '" min="0" max="100">%</label>' +
-        '<span class="ps-sum' + (psValid ? ' valid' : ' invalid') + '">Total: ' + psSum.toFixed(0) + '%' + (psValid ? ' ✓' : ' (must equal 100%)') + '</span>' +
+      '<div class="powered-stages-grid' + (psValid ? '' : ' invalid') + '">' +
+        '<div class="param-field">' +
+          '<label>Vision:</label>' +
+          '<input type="number" class="ps-input param-input" data-stage="Vision" value="' + params.poweredStages.Vision + '" min="0" max="100">' +
+        '</div>' +
+        '<div class="param-field">' +
+          '<label>Validate:</label>' +
+          '<input type="number" class="ps-input param-input" data-stage="Validate" value="' + params.poweredStages.Validate + '" min="0" max="100">' +
+        '</div>' +
+        '<div class="param-field">' +
+          '<label>Construct:</label>' +
+          '<input type="number" class="ps-input param-input" data-stage="Construct" value="' + params.poweredStages.Construct + '" min="0" max="100">' +
+        '</div>' +
+        '<div class="param-field">' +
+          '<label>Deploy:</label>' +
+          '<input type="number" class="ps-input param-input" data-stage="Deploy" value="' + params.poweredStages.Deploy + '" min="0" max="100">' +
+        '</div>' +
+        '<div class="param-field">' +
+          '<label>Evolve:</label>' +
+          '<input type="number" class="ps-input param-input" data-stage="Evolve" value="' + params.poweredStages.Evolve + '" min="0" max="100">' +
+        '</div>' +
+        '<div class="param-field ps-total">' +
+          '<label>Total:</label>' +
+          '<div class="ps-sum-value' + (psValid ? ' valid' : ' invalid') + '">' + psSum.toFixed(0) + '%' + (psValid ? ' ✓' : '') + '</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
 

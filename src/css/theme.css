@@ -324,21 +324,38 @@ input, select, textarea {
 
 .modal-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
 
 .modal-actions button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 #solution-type-save {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+}
+
+#solution-type-save:hover {
+  opacity: 0.9;
+}
+
+#solution-type-cancel {
+  background: white;
+}
+
+#solution-type-cancel:hover {
+  background: var(--bg-secondary);
 }
 
 .highlevel-tabs {

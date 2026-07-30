@@ -98,38 +98,27 @@ function renderParams(state) {
 
   html += '<div class="param-section">' +
       '<h4>Powered Stage Distribution</h4>' +
-      '<div class="powered-stages-grid' + (psValid ? '' : ' invalid') + '">' +
-      '<div class="param-field">' +
-      '<label>Vision:</label>' +
-      '<input type="number" class="ps-input param-input" data-stage="Vision" value="' +
-      params.poweredStages.Vision + '" min="0" max="100">' +
-      '</div>' +
-      '<div class="param-field">' +
-      '<label>Validate:</label>' +
-      '<input type="number" class="ps-input param-input" data-stage="Validate" value="' +
-      params.poweredStages.Validate + '" min="0" max="100">' +
-      '</div>' +
-      '<div class="param-field">' +
-      '<label>Construct:</label>' +
-      '<input type="number" class="ps-input param-input" data-stage="Construct" value="' +
-      params.poweredStages.Construct + '" min="0" max="100">' +
-      '</div>' +
-      '<div class="param-field">' +
-      '<label>Deploy:</label>' +
-      '<input type="number" class="ps-input param-input" data-stage="Deploy" value="' +
-      params.poweredStages.Deploy + '" min="0" max="100">' +
-      '</div>' +
-      '<div class="param-field">' +
-      '<label>Evolve:</label>' +
-      '<input type="number" class="ps-input param-input" data-stage="Evolve" value="' +
-      params.poweredStages.Evolve + '" min="0" max="100">' +
-      '</div>' +
-      '<div class="param-field ps-total">' +
+      '<div class="powered-stages-grid' + (psValid ? '' : ' invalid') + '">';
+
+  var stages = Object.keys(params.poweredStages).sort();
+  stages.forEach(function(stage) {
+    html += '<div class="param-field">' +
+      '<label>' + escapeHtml(stage) + ':</label>' +
+      '<input type="number" class="ps-input param-input" data-stage="' +
+      escapeHtml(stage) + '" value="' + params.poweredStages[stage] +
+      '" min="0" max="100">' +
+      '<button class="ps-delete-btn" data-stage="' + escapeHtml(stage) +
+      '"' + (stages.length === 1 ? ' disabled' : '') + '>&times;</button>' +
+      '</div>';
+  });
+
+  html += '<div class="param-field ps-total">' +
       '<label>Total:</label>' +
       '<div class="ps-sum-value' + (psValid ? ' valid' : ' invalid') + '">' +
       psSum.toFixed(0) + '%' + (psValid ? ' ✓' : '') + '</div>' +
       '</div>' +
       '</div>' +
+      '<button id="ps-add-stage-btn">+ Add Stage</button>' +
       '</div>';
 
   // Estimation Parameters section (grid layout)

@@ -373,7 +373,7 @@
     var html = '<div class="modal-overlay" id="solution-type-modal">' +
       '<div class="modal-content">' +
         '<h3>Select Solution Types</h3>' +
-        '<p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Select types (check) and primary type (radio). Primary is used for effort calculations.</p>' +
+        '<p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">First selection is primary (used for effort calculations). Others are tags.</p>' +
         '<div class="solution-type-checkboxes">';
 
     types.forEach(function (type) {
@@ -381,8 +381,7 @@
       var isPrimary = selected[0] === type;
       html += '<label class="solution-type-option' + (isPrimary ? ' primary' : '') + '">' +
         '<input type="checkbox" class="st-checkbox" value="' + type + '"' + (checked ? ' checked' : '') + '>' +
-        '<input type="radio" name="st-primary" class="st-radio" value="' + type + '"' + (isPrimary ? ' checked' : '') + (checked ? '' : ' disabled') + '>' +
-        '<span>' + type + '</span>' +
+        '<span>' + type + (isPrimary ? ' [Primary]' : '') + '</span>' +
       '</label>';
     });
 
@@ -533,56 +532,50 @@
         modal.innerHTML = renderSolutionTypeModal(req, state);
         document.body.appendChild(modal.firstChild);
 
-        // Wire checkbox changes to enable/disable radios
+        // Track selection order
+        var selectionOrder = (req.solutionTypes || []).slice();
+
+        // Wire checkbox changes to track order
         var checkboxes = document.querySelectorAll('.st-checkbox');
         checkboxes.forEach(function (cb) {
           cb.addEventListener('change', function () {
-            var radio = cb.parentElement.querySelector('.st-radio');
             if (cb.checked) {
-              radio.disabled = false;
-              // Auto-select as primary if no primary selected
-              var anyPrimaryChecked = document.querySelector('.st-radio:checked');
-              if (!anyPrimaryChecked) {
-                radio.checked = true;
+              // Add to order if not already present
+              if (!selectionOrder.includes(cb.value)) {
+                selectionOrder.push(cb.value);
               }
             } else {
-              radio.disabled = true;
-              if (radio.checked) {
-                radio.checked = false;
-                // Select first available as new primary
-                var firstAvailable = document.querySelector('.st-checkbox:checked');
-                if (firstAvailable) {
-                  firstAvailable.parentElement.querySelector('.st-radio').checked = true;
-                }
-              }
+              // Remove from order
+              selectionOrder = selectionOrder.filter(function (v) { return v !== cb.value; });
             }
+
+            // Update visual primary indicator
+            updatePrimaryLabels();
           });
         });
 
+        function updatePrimaryLabels() {
+          var labels = document.querySelectorAll('.solution-type-option');
+          labels.forEach(function (label) {
+            var checkbox = label.querySelector('.st-checkbox');
+            var span = label.querySelector('span');
+            var type = checkbox.value;
+            var isPrimary = selectionOrder[0] === type;
+
+            label.classList.toggle('primary', isPrimary);
+            span.textContent = type + (isPrimary ? ' [Primary]' : '');
+          });
+        }
+
         // Wire save button
         document.getElementById('solution-type-save').addEventListener('click', function () {
-          var checkedBoxes = document.querySelectorAll('.st-checkbox:checked');
-          var primaryRadio = document.querySelector('.st-radio:checked');
-
-          if (checkedBoxes.length === 0) {
+          if (selectionOrder.length === 0) {
             alert('Please select at least one solution type');
             return;
           }
 
-          if (!primaryRadio) {
-            alert('Please select a primary type');
-            return;
-          }
-
-          var newTypes = [primaryRadio.value];
-          checkedBoxes.forEach(function (cb) {
-            if (cb.value !== primaryRadio.value) {
-              newTypes.push(cb.value);
-            }
-          });
-
           state.project._pushUndo();
-          req.solutionTypes = newTypes;
+          req.solutionTypes = selectionOrder.slice();
           state.project.estimator.summary = PP.recalcSummary(state.project.estimator);
 
           document.getElementById('solution-type-modal').remove();

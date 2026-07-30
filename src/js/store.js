@@ -149,7 +149,7 @@
     this.estimator = data.estimator || {
       mode: 'detailed',
       params: {
-        features: ['Field Service', 'Case Management', 'Reports & Dashboards'],
+        features: [],
         phases: ['Phase-1', 'Phase-2', 'Phase-3', 'Phase-4', 'Deferred'],
         poweredStages: {
           Vision: 12,
@@ -235,7 +235,7 @@
       estimator: {
         mode: 'detailed',
         params: {
-          features: ['Field Service', 'Case Management', 'Reports & Dashboards'],
+          features: [],
           phases: ['Phase-1', 'Phase-2', 'Phase-3', 'Phase-4', 'Deferred'],
           poweredStages: {
             Vision: 12,

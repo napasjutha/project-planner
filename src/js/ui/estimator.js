@@ -885,17 +885,20 @@ function renderMoscowMatrix(estimator) {
       '<th style="width:120px">Low</th>' +
       '<th style="width:120px">Medium</th>' +
       '<th style="width:120px">High</th>' +
+      '<th style="width:80px">Total</th>' +
       '<th style="width:140px">Total Effort (days)</th>' +
       '</tr></thead>' +
       '<tbody>';
 
   priorities.forEach(function(priority) {
     var counts = pivot[priority];
+    var totalCount = counts.low + counts.medium + counts.high;
     html += '<tr>' +
         '<td>' + priority + '</td>' +
         '<td style="text-align:center">' + counts.low + '</td>' +
         '<td style="text-align:center">' + counts.medium + '</td>' +
         '<td style="text-align:center">' + counts.high + '</td>' +
+        '<td style="text-align:center">' + totalCount + '</td>' +
         '<td style="text-align:right">' + counts.totalEffort.toFixed(2) + '</td>' +
         '</tr>';
   });

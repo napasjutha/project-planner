@@ -855,14 +855,23 @@ function renderFeatureMatrix(estimator) {
 }
 
 function renderMoscowMatrix(estimator) {
-  if (!estimator.highlevel.byMoscow) {
-    estimator.highlevel.byMoscow = {
-      Must: {low: 0, medium: 0, high: 0},
-      Should: {low: 0, medium: 0, high: 0},
-      Could: {low: 0, medium: 0, high: 0},
-      'Won\'t': {low: 0, medium: 0, high: 0}
-    };
-  }
+  var priorities = ['Must', 'Should', 'Could', "Won't"];
+  var pivot = {};
+
+  priorities.forEach(function(p) {
+    pivot[p] = { low: 0, medium: 0, high: 0 };
+  });
+
+  estimator.requirements.forEach(function(req) {
+    var moscow = req.moscow || 'Must';
+    if (!pivot[moscow]) {
+      pivot[moscow] = { low: 0, medium: 0, high: 0 };
+    }
+
+    if (req.complexity === 'Low') pivot[moscow].low++;
+    if (req.complexity === 'Medium') pivot[moscow].medium++;
+    if (req.complexity === 'High') pivot[moscow].high++;
+  });
 
   var html = '<table class="highlevel-table">' +
       '<thead><tr>' +
@@ -870,57 +879,16 @@ function renderMoscowMatrix(estimator) {
       '<th style="width:120px">Low</th>' +
       '<th style="width:120px">Medium</th>' +
       '<th style="width:120px">High</th>' +
-      '<th style="width:160px">Total Effort (days)</th>' +
       '</tr></thead>' +
       '<tbody>';
 
-  var priorities = ['Must', 'Should', 'Could', 'Won\'t'];
-
   priorities.forEach(function(priority) {
-    var counts = estimator.highlevel.byMoscow[priority];
-
-    // Calculate effort for each complexity level
-    var lowEffort = counts.low *
-        PP.calculateRequirement(
-              {
-                moscow: priority,
-                solutionTypes: ['Configuration'],
-                complexity: 'Low'
-              },
-              estimator.params)
-            .totalDays;
-    var mediumEffort = counts.medium *
-        PP.calculateRequirement(
-              {
-                moscow: priority,
-                solutionTypes: ['Configuration'],
-                complexity: 'Medium'
-              },
-              estimator.params)
-            .totalDays;
-    var highEffort = counts.high *
-        PP.calculateRequirement(
-              {
-                moscow: priority,
-                solutionTypes: ['Configuration'],
-                complexity: 'High'
-              },
-              estimator.params)
-            .totalDays;
-    var totalEffort = lowEffort + mediumEffort + highEffort;
-
+    var counts = pivot[priority];
     html += '<tr>' +
         '<td>' + priority + '</td>' +
-        '<td><input type="number" class="hl-input-moscow" data-moscow="' +
-        priority + '" data-complexity="low" value="' + counts.low +
-        '" min="0"></td>' +
-        '<td><input type="number" class="hl-input-moscow" data-moscow="' +
-        priority + '" data-complexity="medium" value="' + counts.medium +
-        '" min="0"></td>' +
-        '<td><input type="number" class="hl-input-moscow" data-moscow="' +
-        priority + '" data-complexity="high" value="' + counts.high +
-        '" min="0"></td>' +
-        '<td>' + totalEffort.toFixed(2) + '</td>' +
+        '<td style="text-align:center">' + counts.low + '</td>' +
+        '<td style="text-align:center">' + counts.medium + '</td>' +
+        '<td style="text-align:center">' + counts.high + '</td>' +
         '</tr>';
   });
 

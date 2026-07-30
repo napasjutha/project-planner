@@ -863,7 +863,9 @@ function renderMoscowMatrix(estimator) {
   });
 
   estimator.requirements.forEach(function(req) {
-    var moscow = req.moscow || 'Must';
+    if (!req.moscow) return;
+
+    var moscow = req.moscow;
     if (!pivot[moscow]) {
       pivot[moscow] = { low: 0, medium: 0, high: 0 };
     }
